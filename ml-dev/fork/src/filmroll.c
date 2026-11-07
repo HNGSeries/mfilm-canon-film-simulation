@@ -215,6 +215,21 @@ static void read_back_log()
     loaded_at[0] = 0;
     int size = 0;
     char *buf = (char *) read_entire_file(log_path, &size);
+    if (!buf && log_path[1] == ':')
+    {
+        char alt[64];
+        snprintf(alt, sizeof(alt), "%s", log_path);
+        if (alt[0] == 'A') alt[0] = 'B';
+        else if (alt[0] == 'B') alt[0] = 'A';
+        if (alt[0] != log_path[0])
+        {
+            buf = (char *) read_entire_file(alt, &size);
+            if (buf)
+            {
+                snprintf(log_path, sizeof(log_path), "%s", alt);
+            }
+        }
+    }
     if (!buf)
         return;
     for (char *line = buf; line && *line; )
@@ -419,7 +434,18 @@ static void load_roll(int film, int exposures)
         roll_number = roll_number % 999 + 1;
         update_log_path();
         if (!is_file(log_path))
+        {
+            if (log_path[1] == ':')
+            {
+                char alt[64];
+                snprintf(alt, sizeof(alt), "%s", log_path);
+                if (alt[0] == 'A') alt[0] = 'B';
+                else if (alt[0] == 'B') alt[0] = 'A';
+                if (is_file(alt))
+                    continue;
+            }
             break;
+        }
     }
     frames_shot = 0;
     need_wind = 0;
@@ -1019,6 +1045,8 @@ const char *fos_port_card()
 
 void *fos_port_open(const char *path, int write)
 {
+    /* the path names its card; fos_lab looks on the other one itself */
+    if (!path || !*path) return 0;
     return write ? FIO_CreateFile(path) : FIO_OpenFile(path, O_RDONLY | O_SYNC);
 }
 
@@ -1096,9 +1124,38 @@ int fos_port_list(const char *dir, int (*fn)(void *ctx, const char *name, int is
 
 int fos_port_mkdir(const char *path)
 {
+    if (!path || !*path) return -1;
     if (is_dir(path)) return 0;
-    FIO_CreateDirectory(path);
-    return is_dir(path) ? 0 : -1;
+
+    char sub[FIO_MAX_PATH_LENGTH];
+    int len = snprintf(sub, sizeof(sub), "%s", path);
+    if (len <= 0 || len >= (int) sizeof(sub)) return -1;
+
+    /* Strip trailing slashes */
+    while (len > 0 && (sub[len - 1] == '/' || sub[len - 1] == '\\'))
+    {
+        sub[--len] = 0;
+    }
+
+    /* Create parent directories recursively */
+    for (char *p = sub + 1; *p; p++)
+    {
+        if (*p == '/' || *p == '\\')
+        {
+            char c = *p;
+            *p = 0;
+            if (p - sub > 2 || (p - sub == 2 && sub[1] != ':'))
+            {
+                if (!is_dir(sub))
+                {
+                    FIO_CreateDirectory(sub);
+                }
+            }
+            *p = c;
+        }
+    }
+    FIO_CreateDirectory(sub);
+    return is_dir(sub) ? 0 : -1;
 }
 
 /* Canon's FIO_RemoveFile, for a file or an empty folder. Whether it takes a
