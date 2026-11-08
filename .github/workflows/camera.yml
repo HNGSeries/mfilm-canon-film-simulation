@@ -51,7 +51,8 @@ jobs:
     name: camera ${{ matrix.platform }}
     env:
       # built and released without the in-camera darkroom: the full build doesn't fit at boot (cameras.txt
-      # "nodark"). None at the moment: the 650D and 700D were until 0.1.5, and now start as modules with it
+      # "nodark"). None at the moment: the 650D and 700D were until 0.1.5, and now start as modules with it.
+      # The release text below says every zip has the darkroom: if a camera comes back here, change it.
       NODARK: ""
       # built with the film OS as a module (ML/modules/filmos.mo), loaded after boot (cameras.txt ":module")
       MODULE: "100D.101 650D.104 700D.115 70D.112 550D.109 600D.102 1100D.105"

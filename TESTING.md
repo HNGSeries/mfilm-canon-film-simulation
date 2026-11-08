@@ -79,8 +79,9 @@ and the file **`ML/FILMROLL.LOG`** from the card attached.
 
 The camera found no update file it accepts on the card:
 - The Canon firmware isn't exactly the one in the table: `ML-SETUP.FIR` only works on that version.
-- `ML-SETUP.FIR` isn't at the top of the card. Unzipping on a Mac often makes a folder
-  (`M-Film-camera-EOSM.202/`). The card's top level should show `autoexec.bin`, `ML-SETUP.FIR` and `ML`.
+- `ML-SETUP.FIR` isn't at the top of the card. Unzipping on a Mac, or with Windows' *Extract All*, often
+  makes a folder (`M-Film-camera-EOSM.202/`). The card's top level should show `autoexec.bin`,
+  `ML-SETUP.FIR` and `ML`.
 - On a Mac, hidden `._` files next to them can trip the camera. With the card in the reader, run
   `dot_clean -m /Volumes/EOS_DIGITAL` in *Terminal* (your card's name in place of `EOS_DIGITAL`),
   then eject the card before taking it out.

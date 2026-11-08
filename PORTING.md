@@ -95,10 +95,11 @@ palette looks, which keys arrive, and whether the darkroom has the memory it nee
 
 ## Which cameras are worth trying
 
-All the DIGIC 4 and 5 cameras build already ([the list](README.md#cameras)); what they need is someone
-with the camera. The closest to the EOS M are the **100D, 650D and 700D**: the same sensor, the same
-DIGIC 5. DIGIC 6 and later (80D, 200D, EOS R …) wait for Magic Lantern itself, and the 7D doesn't build
-in Magic Lantern's current source.
+All the DIGIC 4 and 5 cameras build already, and testers have tried most of them
+([the list](README.md#cameras)): what they need now is someone with a camera still marked *needs a
+tester*, or with one of the known problems there. The closest to the EOS M are the **100D, 650D and
+700D**: the same sensor, the same DIGIC 5. DIGIC 6 and later (80D, 200D, EOS R …) wait for Magic
+Lantern itself, and the 7D doesn't build in Magic Lantern's current source.
 
 ## How to go about a port
 
