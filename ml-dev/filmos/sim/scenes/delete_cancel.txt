@@ -1,0 +1,10 @@
+# Delete roll (cardtest.sh): asked, then not confirmed (MENU), for each kind: nothing goes
+noroll
+open darkroom
+1500 left
+2300 info
+3100 menu
+3900 left
+4700 set
+5500 menu
+6500 end

@@ -1,0 +1,7 @@
+# Delete roll (cardtest.sh): roll 006 is in the camera and can't be deleted
+roll 0 4 12 6
+open darkroom
+1500 down
+1900 left
+2700 set
+3500 end

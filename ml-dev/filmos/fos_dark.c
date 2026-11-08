@@ -101,6 +101,14 @@ static int dk_sel;
 static struct spring dk_hl, dk_scroll;
 static int dk_hints_for = -1;           /* the hints show what SET does on this row */
 
+/* Delete roll (LEFT, a roll out of the camera): which part, then sure? The
+ * files go once the sheet is down, under a toast saying so. */
+enum { DEL_NONE, DEL_WHICH, DEL_PRINTS, DEL_WHOLE };
+static int dk_ask, dk_said;             /* the sheet up; what it said, while it goes down */
+static int dk_doing;                    /* DEL_PRINTS or DEL_WHOLE: confirmed */
+static struct spring dk_sheet;
+static int dk_sheet_drawn;
+
 #define DK_X    24
 #define DK_W    672
 #define DK_Y    124
@@ -155,11 +163,12 @@ static void dark_hints()
     char dev[32];
     if (nm) snprintf(dev, sizeof(dev), "Develop %d", nm);
     else snprintf(dev, sizeof(dev), "Develop all");
-    struct hint h[4];
+    struct hint h[5];
     int n = 0;
     if (r && is_waiting(r)) h[n++] = (struct hint) { "SET", marked[dk_sel] ? "Unmark" : "Mark" };
     else if (r && has_prints(r)) h[n++] = (struct hint) { "SET", "Prints" };
     if (count_waiting(0)) h[n++] = (struct hint) { "INFO", dev };
+    if (r && !r->in_camera) h[n++] = (struct hint) { "<", "Delete" };
     h[n++] = (struct hint) { "PLAY", "Prints" };
     h[n++] = (struct hint) { "MENU", "Back" };
     ui_bg_restore(0, HINTS_Y, FOS_W, FOS_H - HINTS_Y);
@@ -186,6 +195,9 @@ void dark_enter(int arg)
     dk_scroll.x = (float) fos_clamp(dk_sel - DK_ROWS / 2, 0, nrolls > DK_ROWS ? nrolls - DK_ROWS : 0);
     dk_scroll.v = 0;
     dk_hints_for = -1;
+    dk_ask = dk_doing = 0;
+    dk_sheet.x = dk_sheet.v = 0;
+    dk_sheet_drawn = 0;
     dark_bake();
 }
 
@@ -214,6 +226,21 @@ void dark_key(int k)
         return;
     }
     const struct fos_lab_roll *r = nrolls ? &rolls[dk_sel] : 0;
+    if (dk_doing) return;
+    if (dk_ask)
+    {
+        /* Delete roll: SET prints only (or, asked to be sure, yes), INFO the whole roll */
+        if (k == FK_MENU) dk_ask = DEL_NONE;
+        else if (dk_ask == DEL_WHICH && (k == FK_SET || k == FK_INFO)) dk_ask = k == FK_SET ? DEL_PRINTS : DEL_WHOLE;
+        else if (dk_ask != DEL_WHICH && k == FK_SET)
+        {
+            dk_doing = dk_ask;
+            dk_ask = DEL_NONE;
+            ui_toast("Deleting" T_ELLIPSIS);
+        }
+        ui_damage_all();
+        return;
+    }
     switch (k)
     {
         case FK_UP: case FK_WHEEL_L:
@@ -222,11 +249,13 @@ void dark_key(int k)
         case FK_DOWN: case FK_WHEEL_R:
             if (dk_sel < nrolls - 1) dk_sel++;
             break;
-        case FK_SET: case FK_RIGHT:
+        case FK_SET: case FK_RIGHT: case FK_LEFT:
             if (!r) break;
-            if (r->in_camera && !finished_in_camera(r))
+            /* LEFT: Delete roll, never the one in the camera */
+            if (r->in_camera && (k == FK_LEFT || !finished_in_camera(r)))
                 ui_toast(ui_realistic() ? "Still in the camera " T_MDASH " rewind it first"
                                         : "Still in the camera " T_MDASH " finish it on the Roll page first");
+            else if (k == FK_LEFT) dk_ask = has_prints(r) || r->jpegs ? DEL_WHICH : DEL_WHOLE;   /* no prints: no choice */
             else if (is_waiting(r) && k == FK_SET) marked[dk_sel] ^= 1;
             else if (has_prints(r)) ui_go(SCR_PRINTS, r->number, GO_FADE);
             break;
@@ -247,6 +276,19 @@ void dark_key(int k)
     ui_damage(DK_Y - 4, FOS_H);
 }
 
+/* the confirmed Delete roll, with the sheet down and the toast up */
+static void dark_delete()
+{
+    int left = fos_lab_delete(rolls[dk_sel].number, dk_doing == DEL_WHOLE, dm->frames);
+    dk_doing = DEL_NONE;
+    ui_toast(left ? "Not all of it could be deleted" : "Deleted");
+    rescan();
+    memset(marked, 0, sizeof(marked));
+    if (dk_sel >= nrolls) dk_sel = nrolls > 0 ? nrolls - 1 : 0;
+    dark_bake();
+    ui_clobbered = 1;
+}
+
 int dark_update(int dt)
 {
     int moving = 0;
@@ -254,6 +296,8 @@ int dark_update(int dt)
     moving |= spring_step(&dk_hl, (float) dk_sel, dt, 3.4f, 0.82f);
     moving |= spring_step(&dk_scroll, top, dt, 2.6f, 0.9f);
     if (moving) ui_damage(DK_Y - 4, DK_Y + DK_ROWS * DK_ROW + 4);
+    if (dm && spring_step(&dk_sheet, dk_ask ? 1 : 0, dt, 3.0f, 0.95f)) { moving = 1; ui_damage_all(); }
+    if (dk_doing && dk_sheet.x <= 0.002f) dark_delete();
     return moving;
 }
 
@@ -289,15 +333,31 @@ static void dark_row(int i, int y)
     fos_text_r(cv, &fos_font_xs, DK_X + DK_W - 24, y + 36, b, c, OPAQUE, 48);
 }
 
+/* the Delete roll sheet */
+static void dark_sheet()
+{
+    if (dk_ask) dk_said = dk_ask;
+    const struct fos_lab_roll *r = &rolls[dk_sel];
+    char t[48], b[80];
+    int which = dk_said == DEL_WHICH, prints = dk_said == DEL_PRINTS;
+    snprintf(t, sizeof(t), which ? "Delete roll %03d?" : prints ? "Delete its prints?" : "Delete all of roll %03d?", r->number);
+    snprintf(b, sizeof(b), "Its %d frame%s, prints and log. They can't come back.", r->shot, r->shot == 1 ? "" : "s");
+    /* which part: SET, INFO; then sure? SET */
+    ui_sheet3(dk_sheet.x, t, which ? "Prints only keeps the RAW files and the log." : prints ? "Its JPEGs in DCIM go too." : b,
+              which ? "Prints only" : "Delete", which ? "Whole roll" : 0, which ? "Cancel" : "Keep");
+}
+
 void dark_draw()
 {
-    if (ui_clobbered)
+    int sheet = dk_sheet.x > 0.002f;
+    if (ui_clobbered || sheet || dk_sheet_drawn)
     {
         ui_clobbered = 0;
         ui_bg_restore(0, 0, FOS_W, FOS_H);
         ui_damage_all();
         dk_hints_for = -1;
     }
+    dk_sheet_drawn = sheet;
     if (!dm)
     {
         fos_text_c(cv, &fos_font_md, 360, DK_Y + 120, "Not enough memory for the darkroom.", C_TEXT3, OPAQUE, 0);
@@ -326,6 +386,7 @@ void dark_draw()
     if (top > 0.05f) fos_tri(cv, DK_X + DK_W - 14, DK_Y - 8, 8, 3, C_TEXT3, OPAQUE);
     if (top < nrolls - DK_ROWS - 0.05f) fos_tri(cv, DK_X + DK_W - 14, DK_Y + DK_ROWS * DK_ROW + 6, 8, 1, C_TEXT3, OPAQUE);
     ui_damage(y0, y1 + 8);
+    if (dk_sheet_drawn) dark_sheet();
 }
 
 /* ================================================================ developing */

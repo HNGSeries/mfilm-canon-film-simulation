@@ -165,5 +165,10 @@ void fos_lab_cache_dir(char *buf, int size);                            /* where
  * (month, month number, day of its first frame; when: "2026-09-06 10:15")
  * or SEP0906 where the card takes no long names. 0 = ok */
 int  fos_lab_dcim_dir(char *buf, int size, int roll, int film, const char *when);
+/* delete a roll that isn't in the camera: its prints (in the darkroom and
+ * its folder in DCIM), and with whole also the frames its logs list and
+ * the logs. frames: room for FOS_MAX_FRAMES to work in. Returns how many
+ * files or folders couldn't be removed; -1 for the roll in the camera */
+int  fos_lab_delete(int roll, int whole, struct fos_lab_frame *frames);
 
 #endif

@@ -72,6 +72,8 @@ Go through these and note what happens (a photo of the screen helps a lot):
 - [ ] With a manual (adapted) lens, turn off *Viewfinder → Exposure simulation*. Is LiveView bright enough
       to focus? Does the HUD's meter needle still move when you half-press?
 - [ ] Rewind the roll and **develop it in the camera** (Darkroom). Do prints come out? How long per frame?
+- [ ] In the Darkroom, **◀** on a developed roll: *Delete roll* → *Prints only* → *Delete*. On a computer:
+      are its JPEG folder in `DCIM` and `ML/DARKROOM/Rnnn` gone, with no empty folder left?
 - [ ] Open the card in **Darkrooms** on a computer: are the rolls and films there?
 
 Then [open an issue](../../issues/new/choose) with: your camera and firmware, what worked, what didn't,

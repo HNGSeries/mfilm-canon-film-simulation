@@ -242,11 +242,14 @@ int main(int argc, char **argv)
     while (fgets(line, sizeof(line), f))
     {
         char a[64], b[64];
-        int t, n1, n2, n3;
+        int t, n1, n2, n3, n4;
         if (line[0] == '#' || line[0] == '\n') continue;
-        if (sscanf(line, "roll %d %d %d", &n1, &n2, &n3) == 3)
+        /* roll <film> <shot> <exposures> [<number>]: the roll in the camera */
+        int nr = sscanf(line, "roll %d %d %d %d", &n1, &n2, &n3, &n4);
+        if (nr >= 3)
         {
             roll.loaded = 1; roll.film = n1; roll.shot = n2; roll.exposures = n3;
+            if (nr == 4) roll.number = n4;
             continue;
         }
         if (!strncmp(line, "noroll", 6)) { roll.loaded = 0; continue; }

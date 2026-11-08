@@ -1,0 +1,8 @@
+# Delete roll (cardtest.sh, on the problem card once developed): the prints of
+# the newest roll waiting (007), keeping its RAWs and log
+noroll
+open darkroom
+1500 left
+2300 set
+3100 set
+6000 end

@@ -4,7 +4,8 @@
  * camera frame by frame (a roll that ran into a new DCIM folder has a log
  * in each). Its prints are kept in ML/DARKROOM/Rnnn/, Fnn.BMP for frame nn
  * and SHEET.BMP for the contact sheet; a roll is developed when they are
- * all there.
+ * all there. A roll out of the camera can be deleted here too: its prints,
+ * or with them the frames its logs list and the logs.
  */
 
 #include "fos.h"
@@ -297,9 +298,13 @@ static int print_entry(void *ctx, const char *name, int is_dir)
     return 1;
 }
 
+/* paths found for a roll, to act on once their folders have been read */
+struct found { int roll, n; char paths[8][64]; };
+
 /* our folders in DCIM (not Canon's "100CANON"): which roll each holds, by
- * its tag file, and how many JPEGs */
-struct jpeg_scan { struct fos_lab_roll *rolls; int n; int roll, count; };
+ * its tag file, and how many JPEGs; with found, the paths of those that
+ * hold its roll */
+struct jpeg_scan { struct fos_lab_roll *rolls; int n; int roll, count; struct found *found; };
 
 static int jpeg_file(void *ctx, const char *name, int is_dir)
 {
@@ -322,6 +327,8 @@ static int jpeg_folder(void *ctx, const char *name, int is_dir)
     fos_port_list(dir, jpeg_file, s);
     for (int i = 0; i < s->n; i++)
         if (s->rolls[i].number == s->roll) s->rolls[i].jpegs += s->count;
+    struct found *f = s->found;
+    if (f && s->roll == f->roll && f->n < 8 && strlen(dir) < sizeof(f->paths[0])) strcpy(f->paths[f->n++], dir);
     return 1;
 }
 
@@ -341,7 +348,7 @@ int fos_lab_scan(struct fos_lab_roll *rolls, int max)
     }
     char dcim[64];
     snprintf(dcim, sizeof(dcim), "%sDCIM", fos_port_card());
-    struct jpeg_scan js = { rolls, s.n, -1, 0 };
+    struct jpeg_scan js = { rolls, s.n, -1, 0, 0 };
     fos_port_list(dcim, jpeg_folder, &js);
     /* newest first */
     for (int i = 1; i < s.n; i++)
@@ -462,4 +469,82 @@ int fos_lab_frames(int roll, struct fos_lab_frame *frames, int max)
         if (strlen(base) == 12 && base[8] == '.') memcpy(base, seen, 4);
     }
     return n;
+}
+
+/* ---------------------------------------------------------------- deleting a roll */
+
+/* A folder of ours: the roll's prints (ML/DARKROOM/Rnnn: Fnn.BMP, SHEET.BMP),
+ * or its folder in DCIM (IMG_0102.JPG and the tag, ROLL012.TXT). Those files
+ * go, and the folder once nothing else is in it: one with anything left is
+ * never removed. The names are taken first and removed after, not while the
+ * folder is read. How many couldn't be removed. */
+#define SWEEP_MAX (FOS_MAX_FRAMES + 2)
+struct sweep { int n; char names[SWEEP_MAX][13]; };
+
+static int sweep_entry(void *ctx, const char *name, int is_dir)
+{
+    struct sweep *s = ctx;
+    int len = (int) strlen(name);
+    if (!is_dir && len >= 5 && len <= 12 && s->n < SWEEP_MAX
+        && (!strcmp(name + len - 4, ".BMP") || !strcmp(name + len - 4, ".JPG") || !strncmp(name, "ROLL", 4)))
+        memcpy(s->names[s->n++], name, len + 1);
+    return 1;
+}
+
+static int sweep(const char *dir)
+{
+    struct sweep s;
+    s.n = 0;
+    fos_port_list(dir, sweep_entry, &s);
+    char path[160];
+    int failed = 0;
+    for (int i = 0; i < s.n; i++)
+    {
+        snprintf(path, sizeof(path), "%s/%s", dir, s.names[i]);
+        failed += remove_logged(path);
+    }
+    int left = fos_port_list(dir, first_only, 0);       /* < 0: there was none */
+    return failed + (left ? left > 0 : remove_logged(dir));
+}
+
+/* the roll's logs, one in each DCIM folder it ran into */
+static void logs_log(void *ctx, const char *folder, const char *name, int number)
+{
+    struct found *f = ctx;
+    if (number == f->roll && f->n < 8) snprintf(f->paths[f->n++], sizeof(f->paths[0]), "%sDCIM/%s/%s", fos_port_card(), folder, name);
+}
+
+int fos_lab_delete(int roll, int whole, struct fos_lab_frame *frames)
+{
+    struct fos_roll cam;
+    fos_port_roll(&cam);
+    if (cam.loaded && cam.number == roll) return -1;           /* never the one in the camera */
+    /* its prints: the darkroom's, and its folder in DCIM */
+    struct found f;
+    f.roll = roll;
+    f.n = 1;
+    snprintf(f.paths[0], sizeof(f.paths[0]), "%sML/DARKROOM/R%03d", fos_port_card(), roll);
+    struct jpeg_scan js = { 0, 0, -1, 0, &f };
+    char dcim[64];
+    snprintf(dcim, sizeof(dcim), "%sDCIM", fos_port_card());
+    fos_port_list(dcim, jpeg_folder, &js);
+    int failed = 0;
+    for (int i = 0; i < f.n; i++) failed += sweep(f.paths[i]);
+    if (whole)
+    {
+        /* its frames, only those its logs list, by the names the darkroom
+         * finds them by (Canon's _MG_ in Adobe RGB, a JPEG where it was
+         * shot as one, each in its folder across IMG_9999); then the logs,
+         * last, so a roll that couldn't all go is still there to delete */
+        int n = fos_lab_frames(roll, frames, FOS_MAX_FRAMES);
+        for (int i = 0; i < n; i++)
+            if (!frames[i].missing || frames[i].jpeg) failed += remove_logged(frames[i].cr2);
+        f.n = 0;
+        each_log(logs_log, &f);
+        for (int i = 0; i < f.n; i++) failed += remove_logged(f.paths[i]);
+    }
+    char msg[64];
+    snprintf(msg, sizeof(msg), "lab: roll %03d: deleted %s, %d left", roll, whole ? "all" : "prints", failed);
+    fos_port_log(msg);
+    return failed;
 }

@@ -226,15 +226,15 @@ void ui_status_bar(const char *title)
 
 int ui_keycap(int x, int base, const char *key)
 {
-    /* arrows are drawn, words are written */
+    /* arrows are drawn ("<>", "^v", or "<" alone), words are written */
     int w;
-    if (!strcmp(key, "<>") || !strcmp(key, "^v"))
+    if (key[0] == '<' || key[0] == '^')
     {
-        w = 34;
+        w = key[1] ? 34 : 22;
         fos_rrect_line(cv, x, base - 15, w, 20, 6, 1, FC(RAMP_GRAY, 90), OPAQUE);
         int vert = key[0] == '^';
         fos_tri(cv, x + 11, base - 5, 7, vert ? 3 : 2, C_TEXT2, OPAQUE);
-        fos_tri(cv, x + 23, base - 5, 7, vert ? 1 : 0, C_TEXT2, OPAQUE);
+        if (key[1]) fos_tri(cv, x + 23, base - 5, 7, vert ? 1 : 0, C_TEXT2, OPAQUE);
         return w;
     }
     w = fos_text_w(&fos_font_xs, key, 16) + 14;
@@ -245,7 +245,7 @@ int ui_keycap(int x, int base, const char *key)
 
 static int keycap_w(const char *key)
 {
-    return !strcmp(key, "<>") || !strcmp(key, "^v") ? 34 : fos_text_w(&fos_font_xs, key, 16) + 14;
+    return key[0] == '<' || key[0] == '^' ? (key[1] ? 34 : 22) : fos_text_w(&fos_font_xs, key, 16) + 14;
 }
 
 void ui_hints(const struct hint *h, int n)
