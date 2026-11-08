@@ -2,12 +2,16 @@
 #   powershell -File install_fork.ps1 -Card G:
 # First run backs up the official ML (autoexec.bin + ML\MODULES) to
 # ml-dev\card_backup\official\ so restore_official.ps1 can put it back.
+# Every run also keeps the build it replaces in ml-dev\card_backup\previous\,
+# unless the card already has this one (restore_official.ps1 -Previous puts
+# that build back).
 param([Parameter(Mandatory = $true)][string]$Card)
 
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $fork = Join-Path $here "out\fork"
 $backup = Join-Path $here "card_backup\official"
+$prev = Join-Path $here "card_backup\previous"
 $card = $Card.TrimEnd('\') + '\'
 
 if (-not (Test-Path (Join-Path $card "autoexec.bin"))) { throw "No autoexec.bin on $card - is this the camera card?" }
@@ -19,6 +23,31 @@ if (-not (Test-Path (Join-Path $backup "autoexec.bin"))) {
     Copy-Item (Join-Path $card "autoexec.bin") $backup
     Copy-Item (Join-Path $card "ML\MODULES\*") (Join-Path $backup "ML\MODULES")
     Write-Output "Backed up official ML to $backup"
+}
+
+# what this install replaces, so the build on the card now can come back if
+# the new one fails; not when the card already has this build (that would
+# put the last good one out of reach)
+$onCard = (Get-FileHash (Join-Path $card "autoexec.bin")).Hash
+if ($onCard -ne (Get-FileHash (Join-Path $fork "autoexec.bin")).Hash) {
+    $tmp = "$prev.new"
+    if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
+    New-Item -ItemType Directory -Force (Join-Path $tmp "ML") | Out-Null
+    Copy-Item (Join-Path $card "autoexec.bin") $tmp
+    foreach ($d in "MODULES", "DATA", "SAMPLES") {
+        $p = Join-Path $card "ML\$d"
+        if (Test-Path $p) { Copy-Item $p (Join-Path $tmp "ML") -Recurse }
+    }
+    # only the colour tables: the prints in ML\DARKROOM stay on the card
+    $looks = Join-Path $card "ML\DARKROOM\LOOK*.LUT"
+    if (Test-Path $looks) {
+        New-Item -ItemType Directory -Force (Join-Path $tmp "ML\DARKROOM") | Out-Null
+        Copy-Item $looks (Join-Path $tmp "ML\DARKROOM")
+    }
+    # the copy is whole before the last one goes
+    if (Test-Path $prev) { Remove-Item $prev -Recurse -Force }
+    Rename-Item $tmp (Split-Path -Leaf $prev)
+    Write-Output "Kept the build that was on the card in $prev"
 }
 
 # the fork's core and the modules/symbols built against it

@@ -41,7 +41,7 @@
 
 ### สนับสนุน
 System > Support M·FILM แสดง QR code ของลิงก์โดเนท (สูงสุด 2 อัน) ใส่ลิงก์ใน `ml-dev/donate.txt`
-บรรทัดละ `ชื่อ URL` แล้ว build ใหม่ (`tools/genqr.py`, ต้องมี `pip install segno`)
+บรรทัดละ `ชื่อ URL` แล้ว build ใหม่ (`tools/genqr.py`, ต้องมี segno: `setup_wsl.sh` ลง `python3-segno` ให้)
 ไม่มีลิงก์ หน้านี้จะขึ้นคำขอบคุณแทน
 
 ### ห้องมืด: ล้างฟิล์มในกล้อง
@@ -170,12 +170,17 @@ Brightness (โทนกลาง) และ Conversion (Canon / Rec.709 แบ�
   - `sim/` ตัวจำลองบนคอม, `preview/` ภาพตัวอย่าง
 - `ml-dev/fork/src/filmroll.c` ส่วนเชื่อมกับกล้อง: ม้วนฟิล์ม, log, ตั้งค่ากล้องตามฟิล์ม,
   การยึดหน้าจอและปุ่มให้ Film OS, palette
-- `ml-dev/fork/apply_fork.py` และ `fork/film-mode.patch` การแก้ไขบน
+- `ml-dev/fork/apply_fork.py` การแก้ไขบน
   [magiclantern_simplified](https://github.com/reticulatedpines/magiclantern_simplified)
-  commit `ed3e7c0df` (ตรงกับ build ทางการ 2025-06-20.EOSM.202)
-- `setup_wsl.sh` ตั้งเครื่อง build ใน WSL Ubuntu
+  commit `ed3e7c0df` (ตรงกับ build ทางการ 2025-06-20.EOSM.202) ทุกครั้งที่ build
+  จะได้ diff ทั้งหมดของ fork สำหรับกล้องรุ่นนั้นไว้ดูที่ `ml-dev/out/film-mode-<รุ่น>.patch`
+  (เช่น `film-mode-EOSM.202.patch`, `film-mode-70D.112-module.patch`)
+- `setup_wsl.sh` ตั้งเครื่อง build ใน WSL Ubuntu รวม Python modules ที่ build ใช้ (docutils, numpy, segno)
+  `build_fork.sh` เช็กก่อนเริ่ม build ถ้าขาดตัวไหนจะบอกชื่อ package ที่ต้องลง
 - `build_fork.sh` build fork แล้วเก็บไฟล์สำหรับลงการ์ดไว้ที่ `ml-dev/out/fork/`
 - `install_fork.ps1` / `restore_official.ps1` ลง fork บนการ์ด / คืน ML ทางการ
+  ทุกครั้งที่ลง `install_fork.ps1` เก็บ build ที่อยู่บนการ์ดก่อนหน้าไว้ที่ `ml-dev/card_backup/previous/`
+  (ยกเว้นบนการ์ดเป็น build เดียวกันอยู่แล้ว) `restore_official.ps1 -Previous` คืน build นั้นกลับไป
 - `push_fork.ps1` push branch `film-mode` ของ fork ทั้งชุดขึ้น
   [HNGSeries/magiclantern-eosm-film](https://github.com/HNGSeries/magiclantern-eosm-film) (private)
 - `filmroll/` โหมดฟิล์มรุ่นแรกที่ทำเป็น ML module (เก็บไว้อ้างอิง ไม่ได้ใช้แล้ว)
@@ -187,6 +192,7 @@ Brightness (โทนกลาง) และ Conversion (Canon / Rec.709 แบ�
 (ขนาดใหญ่สุดที่เคยเปิดได้) ฟอนต์ของ Film OS จึงอยู่ในไฟล์ `ML/DATA/FOSFONT.BIN` บนการ์ด (`tools/fontblob.c`)
 โหลดหลังบูต และตารางของห้องมืดจองหน่วยความจำเฉพาะตอนเปิด Film OS
 ถ้ากล้องค้างแบบนั้น: ถอดแบต ถอดการ์ด เปิดกล้องได้ตามปกติ แล้วคืน ML ทางการด้วย `restore_official.ps1`
+หรือคืน build ก่อนหน้าที่เคยใช้ได้ด้วย `restore_official.ps1 -Previous`
 
 ### ตัวจำลอง
 ```

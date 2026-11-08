@@ -32,6 +32,31 @@ TAG="${NODARK:+-nodark}${MODULE:+-module}"
 if [ "$PLAT" = "EOSM.202" ] && [ -z "$TAG" ]; then OUT="$HERE/out/fork"; else OUT="$HERE/out/fork-$PLAT$TAG"; fi
 LOG="${LOG:-$HOME/ml/build_fork_$PLAT$TAG.log}"
 
+# What the build needs besides the compiler, checked here rather than found
+# missing after the long make:
+#   rst2html (docutils)  the modules' help text (ML's modules/readme2modulestrings.py)
+#   distutils            imported by that script: from Python 3.12 only setuptools has it
+#   numpy                the films' colour tables (films/lut.py)
+#   segno                the donation QR codes (filmos/tools/genqr.py)
+#   unzip                the card files out of ML's zip
+# setup_wsl.sh installs them with apt: Ubuntu's own python3 has no pip, and pip
+# won't install into it (PEP 668). In a venv, or the Python CI sets up, pip does.
+APT=""
+PIP=""
+need() { APT="$APT $1"; PIP="$PIP${2:+ $2}"; }
+command -v rst2html > /dev/null || command -v rst2html5 > /dev/null || command -v rst2html.py > /dev/null \
+    || command -v rst2html5.py > /dev/null || need python3-docutils docutils
+python3 -c "from distutils.spawn import find_executable" 2> /dev/null || need python3-setuptools setuptools
+python3 -c "import numpy" 2> /dev/null || need python3-numpy numpy
+python3 -c "import segno" 2> /dev/null || need python3-segno segno
+command -v unzip > /dev/null || need unzip
+if [ -n "$APT" ]; then
+    echo "the build needs:$APT"
+    echo "  on Ubuntu / WSL: sudo apt-get install$APT   (setup_wsl.sh installs them all)"
+    if [ -n "$PIP" ]; then echo "  in a venv:       python3 -m pip install$PIP"; fi
+    exit 1
+fi
+
 cp "$HERE"/fork/src/filmroll.{c,h} "$HERE"/fork/src/filmhook.c "$HERE"/filmos/fos*.{c,h} "$SRC/src/"
 sed -i 's/\r$//' "$SRC"/src/filmroll.{c,h} "$SRC"/src/filmhook.c "$SRC"/src/fos*.{c,h}
 # M-Film's version, one for the camera and the program (VERSION at the top of the repository)
@@ -143,8 +168,7 @@ mkdir -p "$OUT/ML/data"
 F="$HERE/filmos"
 python3 "$F/tools/genfilms.py" "$OUT/ML/data/FOSFILMS.BIN"
 
-# the donation links in donate.txt as QR codes (needs segno: pip install segno)
-python3 -c "import segno" 2>/dev/null || pip install -q segno
+# the donation links in donate.txt as QR codes
 python3 "$F/tools/genqr.py" "$HERE/donate.txt" "$OUT/ML/data/FOSQR.BIN"
 
 # every film's colour table, so the darkroom never spends its first
@@ -170,12 +194,16 @@ if [ -n "$NODARK" ]; then
     rm -rf "$OUT/ML/DARKROOM"
     python3 "$F/tools/genfilms.py" "$OUT/ML/data/FOSFILMS.BIN"
     echo "== card files in $OUT (no darkroom) =="
-    (cd "$OUT" && find . -maxdepth 3 | sort | head -60)
-    exit 0
+else
+    echo "== card files in $OUT =="
 fi
-echo "== card files in $OUT =="
 (cd "$OUT" && find . -maxdepth 3 | sort | head -60)
 
-# keep the fork's source changes next to the project
-(cd "$SRC" && git add -A src/filmroll.c src/filmroll.h src/filmhook.c src/fos*.c $(ls src/fos*.h | grep -v fos_version.h) && git diff ed3e7c0df -- src platform > "$HERE/fork/film-mode.patch")
-echo "patch: $HERE/fork/film-mode.patch"
+# The fork's changes to ML as this build made them, to read: the sources in
+# filmos/ and fork/src/ with apply_fork.py are what builds it. Only this
+# camera's platform files are in it (an ML checkout keeps the ones earlier
+# builds applied for other cameras).
+PATCH="$HERE/out/film-mode-$PLAT$TAG.patch"
+(cd "$SRC" && git add -A src/filmroll.c src/filmroll.h src/filmhook.c src/fos*.c $(ls src/fos*.h | grep -v fos_version.h) \
+    && git diff ed3e7c0df -- src "platform/$PLAT" modules/Makefile > "$PATCH")
+echo "patch: $PATCH"
