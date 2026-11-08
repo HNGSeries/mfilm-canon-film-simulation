@@ -7,7 +7,21 @@
 #include <sys/stat.h>
 #include "../fos.h"
 
-void *fos_port_open(const char *path, int write) { return fopen(path, write ? "wb" : "rb"); }
+/* a long folder name: more than 8.3 takes, or a space */
+static int long_name(const char *name, int len)
+{
+    return len > 8 || memchr(name, ' ', len) != 0;
+}
+
+void *fos_port_open(const char *path, int write)
+{
+    /* FOS_LONG_DIRS_EMPTY: a card where a long-named folder is made, but no
+     * file can be written into it (a 550D's exFAT card, #65) */
+    const char *base = strrchr(path, '/'), *dir = base;
+    while (dir && dir > path && dir[-1] != '/') dir--;
+    if (write && base && dir && getenv("FOS_LONG_DIRS_EMPTY") && long_name(dir, (int) (base - dir))) return 0;
+    return fopen(path, write ? "wb" : "rb");
+}
 int  fos_port_read(void *f, void *buf, int size) { return (int) fread(buf, 1, size, f); }
 int  fos_port_write(void *f, const void *buf, int size) { return (int) fwrite(buf, 1, size, f); }
 int  fos_port_seek(void *f, int offset) { return fseek(f, offset, SEEK_SET); }
@@ -48,6 +62,15 @@ int fos_port_mkdir(const char *path)
     /* FOS_SHORT_NAMES: a card that takes 8.3 names only */
     const char *name = strrchr(path, '/');
     name = name ? name + 1 : path;
-    if (getenv("FOS_SHORT_NAMES") && (strlen(name) > 8 || strchr(name, ' '))) return -1;
+    if (getenv("FOS_SHORT_NAMES") && long_name(name, (int) strlen(name))) return -1;
     return mkdir(path, 0777);
+}
+
+int fos_port_remove(const char *path)
+{
+    struct stat st;
+    if (stat(path, &st)) return 0;
+    /* FOS_NO_RMDIR: a camera whose firmware removes files but not folders */
+    if (S_ISDIR(st.st_mode) && getenv("FOS_NO_RMDIR")) return -1;
+    return remove(path) ? -1 : 0;
 }

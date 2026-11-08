@@ -1062,6 +1062,18 @@ int fos_port_mkdir(const char *path)
     return is_dir(path) ? 0 : -1;
 }
 
+/* Canon's FIO_RemoveFile, for a file or an empty folder. Whether it takes a
+ * folder on every camera isn't known, so what counts is that the path is
+ * gone afterwards, as a folder and as a file. */
+int fos_port_remove(const char *path)
+{
+    FIO_RemoveFile(path);
+    if (is_dir(path)) return -1;
+    FILE *f = FIO_OpenFile(path, O_RDONLY | O_SYNC);
+    if (f) FIO_CloseFile(f);
+    return f ? -1 : 0;
+}
+
 void *fos_port_alloc(int size)
 {
     void *p = tmp_malloc(size);

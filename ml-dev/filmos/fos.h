@@ -166,6 +166,9 @@ const char *fos_port_card();                                /* the card's root, 
 /* every entry of a directory, until fn returns 0; < 0 if it can't be read */
 int  fos_port_list(const char *dir, int (*fn)(void *ctx, const char *name, int is_dir), void *ctx);
 int  fos_port_mkdir(const char *path);                      /* 0 on success or if it exists */
+/* a file, or an empty folder (never called on one with anything in it);
+ * 0 once it isn't there, removed or never there */
+int  fos_port_remove(const char *path);
 
 void fos_port_roll(struct fos_roll *r);
 int  fos_port_get(int setting);

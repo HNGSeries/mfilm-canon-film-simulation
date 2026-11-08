@@ -42,45 +42,86 @@ static int tagged(const char *dir, int roll)
     return f != 0;
 }
 
+/* a file, or an empty folder; 1 if it's still there */
+static int remove_logged(const char *path)
+{
+    if (!fos_port_remove(path)) return 0;
+    char msg[200];
+    snprintf(msg, sizeof(msg), "lab: can't remove %s", path);
+    fos_port_log(msg);
+    return 1;
+}
+
 static int make_tagged(const char *dir, int roll, int film)
 {
     if (fos_port_mkdir(dir) < 0) return 0;
     char path[128], text[96];
     snprintf(path, sizeof(path), "%s/ROLL%03d.TXT", dir, roll);
     void *f = fos_port_open(path, 1);
-    if (!f) return 0;
+    if (!f)
+    {
+        /* the folder was made, but nothing can be written into it (a long
+         * name on a 550D's exFAT card, #65): it goes again, still empty */
+        remove_logged(dir);
+        return 0;
+    }
     int n = snprintf(text, sizeof(text), "roll = %03d\nfilm = %s\n", roll, fos_films[film].key);
     fos_port_write(f, text, n);
     fos_port_close(f);
     return 1;
 }
 
+/* The day's names for the folder, in the order they are tried: k 0..8 are
+ * "Sep0906 Portra400", "Sep0906 Portra400 2" .. " 9" (another roll that
+ * day), k 9.. are SEP0906, SEP0906B .. SEP0906Z where the card takes no
+ * long names */
+#define DAY_LONG 9
+#define DAY_NAMES (DAY_LONG + 26)
+static void day_dir(char *buf, int size, int k, int m, int d, const char *film_name)
+{
+    static const char months[12][4] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    int short_name = k >= DAY_LONG;
+    char mon[4], suffix[3] = { 0, 0, 0 };
+    memcpy(mon, months[m - 1], 4);
+    if (short_name)
+    {
+        mon[1] -= 32;
+        mon[2] -= 32;
+        if (k > DAY_LONG) suffix[0] = (char) ('A' + k - DAY_LONG);
+    }
+    else if (k)
+    {
+        suffix[0] = ' ';
+        suffix[1] = (char) ('1' + k);
+    }
+    snprintf(buf, size, "%sDCIM/%s%02d%02d%s%s%s", fos_port_card(), mon, m, d, short_name ? "" : " ",
+             short_name ? "" : film_name, suffix);
+}
+
 int fos_lab_dcim_dir(char *buf, int size, int roll, int film, const char *when)
 {
-    static const char *const months[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
     int m = when && strlen(when) >= 10 ? atoi(when + 5) : 0, d = m ? atoi(when + 8) : 0;
     if (m < 1 || m > 12 || d < 1 || d > 31) return -1;
     film = fos_clamp(film, 0, fos_nfilms - 1);
     const char *film_name = fos_films[film].shortname ? fos_films[film].shortname : fos_films[film].key;
-    /* "Sep0906 Portra400", "Sep0906 Portra400 2" for another roll that day */
-    for (int k = 1; k < 10; k++)
+    /* developed before: its folder, long or short (so a card without long
+     * names doesn't get the long one tried again each time) */
+    for (int k = 0; k < DAY_NAMES; k++)
     {
-        if (k == 1) snprintf(buf, size, "%sDCIM/%s%02d%02d %s", fos_port_card(), months[m - 1], m, d, film_name);
-        else snprintf(buf, size, "%sDCIM/%s%02d%02d %s %d", fos_port_card(), months[m - 1], m, d, film_name, k);
-        if (dir_exists(buf)) { if (tagged(buf, roll)) return 0; continue; }
-        if (make_tagged(buf, roll, film) && dir_exists(buf)) return 0;
-        break;                          /* no long names on this card */
+        day_dir(buf, size, k, m, d, film_name);
+        if (dir_exists(buf)) { if (tagged(buf, roll)) return 0; }
+        else if (k < DAY_LONG) k = DAY_LONG - 1;
+        else break;
     }
-    /* SEP0906, SEP0906B, ... */
-    char up[4] = { months[m - 1][0], (char) (months[m - 1][1] - 32), (char) (months[m - 1][2] - 32), 0 };
-    for (int k = 0; k < 26; k++)
+    /* else the first free name */
+    for (int k = 0; k < DAY_NAMES; k++)
     {
-        char suffix[2] = { (char) (k ? 'A' + k : 0), 0 };
-        snprintf(buf, size, "%sDCIM/%s%02d%02d%s", fos_port_card(), up, m, d, suffix);
-        if (dir_exists(buf)) { if (tagged(buf, roll)) return 0; continue; }
-        if (make_tagged(buf, roll, film)) return 0;
-        return -1;
+        day_dir(buf, size, k, m, d, film_name);
+        if (dir_exists(buf)) continue;
+        if (k >= DAY_LONG) return make_tagged(buf, roll, film) ? 0 : -1;
+        if (make_tagged(buf, roll, film) && dir_exists(buf)) return 0;
+        k = DAY_LONG - 1;               /* no long names on this card */
     }
     return -1;
 }
