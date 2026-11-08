@@ -1450,8 +1450,8 @@ static __attribute__((noinline)) int nearest(struct fos_dev *d, int cell)
 static int write_print(const char *path, int film, int frame, const char *when, const char *fstop,
                        const uint8_t pal[][3], int npal, const uint8_t *px, const uint8_t *thumb, int x0, int w)
 {
-    static uint8_t h[FOS_BMP_PIXELS];
-    memset(h, 0, sizeof(h));
+    uint8_t *h = fos_bmp_head;
+    memset(h, 0, FOS_BMP_PIXELS);
     h[0] = 'B'; h[1] = 'M';
     put32(h + 2, FOS_BMP_SIZE);
     put32(h + 10, FOS_BMP_PIXELS);

@@ -81,6 +81,11 @@ extern const uint8_t fos_fixed_rgb[FOS_FIXED_N][3];
 #define FOS_BMP_SIZE    (FOS_BMP_THUMB + FOS_THUMB_SIZE)
 
 /* in fos_print.c, which every build has (the shelf's samples are prints too) */
+/* a print's headers while it is read or written: one for the readers here and
+ * the darkroom's writer, which never use it at the same time (all on the film
+ * OS's task, each done with it before it returns), so the boot memory holds
+ * it once and not three times */
+extern uint8_t fos_bmp_head[FOS_BMP_PIXELS];
 int  fos_print_load(const char *path, struct fos_print *p);     /* allocates p->px; 0 on failure */
 void fos_print_free(struct fos_print *p);
 int  fos_print_thumb(const char *path, uint8_t *thumb);         /* FOS_THUMB_W x FOS_THUMB_H RGB */
