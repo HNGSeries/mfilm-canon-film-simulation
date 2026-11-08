@@ -89,6 +89,7 @@ static CONFIG_INT("filmroll.scr_sat",   scr_sat,          0);   /* -6..6 */
 static CONFIG_INT("filmroll.scr_warm",  scr_warm,         0);
 static CONFIG_INT("filmroll.scr_bright", scr_bright,      0);
 static CONFIG_INT("filmroll.scr_flip",  scr_flip,         0);   /* 0 Canon's hinge, 1 normal, 2 upside down, 3 mirrored */
+static CONFIG_INT("filmroll.expsim",    expsim_set,      -1);   /* LiveView's exposure simulation: 1 on, 0 off, -1 as Canon has it */
 
 /* roll state, kept across power cycles */
 static CONFIG_INT("filmroll.loaded",    roll_loaded,      0);
@@ -287,6 +288,67 @@ static void apply_film(int index)
     lens_set_wbs_gm(f->wbs_gm);
     lens_set_wbs_ba(f->wbs_ba);
     lens_set_rawiso(iso_to_raw(f->iso));
+}
+
+/* Exposure simulation (Viewfinder > Exposure simulation, #66). On, LiveView
+ * shows the exposure the frame will get: at a slow film's ISO (loading a roll
+ * sets it) and with a manual lens stopped down, too dark to focus. Off, Canon
+ * shows LiveView at a brightness you can focus by, whatever the exposure. It
+ * is Canon's own setting (PROP_LIVE_VIEW_VIEWTYPE), which Magic Lantern's
+ * ExpSim item sets; that menu is gone (see the top), so it is here. Until it
+ * is set here Canon's is left as it is; once it is, it goes back in when it
+ * changes, when LiveView starts and after a roll is loaded. The HUD's meter
+ * is Canon's reading of the exposure (get_ae_value), not of the picture on
+ * the screen; that Canon keeps metering with it off wants checking on a
+ * camera (the log has the reading each time it is set). Magic Lantern can't
+ * set it on the 600D and 1100D (no CONFIG_EXPSIM): there the item isn't shown. */
+static volatile int expsim_due = 0;     /* set it at the next chance */
+
+static int expsim_get()
+{
+#ifdef CONFIG_EXPSIM
+    return expsim_set >= 0 ? expsim_set : get_expsim() != 0;
+#else
+    return -1;
+#endif
+}
+
+/* called from the main loop */
+static void expsim_step()
+{
+#ifdef CONFIG_EXPSIM
+    static int was_lv = 0, tries = 0, wait_until = 0;
+    int now = get_ms_clock();
+    if (lv && !was_lv)
+    {
+        expsim_due = 1;
+        wait_until = now + 1000;        /* LiveView started: once it has settled */
+    }
+    was_lv = lv;
+    if (!expsim_due) return;
+    if (expsim_set < 0)
+    {
+        expsim_due = 0;
+        return;
+    }
+    /* photo LiveView only (the 5D Mark II's movie display is its own), between pictures */
+    if (!lv || is_movie_mode() || !job_state_ready_to_take_pic() || now - wait_until < 0)
+        return;
+    int want = expsim_set ? 1 : 0;
+    if (get_expsim() != want && tries < 5)
+    {
+        tries++;
+        set_expsim(want);
+        dbg("expsim: %s, Canon's now %d (try %d), meter %d", want ? "on" : "off", get_expsim(), tries, get_ae_value());
+        if (get_expsim() != want)
+        {
+            wait_until = get_ms_clock() + 1000;
+            return;
+        }
+    }
+    expsim_due = 0;
+    tries = 0;
+#endif
 }
 
 /* each frame is saved with a full-size RAW (RAW, or RAW+JPEG), so the
@@ -644,6 +706,7 @@ static void ui_task(int open)
     if (ui_after & AFTER_APPLY)
     {
         apply_film(roll_film);
+        expsim_due = 1;
         beep();
         film_capture_check();
     }
@@ -1107,6 +1170,7 @@ static int *setting_var(int s)
         case FS_SCR_WARM:   return &scr_warm;
         case FS_SCR_BRIGHT: return &scr_bright;
         case FS_SCR_FLIP:   return &scr_flip;
+        case FS_EXPSIM:     return &expsim_set;
     }
     return 0;
 }
@@ -1116,6 +1180,7 @@ int fos_port_get(int s)
     int *v = setting_var(s);
     if (s == FS_FSTOP) return current_fstop();
     if (s == FS_SCR_FLIP && !CAN_FLIP) return -1;
+    if (s == FS_EXPSIM) return expsim_get();
     return v ? *v : 0;
 }
 
@@ -1125,6 +1190,7 @@ void fos_port_set(int s, int value)
     if (v) *v = value;
     hud_dirty = 1;
     if (s == FS_SCR_FLIP) flip_step(1);
+    if (s == FS_EXPSIM) expsim_due = 1;
     /* screen colour: the whole film OS changes at once */
     if (s == FS_SCR_STD || s == FS_SCR_SAT || s == FS_SCR_WARM || s == FS_SCR_BRIGHT)
     {
@@ -1929,6 +1995,7 @@ static void filmroll_task()
         {
             hud_step();                     /* every 100 ms */
             flip_step(0);
+            expsim_step();
         }
 #if !FOS_LV_ONLY
         else if (plate_overdrawn())

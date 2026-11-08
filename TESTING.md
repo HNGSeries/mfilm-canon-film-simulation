@@ -69,6 +69,8 @@ Go through these and note what happens (a photo of the screen helps a lot):
 - [ ] **Trash** opens Home; **PLAY** opens the prints instead of Canon's playback.
 - [ ] Load a roll and shoot a few frames **through the viewfinder**, and a few in **LiveView**.
       Does the frame count go up? Is the HUD drawn in LiveView?
+- [ ] With a manual (adapted) lens, turn off *Viewfinder → Exposure simulation*. Is LiveView bright enough
+      to focus? Does the HUD's meter needle still move when you half-press?
 - [ ] Rewind the roll and **develop it in the camera** (Darkroom). Do prints come out? How long per frame?
 - [ ] Open the card in **Darkrooms** on a computer: are the rolls and films there?
 

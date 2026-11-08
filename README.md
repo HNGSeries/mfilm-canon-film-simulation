@@ -62,6 +62,11 @@ the roll, then develop it and see what you got.
 
 Every RAW is kept, so nothing is lost: you can develop the same roll again with another film later.
 
+**Focusing a manual lens.** Loading a roll sets the camera to the film's ISO, and LiveView shows the exposure
+the frame will get: with a slow film, or an adapted lens stopped down, it can be too dark to focus. Turn off
+*Settings → Viewfinder → Exposure simulation* and LiveView stays bright enough to focus, whatever the exposure.
+(Not on the 600D and 1100D: Magic Lantern can't set it there.)
+
 ### How big the prints are
 
 The camera's darkroom makes small prints, sized for the camera's screen, so it can develop a frame in the

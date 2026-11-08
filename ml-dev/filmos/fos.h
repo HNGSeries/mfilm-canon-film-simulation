@@ -110,6 +110,8 @@ enum
     FS_SCR_SAT, FS_SCR_WARM, FS_SCR_BRIGHT,     /* -FOS_SCR_STEPS..FOS_SCR_STEPS */
     FS_SCR_FLIP,        /* swivel screens: 0 as Canon's hinge says, 1 normal, 2 upside down, 3 mirrored;
                            the port answers -1 on a camera that can't, and the item isn't shown */
+    FS_EXPSIM,          /* LiveView's exposure simulation: 1 on (the exposure the frame gets), 0 off (bright
+                           enough to focus a manual lens); -1 where Magic Lantern can't set it: not shown */
     FS_COUNT
 };
 #define FOS_SCR_STEPS 6

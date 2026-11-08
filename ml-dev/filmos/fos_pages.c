@@ -311,6 +311,8 @@ static const struct item finder_items[] =
     { "LEDs on half-press", IT_TOGGLE, FS_LEDS, 0, 0, "Like a real SLR: the readout lights only while metering." },
     { "Focusing screen", IT_TOGGLE, FS_FOCUS, 0, 0, "A split-image circle and microprism collar (decoration only)." },
     { "Wind lever", IT_CHOICE, FS_WIND, wind_choices, 3, "After each frame press SET to wind on. Locking is experimental." },
+    /* the last row: pages_fit leaves it out where the camera can't */
+    { "Exposure simulation", IT_TOGGLE, FS_EXPSIM, 0, 0, "On: LiveView shows the exposure you'll get. Off: bright, to focus a manual lens." },
 };
 
 static const struct item lens_items[] =
@@ -351,18 +353,19 @@ static const struct item screen_items[] =
 
 static struct { const char *title; const char *sub; const struct item *items; int n; } pages[] =
 {
-    { "Viewfinder", "What you see in LiveView while you shoot", finder_items, 4 },
-    { "Lens", "Aperture for manual lenses", lens_items, 4 },
+    { "Viewfinder", "What you see in LiveView while you shoot", finder_items, NITEMS(finder_items) },
+    { "Lens", "Aperture for manual lenses", lens_items, NITEMS(lens_items) },
     { "System", "Film mode, screen colour, start up and the Canon menu", system_items, NITEMS(system_items) },
-    { "Screen colour", "Live: the whole film OS changes as you go", screen_items, 5 },
+    { "Screen colour", "Live: the whole film OS changes as you go", screen_items, NITEMS(screen_items) },
 };
 
 static int page, page_sel, page_top;
 #define P_KNOBS   12            /* one per row: more rows than any page has */
 static struct spring page_hl, page_scroll, knob[P_KNOBS];
 
-/* The System page without what this camera can't do (the port answers -1
- * for it: screen orientation on a fixed screen), worked out once. */
+/* The pages without what this camera can't do (the port answers -1 for it:
+ * screen orientation on a fixed screen, exposure simulation where Magic
+ * Lantern can't set it), worked out once. */
 static struct item system_here[NITEMS(system_items)];
 
 static void pages_fit()
@@ -379,6 +382,8 @@ static void pages_fit()
     }
     pages[PAGE_SYSTEM].items = system_here;
     pages[PAGE_SYSTEM].n = n;
+    /* the Viewfinder page's last row: no copy needed (memory at boot) */
+    if (fos_port_get(FS_EXPSIM) < 0) pages[0].n--;
 }
 static int help_fade;           /* ms since the selection changed */
 
@@ -599,6 +604,11 @@ static void preview_finder()
         fos_convex(cv, q, 3, FC(RAMP_GRAY, 12), OPAQUE);
     }
     fos_fill(cv, sx, horizon + 8, sw, sy + sh - horizon - 8, FC(RAMP_GRAY, 12));
+    /* exposure simulation (the last row, where there is one) off: Canon
+     * brightens LiveView, whatever the exposure */
+    int es = pages[0].n - 1;
+    if (pages[0].items[es].setting == FS_EXPSIM && knob[es].x < 0.99f)
+        fos_blend(cv, sx, sy, sw, sh, FC(RAMP_GRAY, 255), (int) ((1 - knob[es].x) * 72));
 
     float hud = knob[0].x, leds_half = knob[1].x, focus = knob[2].x;
     int wind = fos_port_get(FS_WIND);
