@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M-Film · Your Canon, shot like film</title>
+<meta name="description" content="A film camera's interface for Canon cameras that run Magic Lantern. Load a roll from 72 film stocks, shoot without looking, then develop. Try it here, on a camera in your browser.">
+<meta property="og:title" content="M-Film · Your Canon, shot like film">
+<meta property="og:description" content="Try the film camera in your browser: load a roll, shoot it, develop it.">
+<meta property="og:image" content="https://mfilm.app/img/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="img/mfilm.png">
+<link rel="preload" href="fos/mfilm.wasm" as="fetch" crossorigin>
+<link rel="stylesheet" href="css/site.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="#"><img src="img/mfilm.png" alt="" width="28" height="28"> M·FILM</a>
+  <nav>
+    <a href="#films" data-i18n="nav.films">Films</a>
+    <a href="#cameras" data-i18n="nav.cameras">Cameras</a>
+    <a href="#darkrooms">Darkrooms</a>
+    <button class="lang" type="button" aria-label="ภาษาไทย / English">TH</button>
+    <a class="btn small" href="https://github.com/HNGSeries/mfilm-canon-film-simulation/releases/latest" data-i18n="nav.download">Download</a>
+  </nav>
+</header>
+
+<main>
+<section class="hero">
+  <div class="hero-text">
+    <h1 data-i18n="hero.title">Your Canon,<br>shot like film.</h1>
+    <p class="lede" data-i18n="hero.lede">This is M-Film running on an EOS M, in your browser: the same menus, drawn by the same code as on the camera. Load a roll, shoot it, then develop it.</p>
+  </div>
+
+  <div class="stage">
+    <div class="picker" role="tablist" aria-label="Camera">
+      <button class="chip on" role="tab" aria-selected="true">EOS M</button>
+      <button class="chip soon" role="tab" aria-selected="false" disabled title="Coming soon">6D</button>
+      <button class="chip soon" role="tab" aria-selected="false" disabled title="Coming soon">60D</button>
+      <button class="chip soon" role="tab" aria-selected="false" disabled title="Coming soon">550D</button>
+      <button class="chip soon" role="tab" aria-selected="false" disabled title="Coming soon">5D Mark III</button>
+      <span class="chip-note" data-i18n="picker.more">more soon</span>
+    </div>
+
+    <!-- The EOS M from the back. The body is drawn (img/eosm-back.svg); each
+         control is a button placed over it in % of the body, so a photo can
+         take the drawing's place without moving them. -->
+    <div class="cam" id="cam" data-model="eosm">
+      <img class="body" src="img/eosm-back.svg" alt="Canon EOS M, from the back" draggable="false">
+
+      <button class="ctl shutter" data-ctl="shutter" aria-label="Shutter button (hold to half-press)"><span></span></button>
+      <button class="ctl power" data-ctl="power" aria-label="Power"></button>
+
+      <div class="screen" aria-label="The camera's screen">
+        <canvas class="lv" width="720" height="480"></canvas>
+        <canvas class="fos" width="720" height="480"></canvas>
+        <div class="blackout"></div>
+        <div class="loading"><span data-i18n="cam.loading">Loading the film OS…</span></div>
+      </div>
+
+      <button class="ctl rec" data-key="" data-ctl="rec" aria-label="Movie button (unused)"></button>
+      <button class="ctl round info" data-key="INFO" aria-label="INFO">INFO</button>
+      <div class="dial" aria-label="Quick Control Dial: turn it, or press its edges" role="group">
+        <div class="dial-ring"></div>
+        <button class="ctl dpad up"    data-key="UP"    aria-label="Up"></button>
+        <button class="ctl dpad right" data-key="RIGHT" aria-label="Right"></button>
+        <button class="ctl dpad down"  data-key="DOWN"  aria-label="Down"></button>
+        <button class="ctl dpad left"  data-key="LEFT"  aria-label="Left"></button>
+        <button class="ctl set" data-key="SET" aria-label="SET">SET</button>
+      </div>
+      <button class="ctl round play" data-key="PLAY" aria-label="Playback">▶</button>
+      <button class="ctl round menu" data-key="MENU" aria-label="MENU">MENU</button>
+      <button class="ctl round trash" data-key="HOME" aria-label="Delete (opens M-Film home)">⌫</button>
+    </div>
+
+    <div class="cam-under">
+      <div class="status" aria-live="polite"><span class="dot"></span><span class="status-text" data-i18n="st.boot">Starting…</span></div>
+      <div class="wheel-hint">
+        <button class="mini" data-key="WHEEL_L" aria-label="Turn the dial left">⟲</button>
+        <span data-i18n="cam.dial">dial</span>
+        <button class="mini" data-key="WHEEL_R" aria-label="Turn the dial right">⟳</button>
+      </div>
+    </div>
+  </div>
+
+  <aside class="guide">
+    <ol class="steps">
+      <li data-step="load"><b data-i18n="g.load.t">Load a roll</b><span data-i18n="g.load.d">Turn the dial (or ← →) along the shelf, SET to load. 12 frames is quickest.</span></li>
+      <li data-step="shoot"><b data-i18n="g.shoot.t">Shoot the roll</b><span data-i18n="g.shoot.d">Press the shutter on top (or Space). No picture comes up: that's the point.</span></li>
+      <li data-step="develop"><b data-i18n="g.develop.t">Develop it</b><span data-i18n="g.develop.d">When the roll is finished the camera asks. Develop it, and watch the darkroom work.</span></li>
+      <li data-step="prints"><b data-i18n="g.prints.t">See the prints</b><span data-i18n="g.prints.d">PLAY shows the contact sheet and every print.</span></li>
+    </ol>
+    <details class="keys">
+      <summary data-i18n="g.keys">Keyboard</summary>
+      <dl>
+        <dt>Space</dt><dd data-i18n="k.shutter">shutter (hold: half-press)</dd>
+        <dt>← → ↑ ↓</dt><dd data-i18n="k.dial">dial presses</dd>
+        <dt>[ ]</dt><dd data-i18n="k.wheel">turn the dial</dd>
+        <dt>Enter</dt><dd>SET</dd>
+        <dt>M · I · P</dt><dd>MENU · INFO · PLAY</dd>
+        <dt>⌫</dt><dd data-i18n="k.home">delete: M-Film home</dd>
+      </dl>
+    </details>
+    <a class="btn" href="https://github.com/HNGSeries/mfilm-canon-film-simulation/releases/latest" data-i18n="cta.free">Download free for your Canon</a>
+  </aside>
+</section>
+
+<section id="films" class="band">
+  <h2 data-i18n="films.t">72 films, on four shelves</h2>
+  <p data-i18n="films.d">Colour negative, slide, black and white, and cinema film. Each has its own colour, grain, halation and softness.</p>
+  <div class="strip">
+    <figure><img src="img/samples/portra400.jpg" alt="" loading="lazy"><figcaption>Portra 400</figcaption></figure>
+    <figure><img src="img/samples/gold200.jpg" alt="" loading="lazy"><figcaption>Gold 200</figcaption></figure>
+    <figure><img src="img/samples/trix400.jpg" alt="" loading="lazy"><figcaption>Tri-X 400</figcaption></figure>
+    <figure><img src="img/samples/velvia50.jpg" alt="" loading="lazy"><figcaption>Velvia 50</figcaption></figure>
+    <figure><img src="img/samples/cinestill800t.jpg" alt="" loading="lazy"><figcaption>CineStill 800T</figcaption></figure>
+    <figure><img src="img/samples/kodachrome64.jpg" alt="" loading="lazy"><figcaption>Kodachrome 64</figcaption></figure>
+  </div>
+</section>
+
+<section id="cameras" class="band">
+  <h2 data-i18n="cams.t">For Canon cameras that run Magic Lantern</h2>
+  <p data-i18n="cams.d">Works on the EOS M, 6D, 60D, 50D, 500D, 550D, 100D and 650D; the 700D, 70D, 5D Mark III, 5D Mark II and 1100D are being tested. The camera side is free and open source (GPL-2.0).</p>
+  <a class="link" href="https://github.com/HNGSeries/mfilm-canon-film-simulation#cameras" data-i18n="cams.link">Every camera and how far it got →</a>
+</section>
+
+<section id="darkrooms" class="band darkrooms">
+  <div>
+    <h2 data-i18n="dr.t">Develop on your computer: Darkrooms</h2>
+    <p data-i18n="dr.d">The camera develops its rolls by itself, slowly. Darkrooms does it on your computer, fast: plug the camera in, and every roll is there.</p>
+  </div>
+  <div class="prices">
+    <div class="price"><b data-i18n="p.free">Free</b><span data-i18n="p.free.d">one roll a day, up to 36 frames</span></div>
+    <div class="price"><b>US$2.99</b><span data-i18n="p.month">a month</span></div>
+    <div class="price best"><b>US$14.99</b><span data-i18n="p.once">once, for good</span></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <span>M-Film · GPL-2.0 · <a href="https://github.com/HNGSeries/mfilm-canon-film-simulation">GitHub</a></span>
+  <span data-i18n="foot.ml">Built on <a href="https://www.magiclantern.fm/">Magic Lantern</a>. Not affiliated with Canon.</span>
+</footer>
+</body>
+</html>

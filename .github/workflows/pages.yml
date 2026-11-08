@@ -1,0 +1,51 @@
+name: mfilm.app
+
+# The website (site/) on GitHub Pages, with the film OS built for the browser:
+# the same screens as the camera, compiled to WebAssembly (ml-dev/filmos/web).
+# Settings > Pages > Source must be "GitHub Actions"; the domain is site/CNAME.
+on:
+  push:
+    branches: ["main"]
+    paths: ["site/**", "ml-dev/filmos/**", "ml-dev/films/**", "VERSION", ".github/workflows/pages.yml"]
+  pull_request:
+    paths: ["site/**", "ml-dev/filmos/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Toolchain (clang for WebAssembly, WASI libc, Binaryen)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang lld wasi-libc libclang-rt-18-dev-wasm32 binaryen
+          python -m pip install -q numpy scipy pillow
+      - name: Build the film OS for the browser
+        run: bash ml-dev/filmos/web/build.sh site/fos
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

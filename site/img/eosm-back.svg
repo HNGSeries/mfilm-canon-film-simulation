@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 740">
+  <!-- An EOS M-shaped body from the back, unbranded. The controls are page
+       buttons over it (css/site.css, .cam): only their wells are drawn here. -->
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a3836"/>
+      <stop offset=".08" stop-color="#2b2a29"/>
+      <stop offset=".9" stop-color="#1d1c1b"/>
+      <stop offset="1" stop-color="#121211"/>
+    </linearGradient>
+    <linearGradient id="top" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a5754"/>
+      <stop offset="1" stop-color="#2a2928"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c0c0d"/>
+      <stop offset="1" stop-color="#050506"/>
+    </linearGradient>
+    <radialGradient id="well" cx=".5" cy=".45" r=".6">
+      <stop offset=".75" stop-color="#121111"/>
+      <stop offset="1" stop-color="#3b3937"/>
+    </radialGradient>
+    <filter id="grain" x="0" y="0" width="1" height="1">
+      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="4"/>
+      <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+  </defs>
+
+  <!-- top plate: power button, the mode switch around the shutter button -->
+  <rect x="730" y="44" width="62" height="24" rx="8" fill="url(#top)"/>
+  <ellipse cx="900" cy="62" rx="92" ry="16" fill="#2a2928"/>
+  <rect x="808" y="40" width="184" height="28" rx="12" fill="url(#top)"/>
+  <rect x="868" y="30" width="64" height="20" rx="9" fill="#77736e"/>
+
+  <!-- the body -->
+  <rect x="7" y="60" width="1086" height="665" rx="58" fill="url(#body)"/>
+  <rect x="7" y="60" width="1086" height="665" rx="58" fill="#fff" filter="url(#grain)"/>
+  <rect x="9" y="62" width="1082" height="661" rx="56" fill="none" stroke="#4d4a47" stroke-width="2" opacity=".6"/>
+  <path d="M60 72 H1040" stroke="#6b6763" stroke-width="2" opacity=".5"/>
+
+  <!-- strap lugs -->
+  <rect x="0" y="128" width="14" height="44" rx="6" fill="#55524f"/>
+  <rect x="1086" y="128" width="14" height="44" rx="6" fill="#55524f"/>
+
+  <!-- the screen: bezel and glass (the page's canvas sits in the glass) -->
+  <rect x="44" y="124" width="712" height="485" rx="18" fill="#0a0a0a" stroke="#3f3c39" stroke-width="2"/>
+  <rect x="60" y="140" width="680" height="453" rx="2" fill="url(#glass)"/>
+
+  <!-- the speaker and the grip texture to the right -->
+  <g fill="#0e0e0e" opacity=".9">
+    <circle cx="1030" cy="680" r="3"/><circle cx="1044" cy="680" r="3"/><circle cx="1058" cy="680" r="3"/>
+    <circle cx="1030" cy="694" r="3"/><circle cx="1044" cy="694" r="3"/><circle cx="1058" cy="694" r="3"/>
+  </g>
+
+  <!-- wells for the controls -->
+  <circle cx="990" cy="150" r="30" fill="url(#well)"/>
+  <circle cx="830" cy="190" r="34" fill="url(#well)"/>
+  <circle cx="915" cy="400" r="132" fill="url(#well)"/>
+  <circle cx="830" cy="600" r="34" fill="url(#well)"/>
+  <circle cx="1000" cy="600" r="34" fill="url(#well)"/>
+  <circle cx="1000" cy="250" r="30" fill="url(#well)"/>
+
+  <!-- the access lamp -->
+  <circle cx="915" cy="210" r="5" fill="#2c1a0e" stroke="#4a3a2a"/>
+</svg>
