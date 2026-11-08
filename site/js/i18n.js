@@ -6,6 +6,21 @@ const STR = {
     'hero.title': 'Your Canon,<br>shot like film.',
     'hero.lede': 'This is M-Film running on an EOS M, in your browser: the same menus, drawn by the same code as on the camera. Load a roll, shoot it, then develop it.',
     'picker.more': 'more soon',
+    'picker.label': 'Camera', 'picker.soon': 'Coming to the browser',
+    'get.t': 'Put it on your camera',
+    'get.d': 'One zip for your camera: unzip it onto the card, and the camera starts with M-Film. Pay what you want for it, from nothing at all.',
+    'dl.t': 'Download M-Film', 'dl.camera': 'Your camera', 'dl.price': 'Name your price',
+    'dl.free': '$0 is fine: M-Film is free and open source. Whatever you give keeps it going.',
+    'dl.pay': (v) => `Pay $${v} and download`, 'dl.freeGo': 'Download free', 'dl.wait': 'Opening Stripe…',
+    'dl.secure': 'Payment by Stripe. The download starts when you come back.',
+    'dl.all': 'All files and release notes',
+    'dl.err': (url) => `Stripe can't be reached right now. <a href="${url}">Download free instead</a>, or try again in a minute.`,
+    'dl.issues': 'known problems', 'dl.testing': 'needs testers',
+    'dl.note.issues': 'Works with a known problem on this camera: the README says which.',
+    'dl.note.testing': 'Not tried on this camera yet: be the first, and tell us how it goes.',
+    'dl.thanks.t': 'Thank you!', 'dl.thanks.d': 'Your download has started. If it hasn\'t, use the button.',
+    'dl.again': 'Download again',
+    'dl.next': 'Unzip it onto the card and turn the camera on. The README in the zip has the rest.',
     'cam.loading': 'Loading the film OS…', 'cam.dial': 'dial',
     'g.load.t': 'Load a roll', 'g.load.d': 'Turn the dial (or ← →) along the shelf, SET to load. 12 frames is quickest.',
     'g.shoot.t': 'Shoot the roll', 'g.shoot.d': 'Press the shutter on top (or Space). No picture comes up: that\'s the point.',
@@ -13,7 +28,7 @@ const STR = {
     'g.prints.t': 'See the prints', 'g.prints.d': 'PLAY shows the contact sheet and every print.',
     'g.keys': 'Keyboard',
     'k.shutter': 'shutter (hold: half-press)', 'k.dial': 'dial presses', 'k.wheel': 'turn the dial', 'k.home': 'delete: M-Film home',
-    'cta.free': 'Download free for your Canon',
+    'cta.free': 'Download for your Canon',
     'films.t': '72 films, on four shelves',
     'films.d': 'Colour negative, slide, black and white, and cinema film. Each has its own colour, grain, halation and softness.',
     'cams.t': 'For Canon cameras that run Magic Lantern',
@@ -39,6 +54,21 @@ const STR = {
     'hero.title': 'เปลี่ยน Canon ของคุณ<br>ให้ถ่ายเหมือนกล้องฟิล์ม',
     'hero.lede': 'นี่คือ M-Film ที่รันบน EOS M ในเบราว์เซอร์ของคุณ เมนูเดียวกัน วาดด้วยโค้ดชุดเดียวกับในกล้องจริง ลองใส่ฟิล์ม ถ่ายให้หมดม้วน แล้วล้างฟิล์มดู',
     'picker.more': 'รุ่นอื่นเร็วๆ นี้',
+    'picker.label': 'กล้อง', 'picker.soon': 'เร็วๆ นี้บนเว็บ',
+    'get.t': 'ลงในกล้องของคุณ',
+    'get.d': 'zip ไฟล์เดียวต่อรุ่น แตกไฟล์ลงการ์ด เปิดกล้องก็เข้า M-Film เลย จ่ายเท่าไหร่ก็ได้ตามใจ ตั้งแต่ $0',
+    'dl.t': 'ดาวน์โหลด M-Film', 'dl.camera': 'กล้องของคุณ', 'dl.price': 'ตั้งราคาเอง',
+    'dl.free': '$0 ก็ได้ M-Film ฟรีและเปิดซอร์ส ทุกดอลลาร์ที่ให้ช่วยให้พัฒนาต่อได้',
+    'dl.pay': (v) => `จ่าย $${v} แล้วดาวน์โหลด`, 'dl.freeGo': 'ดาวน์โหลดฟรี', 'dl.wait': 'กำลังเปิด Stripe…',
+    'dl.secure': 'ชำระเงินผ่าน Stripe จ่ายเสร็จกลับมาหน้านี้แล้วดาวน์โหลดจะเริ่มเอง',
+    'dl.all': 'ไฟล์ทั้งหมดและบันทึกการอัปเดต',
+    'dl.err': (url) => `ติดต่อ Stripe ไม่ได้ตอนนี้ <a href="${url}">ดาวน์โหลดฟรีไปก่อน</a> หรือลองใหม่อีกสักครู่`,
+    'dl.issues': 'มีปัญหาที่รู้แล้ว', 'dl.testing': 'รอคนทดสอบ',
+    'dl.note.issues': 'ใช้ได้แต่มีปัญหาที่รู้แล้วในรุ่นนี้ ดูรายละเอียดใน README',
+    'dl.note.testing': 'ยังไม่มีใครลองกับรุ่นนี้ ลองเป็นคนแรกแล้วบอกเราด้วย',
+    'dl.thanks.t': 'ขอบคุณครับ!', 'dl.thanks.d': 'ดาวน์โหลดเริ่มแล้ว ถ้ายังไม่เริ่ม กดปุ่มด้านล่าง',
+    'dl.again': 'ดาวน์โหลดอีกครั้ง',
+    'dl.next': 'แตกไฟล์ลงการ์ดแล้วเปิดกล้อง รายละเอียดที่เหลืออยู่ใน README ใน zip',
     'cam.loading': 'กำลังโหลด film OS…', 'cam.dial': 'แป้นหมุน',
     'g.load.t': 'ใส่ฟิล์ม', 'g.load.d': 'หมุนแป้น (หรือ ← →) ไปตามชั้นวาง กด SET เพื่อใส่ม้วน เลือก 12 รูปจะเร็วสุด',
     'g.shoot.t': 'ถ่ายให้หมดม้วน', 'g.shoot.d': 'กดชัตเตอร์ด้านบน (หรือ Space) ถ่ายแล้วไม่มีภาพขึ้นจอ เหมือนกล้องฟิล์ม',
@@ -46,7 +76,7 @@ const STR = {
     'g.prints.t': 'ดูรูปที่ล้างแล้ว', 'g.prints.d': 'กด PLAY เพื่อดู contact sheet และรูปทีละใบ',
     'g.keys': 'ปุ่มบนคีย์บอร์ด',
     'k.shutter': 'ชัตเตอร์ (กดค้าง: แตะครึ่งทาง)', 'k.dial': 'กดขอบแป้น', 'k.wheel': 'หมุนแป้น', 'k.home': 'ปุ่มลบ: หน้า Home ของ M-Film',
-    'cta.free': 'ดาวน์โหลดฟรีสำหรับกล้อง Canon ของคุณ',
+    'cta.free': 'ดาวน์โหลดสำหรับกล้อง Canon ของคุณ',
     'films.t': 'ฟิล์ม 72 แบบ บนชั้นวาง 4 ชั้น',
     'films.d': 'ฟิล์มสีเนกาทีฟ สไลด์ ขาวดำ และฟิล์มภาพยนตร์ แต่ละม้วนมีสี เกรน halation และความนุ่มของตัวเอง',
     'cams.t': 'สำหรับกล้อง Canon ที่ลง Magic Lantern ได้',
@@ -85,6 +115,7 @@ export function applyLang() {
     const v = STR[lang][el.dataset.i18n];
     if (typeof v === 'string') el.innerHTML = v;
   }
+  for (const el of document.querySelectorAll('[data-i18n-label]')) el.label = T(el.dataset.i18nLabel);
   const b = document.querySelector('.lang');
   if (b) b.textContent = lang === 'th' ? 'EN' : 'TH';
 }
@@ -93,4 +124,5 @@ export function toggleLang() {
   lang = lang === 'th' ? 'en' : 'th';
   try { localStorage.setItem('mfilm.lang', lang); } catch {}
   applyLang();
+  document.dispatchEvent(new Event('mfilm:lang'));
 }

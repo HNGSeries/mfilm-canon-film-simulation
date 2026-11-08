@@ -41,4 +41,7 @@ then open http://localhost:8000. Building needs clang, lld, `wasi-libc`,
 - `js/wasi.js` is the memory card: an in-memory file system behind the WASI
   calls of `mfilm.wasm` and `mkcr2.wasm`. Everything shot is lost on reload.
 - `js/liveview.js` is what the sensor sees, and the photo each frame is made from.
+- `js/download.js` is the download: camera, pay what you want (US$0–99). Over $0 it asks the Darkrooms
+  licence server (`/v1/donate`) for a Stripe Checkout page of that amount; Stripe comes back with `?thanks=1`.
+  Its camera list follows `ml-dev/cameras.txt`.
 - `js/main.js` wires the buttons, the dial, the keyboard and the guide; `js/i18n.js` has the English and Thai.

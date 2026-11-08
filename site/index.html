@@ -13,6 +13,7 @@
 <link rel="preload" href="fos/mfilm.wasm" as="fetch" crossorigin>
 <link rel="stylesheet" href="css/site.css">
 <script type="module" src="js/main.js"></script>
+<script type="module" src="js/download.js"></script>
 </head>
 <body>
 
@@ -23,7 +24,7 @@
     <a href="#cameras" data-i18n="nav.cameras">Cameras</a>
     <a href="#darkrooms">Darkrooms</a>
     <button class="lang" type="button" aria-label="ภาษาไทย / English">TH</button>
-    <a class="btn small" href="https://github.com/HNGSeries/mfilm-canon-film-simulation/releases/latest" data-i18n="nav.download">Download</a>
+    <a class="btn small" href="#download" data-download data-i18n="nav.download">Download</a>
   </nav>
 </header>
 
@@ -35,14 +36,28 @@
   </div>
 
   <div class="stage">
-    <div class="picker" role="tablist" aria-label="Camera">
-      <button class="chip on" role="tab" aria-selected="true">EOS M</button>
-      <button class="chip soon" role="tab" aria-selected="false" disabled title="Coming soon">6D</button>
-      <button class="chip soon" role="tab" aria-selected="false" disabled title="Coming soon">60D</button>
-      <button class="chip soon" role="tab" aria-selected="false" disabled title="Coming soon">550D</button>
-      <button class="chip soon" role="tab" aria-selected="false" disabled title="Coming soon">5D Mark III</button>
-      <span class="chip-note" data-i18n="picker.more">more soon</span>
-    </div>
+    <label class="picker">
+      <span class="picker-label" data-i18n="picker.label">Camera</span>
+      <span class="select">
+        <select id="model" aria-label="Camera">
+          <option value="eosm" selected>Canon EOS M</option>
+          <optgroup label="Coming to the browser" data-i18n-label="picker.soon">
+            <option disabled>Canon EOS 6D</option>
+            <option disabled>Canon EOS 60D</option>
+            <option disabled>Canon EOS 50D</option>
+            <option disabled>Canon EOS 500D</option>
+            <option disabled>Canon EOS 550D</option>
+            <option disabled>Canon EOS 600D</option>
+            <option disabled>Canon EOS 100D</option>
+            <option disabled>Canon EOS 650D</option>
+            <option disabled>Canon EOS 700D</option>
+            <option disabled>Canon EOS 70D</option>
+            <option disabled>Canon EOS 5D Mark III</option>
+            <option disabled>Canon EOS 5D Mark II</option>
+          </optgroup>
+        </select>
+      </span>
+    </label>
 
     <!-- The EOS M from the back. The body is drawn (img/eosm-back.svg); each
          control is a button placed over it in % of the body, so a photo can
@@ -103,7 +118,7 @@
         <dt>⌫</dt><dd data-i18n="k.home">delete: M-Film home</dd>
       </dl>
     </details>
-    <a class="btn" href="https://github.com/HNGSeries/mfilm-canon-film-simulation/releases/latest" data-i18n="cta.free">Download free for your Canon</a>
+    <a class="btn" href="#download" data-download data-i18n="cta.free">Download for your Canon</a>
   </aside>
 </section>
 
@@ -137,7 +152,57 @@
     <div class="price best"><b>US$14.99</b><span data-i18n="p.once">once, for good</span></div>
   </div>
 </section>
+<section id="download" class="band get">
+  <h2 data-i18n="get.t">Put it on your camera</h2>
+  <p data-i18n="get.d">One zip for your camera: unzip it onto the card, and the camera starts with M-Film. Pay what you want for it, from nothing at all.</p>
+  <a class="btn" href="#download" data-download data-i18n="nav.download">Download</a>
+</section>
 </main>
+
+<dialog class="dl" id="dl" aria-labelledby="dl-title">
+  <form method="dialog" class="dl-in">
+    <button class="dl-x" value="close" aria-label="Close">×</button>
+
+    <div class="dl-ask">
+      <h2 id="dl-title" data-i18n="dl.t">Download M-Film</h2>
+      <label class="field">
+        <span data-i18n="dl.camera">Your camera</span>
+        <span class="select wide"><select id="dl-camera"></select></span>
+      </label>
+      <p class="dl-note" id="dl-camera-note"></p>
+
+      <div class="field">
+        <span data-i18n="dl.price">Name your price</span>
+        <div class="price-pick">
+          <span class="cur">$</span>
+          <input id="dl-amount" type="number" inputmode="numeric" min="0" max="99" step="1" value="5" aria-label="Amount in US dollars">
+          <span class="cur-tail">USD</span>
+        </div>
+        <input id="dl-range" type="range" min="0" max="99" step="1" value="5" aria-label="Amount in US dollars">
+        <div class="presets">
+          <button type="button" data-amount="0">$0</button>
+          <button type="button" data-amount="3">$3</button>
+          <button type="button" data-amount="5" class="on">$5</button>
+          <button type="button" data-amount="10">$10</button>
+          <button type="button" data-amount="25">$25</button>
+        </div>
+        <p class="dl-note" data-i18n="dl.free">$0 is fine: M-Film is free and open source. Whatever you give keeps it going.</p>
+      </div>
+
+      <button type="button" class="btn dl-go" id="dl-go">Pay $5 and download</button>
+      <p class="dl-err" id="dl-err" role="alert"></p>
+      <p class="dl-small"><span data-i18n="dl.secure">Payment by Stripe. The download starts when you come back.</span>
+        <a href="https://github.com/HNGSeries/mfilm-canon-film-simulation/releases/latest" data-i18n="dl.all">All files and release notes</a></p>
+    </div>
+
+    <div class="dl-thanks" hidden>
+      <h2 data-i18n="dl.thanks.t">Thank you!</h2>
+      <p data-i18n="dl.thanks.d">Your download has started. If it hasn't, use the button.</p>
+      <a class="btn" id="dl-again" href="#" data-i18n="dl.again">Download again</a>
+      <p class="dl-small" data-i18n="dl.next">Unzip it onto the card and turn the camera on. The README in the zip has the rest.</p>
+    </div>
+  </form>
+</dialog>
 
 <footer>
   <span>M-Film · GPL-2.0 · <a href="https://github.com/HNGSeries/mfilm-canon-film-simulation">GitHub</a></span>

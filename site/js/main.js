@@ -176,7 +176,7 @@ const KEYMAP = {
 const camInView = () => { const r = cam.getBoundingClientRect(); return r.bottom > 80 && r.top < innerHeight - 80; };
 addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey || !camInView()) return;
-  if (e.target.closest('input, textarea, summary, a, .top')) return;
+  if (e.target.closest('input, textarea, select, summary, a, .top, dialog') || document.querySelector('dialog[open]')) return;
   if (e.key === ' ') { e.preventDefault(); if (!e.repeat) shutterDown(); return; }
   const k = KEYMAP[e.key];
   if (k === undefined) return;
