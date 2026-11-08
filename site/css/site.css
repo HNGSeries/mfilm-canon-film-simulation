@@ -312,7 +312,7 @@ footer {
 .presets button.on { border-color: var(--amber); color: var(--amber); }
 .dl-go { width: 100%; border: 0; font: 700 17px Barlow, "Noto Sans Thai", sans-serif; cursor: pointer; padding: 14px; }
 .dl-go:disabled { opacity: .6; cursor: wait; }
-.dl-err { color: #ff8a73; font-size: 14px; margin: 10px 0 0; }
+.dl-err { color: #ffb3a5; font-size: 14px; margin: 12px 0 0; padding: 10px 12px; border: 1px solid #7a2e22; background: #2a1411; border-radius: 10px; }
 .dl-err:empty { display: none; }
 .dl-err a, .dl-small a { color: var(--amber); }
 .dl-small { font-size: 13px; color: var(--faint); margin: 14px 0 0; }
