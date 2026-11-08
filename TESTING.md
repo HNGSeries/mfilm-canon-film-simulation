@@ -105,6 +105,23 @@ ML/
 - A card bigger than 32 GB is formatted as exFAT. If a big card keeps saying this, a card of 32 GB or
   less is a good second try.
 
+### If Canon's screen flickers over M-Film's
+
+Some DSLRs keep drawing their own screen over M-Film's (the top plate, the HUD or a film OS page).
+M-Film puts its own back as soon as it sees that. With **System → Debug log** on, `ML/FILMROLL.LOG`
+says what it saw. A line with "seen N times so far" is written the 1st, 51st, 101st... time: N counts
+the times, not the lines.
+- `hud: the plate: Canon drew over rows 22-60 (39 of them), put back; seen 51 times so far, logged every 50th`
+  (`film os:` on a film OS page).
+- `Canon took its screen back, held again`: Canon let go of the hold M-Film keeps on its screen.
+- `screen: Canon put its other buffer on the screen`: Canon showed its own copy of the screen in
+  front of M-Film's, rather than drawing over it.
+- `drawn over for 2 s on end ..., not checking for 5 s`: Canon draws there all the time, and M-Film
+  stops putting its screen back for a while.
+
+Attach the log and say when the flicker happens: when the camera is idle, when the meter moves,
+after each shot, or when you switch screens.
+
 ### If you turned on Magic Lantern's console
 
 The MENU button opens M-Film, so Magic Lantern's menu (where the console is switched off) can't be

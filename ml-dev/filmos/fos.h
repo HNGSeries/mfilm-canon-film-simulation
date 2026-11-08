@@ -215,12 +215,19 @@ void fos_hud_clear(uint8_t *vram, int pitch, const struct fos_hud_palette *p);
 /* the top plate: a DSLR's back screen while you shoot through the viewfinder */
 void fos_hud_plate(uint8_t *vram, int pitch, const struct fos_hud *h, const struct fos_hud_palette *p);
 void fos_hud_plate_clear(uint8_t *vram, int pitch, const struct fos_hud_palette *p);
+/* the same a band at a time, to put together off-screen: screen rows y0 .. y0 + n
+ * into buf, whose first row is y0. The HUD leaves what it doesn't draw on as it
+ * was; fos_hud_spans says where in row y it draws (x0, x1 pairs; returns 2 or 4) */
+void fos_hud_draw_rows(uint8_t *buf, int pitch, int y0, int n, const struct fos_hud *h, const struct fos_hud_palette *p);
+void fos_hud_plate_rows(uint8_t *buf, int pitch, int y0, int n, const struct fos_hud *h, const struct fos_hud_palette *p);
+int  fos_hud_spans(int y, int x[4]);
 
 /* ---------------------------------------------------------------- the UI */
 
 void fos_ui_init();
 void fos_ui_run(int screen);
-void fos_ui_overdrawn();            /* the port saw something else draw on the screen: paint it all again */
+/* the port saw something else draw on rows y0 .. y1 of the screen: they are put back at once */
+void fos_ui_overdrawn(int y0, int y1);
 
 /* canister art, fos_film.c; quality 2 = everything, 1 = no texture
  * filtering, 0 = no reflections either (the UI lowers it on a slow camera) */

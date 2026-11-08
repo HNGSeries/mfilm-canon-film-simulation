@@ -48,9 +48,15 @@ int fos_port_ms() { return now_ms; }
 /* the palette on the screen now, 0xRRGGBB; each dumped frame gets a copy */
 static uint32_t cur_pal[256];
 
+/* FOS_OVERDRAW (below): the rows "Canon" scribbled on, not painted again yet */
+static uint8_t overdrawn_row[FOS_H];
+static int overdraw_wait, overdraw_n, overdraw_missed, overdraw_shown;
+
 static void dump()
 {
     char path[512];
+    /* a frame that shows a scribble still there (FOS_OVERDRAW) */
+    for (int y = 0; y < FOS_H; y++) if (overdrawn_row[y]) { overdraw_shown++; break; }
     if (!strcmp(outdir, "-")) { frame_no++; last_dump = now_ms; return; }   /* measuring only */
     snprintf(path, sizeof(path), "%s/f_%05d_%06d.idx", outdir, frame_no, now_ms);
     FILE *f = fopen(path, "wb");
@@ -64,12 +70,10 @@ static void dump()
 }
 
 /* FOS_OVERDRAW=1: "Canon" scribbles on the screen every 700 ms, as the 60D
- * and 550D do, and the port tells the film OS (fos_ui_overdrawn), as the
- * camera's check does. Every scribbled row must be painted again within
- * three frames, or the screen on show doesn't repaint all of itself. */
-static uint8_t overdrawn_row[FOS_H];
-static int overdraw_wait, overdraw_n, overdraw_missed;
-
+ * and 550D do, and the port tells the film OS which rows (fos_ui_overdrawn),
+ * as the camera's check does. The film OS puts them back at once, or in a
+ * screen change with its next frames: every scribbled row must be painted
+ * again within three frames, or the screen on show doesn't repaint all of itself. */
 static void overdraw_step()
 {
     static int on = -1, last = 0;
@@ -96,7 +100,7 @@ static void overdraw_step()
     }
     overdraw_n++;
     overdraw_wait = 3;
-    fos_ui_overdrawn();
+    fos_ui_overdrawn(y0, y0 + 30);
 }
 
 void fos_port_sleep(int ms)
@@ -279,6 +283,6 @@ int main(int argc, char **argv)
     fos_ui_run(open);
     if (frame_dirty) dump();
     fprintf(stderr, "%d frames, %d ms\n", frame_no, now_ms);
-    if (overdraw_n) fprintf(stderr, "overdraw: %d scribbles, %d not painted again\n", overdraw_n, overdraw_missed);
+    if (overdraw_n) fprintf(stderr, "overdraw: %d scribbles, %d not painted again, %d frames showed one\n", overdraw_n, overdraw_missed, overdraw_shown);
     return 0;
 }
