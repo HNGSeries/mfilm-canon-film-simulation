@@ -12,7 +12,7 @@ echo "== Installing packages (asks for your Ubuntu password) =="
 sudo apt-get update
 # the compiler, and what build_fork.sh needs (it checks before it builds): ML's module help
 # text (docutils; distutils, from setuptools), the films' colour tables (numpy), the donation
-# QR codes (segno), the card files (unzip) and the film OS module's link test (newlib,
+# QR codes (segno), the card files (zip, unzip) and the film OS module's link test (newlib,
 # qemu-user), as CI has them. Ubuntu's python3 has no pip, so the Python modules come from apt.
 sudo apt-get install -y build-essential make git zip unzip python3 \
     gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi qemu-user \

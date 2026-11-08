@@ -38,7 +38,7 @@ LOG="${LOG:-$HOME/ml/build_fork_$PLAT$TAG.log}"
 #   distutils            imported by that script: from Python 3.12 only setuptools has it
 #   numpy                the films' colour tables (films/lut.py)
 #   segno                the donation QR codes (filmos/tools/genqr.py)
-#   unzip                the card files out of ML's zip
+#   zip, unzip           ML's make zips the card files (platform/Makefile), and they come out of it
 # setup_wsl.sh installs them with apt: Ubuntu's own python3 has no pip, and pip
 # won't install into it (PEP 668). In a venv, or the Python CI sets up, pip does.
 APT=""
@@ -49,6 +49,7 @@ command -v rst2html > /dev/null || command -v rst2html5 > /dev/null || command -
 python3 -c "from distutils.spawn import find_executable" 2> /dev/null || need python3-setuptools setuptools
 python3 -c "import numpy" 2> /dev/null || need python3-numpy numpy
 python3 -c "import segno" 2> /dev/null || need python3-segno segno
+command -v zip > /dev/null || need zip
 command -v unzip > /dev/null || need unzip
 if [ -n "$APT" ]; then
     echo "the build needs:$APT"
