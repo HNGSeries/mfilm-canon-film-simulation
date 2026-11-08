@@ -25,3 +25,7 @@ ml-dev/filmos/sim/out/
 ml-dev/films/luts/*.cube
 ml-dev/films/luts/filmluts/
 
+
+# mfilm.app: the film OS built for the browser (ml-dev/filmos/web/build.sh)
+site/fos/
+ml-dev/filmos/web/out/
