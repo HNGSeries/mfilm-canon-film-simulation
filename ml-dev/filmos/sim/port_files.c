@@ -70,7 +70,9 @@ int fos_port_remove(const char *path)
 {
     struct stat st;
     if (stat(path, &st)) return 0;
-    /* FOS_NO_RMDIR: a camera whose firmware removes files but not folders */
-    if (S_ISDIR(st.st_mode) && getenv("FOS_NO_RMDIR")) return -1;
+    /* FOS_NO_RMDIR: a camera whose firmware removes files but not folders;
+     * FOS_KEEP=text: a file whose path has text in it can't be removed */
+    const char *keep = getenv("FOS_KEEP");
+    if (S_ISDIR(st.st_mode) ? getenv("FOS_NO_RMDIR") != 0 : keep && strstr(path, keep)) return -1;
     return remove(path) ? -1 : 0;
 }

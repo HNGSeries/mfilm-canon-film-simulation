@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # The darkroom on a card of problem rolls (mkcard.sh --problems): it develops
 # what it can, and says why it can't the rest; Delete roll takes exactly
-# what it says; a card that can't take long folder names keeps no empty
-# ones (#65). Fails if a line is missing or a file is wrong.
+# what it says, and what it couldn't is still there to delete again; a card
+# that can't take long folder names keeps no empty ones (#65); a roll
+# developed again keeps its folder. Fails if a line is missing or a file is
+# wrong.
 #   make && ./cardtest.sh
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -36,11 +38,12 @@ for f in 1 2 3 4; do expect "9999 wrap: frame $f developed" "roll 008 frame $f d
 # Delete roll, on the card just developed: the files that go are exactly
 # the ones listed, and nothing else changes
 listing() { (cd "$1" && find . | grep -v '/LOOK[0-9]*\.LUT$' | sort); }
-deletes() {     # deletes <what> <scene> <path that goes>...
+dcard=out/cardp
+deletes() {     # deletes <what> <scene> <path that goes>...   (on $dcard)
     local what=$1 scene=$2; shift 2
-    listing out/cardp > out/del-before.txt
-    FOS_CARD=out/cardp/ ./out/sim "scenes/$scene.txt" - >> "$log" 2>&1
-    listing out/cardp > out/del-after.txt
+    listing $dcard > out/del-before.txt
+    FOS_CARD=$dcard/ ./out/sim "scenes/$scene.txt" - >> "$log" 2>&1
+    listing $dcard > out/del-after.txt
     printf '%s\n' "$@" | sed '/^$/d' | sort > out/del-want.txt
     comm -23 out/del-before.txt out/del-after.txt > out/del-gone.txt
     comm -13 out/del-before.txt out/del-after.txt > out/del-new.txt
@@ -60,14 +63,21 @@ deletes "Delete roll: prints only" delete_prints \
     ./ML/DARKROOM/R007 ./ML/DARKROOM/R007/F01.BMP ./ML/DARKROOM/R007/F03.BMP ./ML/DARKROOM/R007/F04.BMP \
     ./ML/DARKROOM/R007/SHEET.BMP
 expect "Delete roll: prints only, logged"   "lab: roll 007: deleted prints, 0 left"
-# the whole roll (008, across IMG_9999): its RAWs and logs in both DCIM folders, and its prints
-deletes "Delete roll: whole roll across IMG_9999" delete_whole \
-    ./DCIM/100CANON/IMG_9998.CR2 ./DCIM/100CANON/IMG_9999.CR2 ./DCIM/100CANON/ROLL_008.TXT \
-    ./DCIM/101CANON/IMG_0001.CR2 ./DCIM/101CANON/IMG_0002.CR2 ./DCIM/101CANON/ROLL_008.TXT \
-    "./DCIM/Oct1003 Gold200" "./DCIM/Oct1003 Gold200/IMG_0001.JPG" "./DCIM/Oct1003 Gold200/IMG_0002.JPG" \
-    "./DCIM/Oct1003 Gold200/IMG_9998.JPG" "./DCIM/Oct1003 Gold200/IMG_9999.JPG" "./DCIM/Oct1003 Gold200/ROLL008.TXT" \
+# the whole roll (008, across IMG_9999) where IMG_9999's RAW and its print
+# in DCIM can't be removed: the rest of it goes; its logs and the print
+# folder's tag stay, so it is still there to delete again
+FOS_KEEP=IMG_9999 deletes "Delete roll: whole roll, files that can't go" delete_whole \
+    ./DCIM/100CANON/IMG_9998.CR2 ./DCIM/101CANON/IMG_0001.CR2 ./DCIM/101CANON/IMG_0002.CR2 \
+    "./DCIM/Oct1003 Gold200/IMG_0001.JPG" "./DCIM/Oct1003 Gold200/IMG_0002.JPG" "./DCIM/Oct1003 Gold200/IMG_9998.JPG" \
     ./ML/DARKROOM/R008 ./ML/DARKROOM/R008/F01.BMP ./ML/DARKROOM/R008/F02.BMP ./ML/DARKROOM/R008/F03.BMP \
     ./ML/DARKROOM/R008/F04.BMP ./ML/DARKROOM/R008/SHEET.BMP
+expect "Delete roll: the RAW that can't go is said" "lab: can't remove out/cardp/DCIM/100CANON/IMG_9999.CR2"
+expect "Delete roll: ... and counted"       "lab: roll 008: deleted all, 3 left"
+# deleted again: the rest of it, the print folder and its tag, the RAW and
+# its logs in both DCIM folders
+deletes "Delete roll: whole roll across IMG_9999, again" delete_whole \
+    "./DCIM/Oct1003 Gold200" "./DCIM/Oct1003 Gold200/IMG_9999.JPG" "./DCIM/Oct1003 Gold200/ROLL008.TXT" \
+    ./DCIM/100CANON/IMG_9999.CR2 ./DCIM/100CANON/ROLL_008.TXT ./DCIM/101CANON/ROLL_008.TXT
 # the roll in the camera (006 here): nothing goes
 deletes "Delete roll: never the roll in the camera" delete_loaded ""
 # the whole roll (007) once its prints are gone: straight to "sure?"; Canon's _MG_ names
@@ -78,7 +88,8 @@ deletes "Delete roll: whole roll shot as JPEG" delete_whole \
     ./DCIM/100CANON/IMG_0501.JPG ./DCIM/100CANON/IMG_0502.JPG ./DCIM/100CANON/IMG_0503.JPG \
     ./DCIM/100CANON/IMG_0504.JPG ./DCIM/100CANON/ROLL_006.TXT \
     "./DCIM/Oct1001 Portra400" "./DCIM/Oct1001 Portra400/ROLL006.TXT" ./ML/DARKROOM/R006 ./ML/DARKROOM/R006/SHEET.BMP
-reject "Delete roll: nothing it couldn't"  "lab: can't remove|isn't empty"
+n=$(grep -c "lab: can't remove" "$log" || true)
+[ "$n" = 2 ] && echo "ok    Delete roll: nothing else it couldn't" || { echo "FAIL  Delete roll: $n \"can't remove\" lines, not 2"; fail=1; }
 
 # A card that makes a long-named folder but can't write into it (a 550D's
 # exFAT card, #65): the prints go in SEP0906-style folders, and no empty
@@ -97,5 +108,27 @@ CARD=out/cardl ./mkcard.sh --problems >/dev/null
 for i in 1 2; do FOS_CARD=out/cardl/ FOS_LONG_DIRS_EMPTY=1 FOS_NO_RMDIR=1 ./out/sim scenes/darkroom_problems.txt - >> "$log" 2>&1; done
 n=$(long_dirs out/cardl)
 [ "$n" = 3 ] && echo "ok    Long names fail, no folder removal: 3 left" || { echo "FAIL  Long names fail, no folder removal: $n left, not 3"; fail=1; }
+# there, Delete roll still takes every file of the whole roll (008) and its
+# logs: only the folders stay, empty
+dcard=out/cardl FOS_NO_RMDIR=1 deletes "Delete roll, no folder removal: every file" delete_whole \
+    ./DCIM/100CANON/IMG_9998.CR2 ./DCIM/100CANON/IMG_9999.CR2 ./DCIM/100CANON/ROLL_008.TXT \
+    ./DCIM/101CANON/IMG_0001.CR2 ./DCIM/101CANON/IMG_0002.CR2 ./DCIM/101CANON/ROLL_008.TXT \
+    ./DCIM/OCT1003/IMG_0001.JPG ./DCIM/OCT1003/IMG_0002.JPG ./DCIM/OCT1003/IMG_9998.JPG ./DCIM/OCT1003/IMG_9999.JPG \
+    ./DCIM/OCT1003/ROLL008.TXT ./ML/DARKROOM/R008/F01.BMP ./ML/DARKROOM/R008/F02.BMP ./ML/DARKROOM/R008/F03.BMP \
+    ./ML/DARKROOM/R008/F04.BMP ./ML/DARKROOM/R008/SHEET.BMP
+expect "Delete roll, no folder removal: the folders counted" "lab: roll 008: deleted all, 2 left"
+
+# A roll developed again finds its folder whichever of the day's names it
+# has: here "Oct1002 Ektar100 2", the first name free again (another roll
+# of that day deleted since). No second folder, no frame developed again.
+CARD=out/cardg ./mkcard.sh --problems >/dev/null
+FOS_CARD=out/cardg/ ./out/sim scenes/darkroom_problems.txt - >> "$log" 2>&1
+mv "out/cardg/DCIM/Oct1002 Ektar100" "out/cardg/DCIM/Oct1002 Ektar100 2"
+FOS_CARD=out/cardg/ ./out/sim scenes/darkroom_problems.txt - > out/cardtest-gap.log 2>&1
+cat out/cardtest-gap.log >> "$log"
+grep -qF "darkroom: JPEGs in out/cardg/DCIM/Oct1002 Ektar100 2" out/cardtest-gap.log && [ ! -e "out/cardg/DCIM/Oct1002 Ektar100" ] \
+    && echo "ok    A gap in the day's names: its own folder" || { echo "FAIL  A gap in the day's names: not its own folder"; fail=1; }
+grep -qE "roll 007 frame [0-9]+ developed" out/cardtest-gap.log \
+    && { echo "FAIL  A gap in the day's names: frames developed again"; fail=1; } || echo "ok    A gap in the day's names: nothing developed again"
 
 [ $fail = 0 ] && echo "cardtest: all passed" || { echo "cardtest: failed (log: sim/$log)"; exit 1; }

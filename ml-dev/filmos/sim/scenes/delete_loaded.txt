@@ -1,7 +1,9 @@
-# Delete roll (cardtest.sh): roll 006 is in the camera and can't be deleted
+# Delete roll (cardtest.sh): roll 006 is in the camera and can't be deleted;
+# LEFT, then SET twice would delete its prints if it could be asked
 roll 0 4 12 6
 open darkroom
 1500 down
 1900 left
 2700 set
-3500 end
+3500 set
+6000 end
