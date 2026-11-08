@@ -1,8 +1,8 @@
 # Taking M-Film further
 
 How to bring M-Film to another camera, or add films.
-It was made on the **Canon EOS M (firmware 2.0.2)**, the only camera it has been tried on. The camera
-side now *builds* for every DIGIC 4 and 5 camera Magic Lantern supports; see [the list](README.md#cameras)
+It was made on the **Canon EOS M (firmware 2.0.2)**. The camera side now *builds* for every DIGIC 4 and 5
+camera Magic Lantern supports, and testers have tried most of them; see [the list](README.md#cameras)
 and [TESTING.md](TESTING.md).
 
 > ภาษาไทยสั้นๆ: ในกล้อง หน้าจอ Film OS (`ml-dev/filmos/`) แยกจากตัวกล้องผ่านชั้น `fos_port_*` แล้ว ที่ต้องทำใหม่ต่อรุ่นคือ
