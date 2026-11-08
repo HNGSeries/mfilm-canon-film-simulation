@@ -179,16 +179,19 @@ python3 "$F/tools/genqr.py" "$HERE/donate.txt" "$OUT/ML/data/FOSQR.BIN"
 [ -d "$HERE/films/luts/filmluts" ] || python3 "$HERE/films/getluts.py"
 gcc -O2 -std=gnu99 -DFOS_DEV_TEST -I"$F" -o "$HOME/ml/devtest" "$F"/sim/devtest.c "$F"/sim/port_files.c \
     "$F"/sim/films.c "$F"/fos_dev.c "$F"/fos_print.c "$F"/fos_looks.c "$F"/fos_film.c "$F"/fos_gfx.c "$F"/fos_jpeg.c -lm
+# devtest runs inside the card's ML/ with short paths: the darkroom keeps its
+# paths in 128 bytes, as on the camera, and with the full ones of a checkout
+# deep in the disk the tables and samples went somewhere else without a word
 mkdir -p "$OUT/ML/DARKROOM"
-FOS_FILMS="$OUT/ML/data/FOSFILMS.BIN" "$HOME/ml/devtest" -T "$OUT/ML/DARKROOM"
+(cd "$OUT/ML" && FOS_FILMS=data/FOSFILMS.BIN "$HOME/ml/devtest" -T DARKROOM)
 python3 "$F/tools/genfilms.py" "$OUT/ML/data/FOSFILMS.BIN" --tables "$OUT/ML/DARKROOM"
 
 # the shelf's samples (PLAY on the shelf): one photo developed with every
 # film, with the tables above, as the camera's darkroom would. The prints
 # don't depend on the camera, so every camera gets the same ones.
 mkdir -p "$OUT/ML/SAMPLES"
-FOS_FILMS="$OUT/ML/data/FOSFILMS.BIN" FOS_LUT_DIR="$OUT/ML/DARKROOM" \
-    "$HOME/ml/devtest" -S "$HERE/films/sample/SAMPLE.CR2" "$OUT/ML/SAMPLES"
+CR2=$(realpath --relative-to="$OUT/ML" "$HERE/films/sample/SAMPLE.CR2")
+(cd "$OUT/ML" && FOS_FILMS=data/FOSFILMS.BIN FOS_LUT_DIR=DARKROOM "$HOME/ml/devtest" -S "$CR2" SAMPLES)
 
 # with no darkroom, the colour tables were only for the samples: the card is done
 if [ -n "$NODARK" ]; then
