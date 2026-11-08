@@ -201,7 +201,10 @@ if [ -n "$NODARK" ]; then
 else
     echo "== card files in $OUT =="
 fi
-(cd "$OUT" && find . -maxdepth 3 | sort | head -60)
+# the first 60 (sed reads to the end: head stops reading, and a sort still
+# writing the rest of a listing over 4 KB then dies of SIGPIPE, which
+# pipefail made the whole build's exit code, 141, after it had worked)
+(cd "$OUT" && find . -maxdepth 3 | sort | sed -n 1,60p)
 
 # The fork's changes to ML as this build made them, to read: the sources in
 # filmos/ and fork/src/ with apply_fork.py are what builds it. Only this
