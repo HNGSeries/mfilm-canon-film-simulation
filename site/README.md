@@ -6,7 +6,10 @@ the darkroom and the prints are the camera's own code; the shutter writes a
 CR2 from what LiveView shows (`sim/tools/mkcr2.c`), and the darkroom develops it.
 
 Published by `.github/workflows/pages.yml` on a push to `main`
-(Settings → Pages → Source: **GitHub Actions**; the domain is `CNAME`).
+(Settings → Pages → Source: **GitHub Actions**) at
+https://hngseries.github.io/mfilm-canon-film-simulation/. A domain of its own
+goes in Settings → Pages → Custom domain (with Actions, a CNAME file is not
+read), and in the licence server's `DONATE_PAGES` so Stripe may send people back to it.
 
 ## Run it here
 
