@@ -16,6 +16,8 @@ CFLAGS="--target=wasm32-wasi --sysroot=$SYSROOT -O2 -std=gnu99 -Wall -Wno-unused
 # the fonts and the films, as the camera finds them on its card (sim's Makefile)
 make -C ../sim out/FOSFONT.BIN out/FOSFILMS.BIN >/dev/null
 cp ../sim/out/FOSFONT.BIN ../sim/out/FOSFILMS.BIN "$OUT/"
+# the page's cameras and films, from cameras.txt and FILMS.md as the README's are
+python3 sitedata.py "$OUT"
 
 SRC="web.c ../sim/port_files.c ../sim/fonts.c ../sim/films.c ../fos_gfx.c ../fos_film.c ../fos_ui.c ../fos_shelf.c \
      ../fos_pages.c ../fos_hud.c ../fos_print.c ../fos_dark.c ../fos_dev.c ../fos_lab.c ../fos_looks.c ../fos_jpeg.c"

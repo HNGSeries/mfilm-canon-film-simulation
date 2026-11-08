@@ -25,10 +25,19 @@ function say(id, ...args) {
   lastStatus = id; lastArgs = args;
   statusText.textContent = T(id, ...args);
 }
+let developed = false;
+// PLAY after a roll is developed: the last step done
+camera.addEventListener('mode', (e) => {
+  if (e.detail.ui && developed && lastKey === KEY.PLAY) stage('done');
+});
+let lastKey = 0;
+const pressKey = camera.press.bind(camera);
+camera.press = (k) => { lastKey = k; pressKey(k); };
+
 function stage(name) {
-  const order = ['load', 'shoot', 'develop', 'prints'];
+  const order = ['load', 'shoot', 'develop', 'prints', 'done'];
   const at = order.indexOf(name);
-  order.forEach((s, i) => {
+  order.slice(0, 4).forEach((s, i) => {
     steps[s].classList.toggle('done', i < at);
     steps[s].classList.toggle('now', i === at);
   });
@@ -60,7 +69,7 @@ camera.addEventListener('finished', () => { stage('develop'); say('st.finished')
 camera.addEventListener('developing', (e) => {
   statusEl.classList.toggle('work', !!e.detail.a);
   if (e.detail.a) say('st.developing');
-  else { stage('prints'); say('st.developed'); }
+  else { stage('prints'); say('st.developed'); developed = true; }
 });
 camera.addEventListener('crash', () => say('st.crash'));
 
@@ -192,7 +201,10 @@ addEventListener('keyup', (e) => {
 
 // ---------------------------------------------------------------- go
 
-camera.start().then(() => {
+if (typeof WebAssembly !== 'object') {
+  screen.querySelector('.loading span').textContent = T('st.nowasm');
+  say('st.nowasm');
+} else camera.start().then(() => {
   screen.querySelector('.loading').classList.add('gone');
   say('st.menu');
 }).catch((e) => {

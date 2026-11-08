@@ -4,9 +4,11 @@
 // Stripe sends the visitor back here with ?thanks=1, where the download starts.
 
 import { T } from './i18n.js';
+import { latestRelease } from './releases.js';
 
-// the cameras with a release zip, M-Film-camera-<platform>.zip (ml-dev/cameras.txt; keep the two together)
-const CAMERAS = [
+// the cameras with a release zip, M-Film-camera-<platform>.zip: fos/cameras.json (from ml-dev/cameras.txt)
+// once it has loaded; this list until then, or if it can't be
+let CAMERAS = [
   ['EOSM.202', 'Canon EOS M', 'working'],
   ['6D.116', 'Canon EOS 6D', 'working'],
   ['60D.111', 'Canon EOS 60D', 'working'],
@@ -25,7 +27,13 @@ const CAMERAS = [
 ];
 const REPO = 'https://github.com/HNGSeries/mfilm-canon-film-simulation';
 const DONATE = 'https://darkrooms-licence.suphalapruksasathit.workers.dev/v1/donate';
-const zipUrl = (p) => `${REPO}/releases/latest/download/M-Film-camera-${p}.zip`;
+// the newest M-Film release (tags v*): Darkrooms' (app-v*) are in the same repository, and either can be
+// GitHub's "latest". Until GitHub answers, or if it doesn't, "latest" it is.
+let camTag = null;
+const tagReady = latestRelease((t) => /^v\d/.test(t)).then((r) => { camTag = r && r.tag; });
+const zipUrl = (p) => camTag ? `${REPO}/releases/download/${camTag}/M-Film-camera-${p}.zip`
+                             : `${REPO}/releases/latest/download/M-Film-camera-${p}.zip`;
+const settled = () => Promise.race([tagReady, new Promise((r) => setTimeout(r, 2500))]);
 
 const dlg = document.getElementById('dl');
 const sel = document.getElementById('dl-camera');
@@ -74,12 +82,14 @@ function startDownload(p) {
   a.remove();
 }
 
-function thanks(p) {
+async function thanks(p) {
   dlg.querySelector('.dl-ask').hidden = true;
   dlg.querySelector('.dl-thanks').hidden = false;
   const again = document.getElementById('dl-again');
   again.href = zipUrl(p);
   open();
+  await settled();
+  again.href = zipUrl(p);
   startDownload(p);
 }
 
@@ -115,6 +125,10 @@ async function submit() {
 
 fillCameras();
 setAmount(5);
+fetch('fos/cameras.json').then((r) => r.json()).then((j) => {
+  CAMERAS = j.cameras.map((c) => [c.platform, c.name, c.status === 'nodark' ? 'working' : c.status]);
+  fillCameras();
+}).catch(() => {});
 sel.addEventListener('change', showNote);
 amount.addEventListener('input', () => setAmount(amount.value, amount));
 amount.addEventListener('blur', () => setAmount(amount.value));

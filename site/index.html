@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/site.css">
 <script type="module" src="js/main.js"></script>
 <script type="module" src="js/download.js"></script>
+<script type="module" src="js/sections.js"></script>
 </head>
 <body>
 
@@ -22,6 +23,7 @@
   <nav>
     <a href="#films" data-i18n="nav.films">Films</a>
     <a href="#cameras" data-i18n="nav.cameras">Cameras</a>
+    <a href="#faq" data-i18n="nav.faq">FAQ</a>
     <a href="#darkrooms">Darkrooms</a>
     <button class="lang" type="button" aria-label="ภาษาไทย / English">TH</button>
     <a class="btn small" href="#download" data-download data-i18n="nav.download">Download</a>
@@ -122,40 +124,80 @@
   </aside>
 </section>
 
+<section class="band how">
+  <h2 data-i18n="how.t">A film camera, inside your camera</h2>
+  <div class="how-grid">
+    <div><span class="num">1</span><b data-i18n="how.1.t">Load a roll</b><p data-i18n="how.1.d">A shelf of 72 canisters. Pick a film and 36, 24 or 12 frames; the camera sets itself up for it.</p></div>
+    <div><span class="num">2</span><b data-i18n="how.2.t">Shoot blind</b><p data-i18n="how.2.d">No picture after each shot and no going back through them: an SLR's viewfinder, a meter needle and a frame counter.</p></div>
+    <div><span class="num">3</span><b data-i18n="how.3.t">Develop the roll</b><p data-i18n="how.3.d">In the camera's own darkroom, or on your computer with Darkrooms. Then see what you got.</p></div>
+  </div>
+</section>
+
 <section id="films" class="band">
   <h2 data-i18n="films.t">72 films, on four shelves</h2>
-  <p data-i18n="films.d">Colour negative, slide, black and white, and cinema film. Each has its own colour, grain, halation and softness.</p>
-  <div class="strip">
-    <figure><img src="img/samples/portra400.jpg" alt="" loading="lazy"><figcaption>Portra 400</figcaption></figure>
-    <figure><img src="img/samples/gold200.jpg" alt="" loading="lazy"><figcaption>Gold 200</figcaption></figure>
-    <figure><img src="img/samples/trix400.jpg" alt="" loading="lazy"><figcaption>Tri-X 400</figcaption></figure>
-    <figure><img src="img/samples/velvia50.jpg" alt="" loading="lazy"><figcaption>Velvia 50</figcaption></figure>
-    <figure><img src="img/samples/cinestill800t.jpg" alt="" loading="lazy"><figcaption>CineStill 800T</figcaption></figure>
-    <figure><img src="img/samples/kodachrome64.jpg" alt="" loading="lazy"><figcaption>Kodachrome 64</figcaption></figure>
-  </div>
+  <p data-i18n="films.d">The same RAW from an EOS M, developed with every film. Each has its own colour, grain, halation and softness.</p>
+  <div class="tabs" role="tablist" id="shelves"></div>
+  <div class="films" id="films-grid"><p class="muted" data-i18n="films.loading">Loading the films…</p></div>
 </section>
 
 <section id="cameras" class="band">
   <h2 data-i18n="cams.t">For Canon cameras that run Magic Lantern</h2>
-  <p data-i18n="cams.d">Works on the EOS M, 6D, 60D, 50D, 500D, 550D, 100D and 650D; the 700D, 70D, 5D Mark III, 5D Mark II and 1100D are being tested. The camera side is free and open source (GPL-2.0).</p>
-  <a class="link" href="https://github.com/HNGSeries/mfilm-canon-film-simulation#cameras" data-i18n="cams.link">Every camera and how far it got →</a>
+  <p data-i18n="cams.d">Every camera on which Magic Lantern itself is mature (DIGIC 4 and 5). Testers have tried most of them: here is how far each one got.</p>
+  <div class="cam-table-wrap">
+    <table class="cam-table">
+      <thead><tr><th data-i18n="ct.camera">Camera</th><th data-i18n="ct.fw">Canon firmware</th><th data-i18n="ct.status">Status</th><th data-i18n="ct.notes">Notes</th></tr></thead>
+      <tbody id="cam-rows"></tbody>
+    </table>
+  </div>
+  <p class="later" id="cam-later"></p>
+  <p class="muted"><span data-i18n="cams.help">Have one that needs a tester? It takes about 20 minutes, and you can always go back:</span>
+    <a class="link" href="https://github.com/HNGSeries/mfilm-canon-film-simulation/blob/main/TESTING.md">TESTING.md →</a></p>
 </section>
 
-<section id="darkrooms" class="band darkrooms">
-  <div>
-    <h2 data-i18n="dr.t">Develop on your computer: Darkrooms</h2>
-    <p data-i18n="dr.d">The camera develops its rolls by itself, slowly. Darkrooms does it on your computer, fast: plug the camera in, and every roll is there.</p>
+<section id="darkrooms" class="band dr">
+  <div class="dr-head">
+    <div>
+      <h2 data-i18n="dr.t">Develop on your computer: Darkrooms</h2>
+      <p data-i18n="dr.d">The camera develops its rolls by itself, slowly. Darkrooms does it on your computer, fast: plug the camera in (or put its card in a reader) and every roll is there, developed at full resolution.</p>
+      <div class="os-links" id="dr-links">
+        <a class="btn" data-os="windows" href="https://github.com/HNGSeries/mfilm-canon-film-simulation/releases?q=Darkrooms&amp;expanded=true">Windows</a>
+        <a class="btn ghost" data-os="apple-silicon" href="https://github.com/HNGSeries/mfilm-canon-film-simulation/releases?q=Darkrooms&amp;expanded=true">Mac · Apple silicon</a>
+        <a class="btn ghost" data-os="intel" href="https://github.com/HNGSeries/mfilm-canon-film-simulation/releases?q=Darkrooms&amp;expanded=true">Mac · Intel</a>
+      </div>
+      <p class="muted small" id="dr-version" data-i18n="dr.unsigned">Not signed with Microsoft or Apple yet: the first time, Windows says More info → Run anyway; a Mac, Privacy &amp; Security → Open Anyway.</p>
+    </div>
+    <div class="prices">
+      <div class="price"><b data-i18n="p.free">Free</b><span data-i18n="p.free.d">one roll a day, up to 36 frames, with a Google account</span></div>
+      <div class="price"><b>US$2.99</b><span data-i18n="p.month">a month: as many rolls as you like</span></div>
+      <div class="price best"><b>US$14.99</b><span data-i18n="p.once">once, for good</span></div>
+    </div>
   </div>
-  <div class="prices">
-    <div class="price"><b data-i18n="p.free">Free</b><span data-i18n="p.free.d">one roll a day, up to 36 frames</span></div>
-    <div class="price"><b>US$2.99</b><span data-i18n="p.month">a month</span></div>
-    <div class="price best"><b>US$14.99</b><span data-i18n="p.once">once, for good</span></div>
+  <div class="shots">
+    <figure><img src="fos/app/app-rolls.jpg" alt="" loading="lazy"><figcaption data-i18n="dr.s1">Your rolls, each with its canister and a strip of its frames.</figcaption></figure>
+    <figure><img src="fos/app/app-darkroom.jpg" alt="" loading="lazy"><figcaption data-i18n="dr.s2">The lights go red. Prints come out of the developer and hang on the line.</figcaption></figure>
+    <figure><img src="fos/app/app-lights-on.jpg" alt="" loading="lazy"><figcaption data-i18n="dr.s3">Lights on: every roll gets a contact sheet and its own folder.</figcaption></figure>
+    <figure><img src="fos/app/app-develop.jpg" alt="" loading="lazy"><figcaption data-i18n="dr.s4">Every pixel of the RAW, EXIF kept, optional date stamp.</figcaption></figure>
   </div>
 </section>
+
 <section id="download" class="band get">
   <h2 data-i18n="get.t">Put it on your camera</h2>
-  <p data-i18n="get.d">One zip for your camera: unzip it onto the card, and the camera starts with M-Film. Pay what you want for it, from nothing at all.</p>
-  <a class="btn" href="#download" data-download data-i18n="nav.download">Download</a>
+  <ol class="install">
+    <li data-i18n="in.1">Check the camera's Canon firmware (MENU → last settings tab → Firmware ver.): it must be the one in the table.</li>
+    <li data-i18n="in.2">Unzip the files for your camera onto an SD card, put it in, and run Firmware ver. → update once. From then on M-Film starts with the camera.</li>
+    <li data-i18n="in.3">In Canon's menu set Image quality to RAW and Image review to Off: the darkroom develops RAWs.</li>
+  </ol>
+  <a class="btn" href="#download" data-download data-i18n="get.btn">Download: pay what you want</a>
+</section>
+
+<section id="faq" class="band faq">
+  <h2 data-i18n="faq.t">Questions</h2>
+  <details><summary data-i18n="faq.1.q">Can it break my camera?</summary><p data-i18n="faq.1.a">Magic Lantern runs from the card and changes nothing permanent in the camera. The worst that usually happens is that the camera doesn't start with the card in: take the battery and the card out, and it starts normally again. Still, it is software on your camera at your own risk: keep a charged battery, and don't try it in the middle of a shoot.</p></details>
+  <details><summary data-i18n="faq.2.q">How do I go back to Canon's camera?</summary><p data-i18n="faq.2.a">Format the card in the camera. To stop the camera looking for Magic Lantern at all, run ML-SETUP.FIR again from Firmware ver. and remove the boot flag.</p></details>
+  <details><summary data-i18n="faq.3.q">Is it really free?</summary><p data-i18n="faq.3.a">The camera side is free and open source (GPL-2.0), and its darkroom is free and unlimited. You can pay what you want for the download, $0 included. Darkrooms, the desktop program, is free for a roll a day.</p></details>
+  <details><summary data-i18n="faq.4.q">Can I shoot JPEG?</summary><p data-i18n="faq.4.a">Set Image quality to RAW (RAW+JPEG works too). The films are applied when the roll is developed, from the RAW: a frame shot as JPEG can't be developed.</p></details>
+  <details><summary data-i18n="faq.5.q">How do I update to a new version?</summary><p data-i18n="faq.5.a">Finish and develop the roll, copy your photos off, format the card in the camera, unzip the new version onto it and run Firmware ver. → update again. Don't unzip a new version over the old one.</p></details>
+  <details><summary data-i18n="faq.6.q">My camera isn't in the list.</summary><p data-i18n="faq.6.a">M-Film needs Magic Lantern, which is mature on DIGIC 4 and 5 cameras. On newer ones (200D, 80D, M50, the R series) Magic Lantern itself is still experimental.</p></details>
 </section>
 </main>
 
@@ -204,9 +246,28 @@
   </form>
 </dialog>
 
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lb-x" aria-label="Close">×</button>
+  <button class="lb-nav prev" aria-label="Previous film">‹</button>
+  <figure><img alt=""><figcaption></figcaption></figure>
+  <button class="lb-nav next" aria-label="Next film">›</button>
+</div>
+
 <footer>
-  <span>M-Film · GPL-2.0 · <a href="https://github.com/HNGSeries/mfilm-canon-film-simulation">GitHub</a></span>
-  <span data-i18n="foot.ml">Built on <a href="https://www.magiclantern.fm/">Magic Lantern</a>. Not affiliated with Canon.</span>
+  <div class="foot-cols">
+    <div><a class="brand" href="#"><img src="img/mfilm.png" alt="" width="24" height="24"> M·FILM</a>
+      <p data-i18n="foot.tag">Your Canon, shot like film.</p></div>
+    <div><b data-i18n="foot.project">Project</b>
+      <a href="https://github.com/HNGSeries/mfilm-canon-film-simulation">GitHub</a>
+      <a href="https://github.com/HNGSeries/mfilm-canon-film-simulation/releases" data-i18n="foot.releases">Releases</a>
+      <a href="https://github.com/HNGSeries/mfilm-canon-film-simulation/blob/main/TESTING.md" data-i18n="foot.test">Test a camera</a>
+      <a href="https://github.com/HNGSeries/mfilm-canon-film-simulation/issues/new/choose" data-i18n="foot.issue">Report a problem</a></div>
+    <div><b data-i18n="foot.more">More</b>
+      <a href="https://github.com/HNGSeries/mfilm-canon-film-simulation/blob/main/docs/MANUAL.th.md" data-i18n="foot.manual">Manual (Thai)</a>
+      <a href="https://darkrooms-licence.suphalapruksasathit.workers.dev/privacy" data-i18n="foot.privacy">Darkrooms privacy</a>
+      <a href="https://buy.stripe.com/7sY14p8d93QE5Ny5M58so02" data-i18n="foot.coffee">Buy the developer a coffee</a></div>
+  </div>
+  <p class="foot-small"><span>M-Film · GPL-2.0</span> · <span data-i18n="foot.ml">Built on <a href="https://www.magiclantern.fm/">Magic Lantern</a>. Not affiliated with Canon.</span></p>
 </footer>
 </body>
 </html>
