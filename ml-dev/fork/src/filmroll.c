@@ -331,8 +331,10 @@ static void expsim_step()
         expsim_due = 0;
         return;
     }
-    /* photo LiveView only (the 5D Mark II's movie display is its own), between pictures */
-    if (!lv || is_movie_mode() || !job_state_ready_to_take_pic() || now - wait_until < 0)
+    /* photo LiveView only (the 5D Mark II's movie display is its own), between pictures,
+     * and not on a half-press: not while Canon focuses and meters (a roll just loaded,
+     * the first thing done is often to half-press) */
+    if (!lv || is_movie_mode() || get_halfshutter_pressed() || !job_state_ready_to_take_pic() || now - wait_until < 0)
         return;
     int want = expsim_set ? 1 : 0;
     if (get_expsim() != want && tries < 5)
