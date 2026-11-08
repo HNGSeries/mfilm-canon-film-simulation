@@ -110,6 +110,8 @@ enum
     FS_SCR_SAT, FS_SCR_WARM, FS_SCR_BRIGHT,     /* -FOS_SCR_STEPS..FOS_SCR_STEPS */
     FS_SCR_FLIP,        /* swivel screens: 0 as Canon's hinge says, 1 normal, 2 upside down, 3 mirrored;
                            the port answers -1 on a camera that can't, and the item isn't shown */
+    FS_EXPSIM,          /* LiveView's exposure simulation: 1 on (the exposure the frame gets), 0 off (bright
+                           enough to focus a manual lens); -1 where Magic Lantern can't set it: not shown */
     FS_COUNT
 };
 #define FOS_SCR_STEPS 6
@@ -164,6 +166,9 @@ const char *fos_port_card();                                /* the card's root, 
 /* every entry of a directory, until fn returns 0; < 0 if it can't be read */
 int  fos_port_list(const char *dir, int (*fn)(void *ctx, const char *name, int is_dir), void *ctx);
 int  fos_port_mkdir(const char *path);                      /* 0 on success or if it exists */
+/* a file, or an empty folder (never called on one with anything in it);
+ * 0 once it isn't there, removed or never there */
+int  fos_port_remove(const char *path);
 
 void fos_port_roll(struct fos_roll *r);
 int  fos_port_get(int setting);
@@ -215,12 +220,19 @@ void fos_hud_clear(uint8_t *vram, int pitch, const struct fos_hud_palette *p);
 /* the top plate: a DSLR's back screen while you shoot through the viewfinder */
 void fos_hud_plate(uint8_t *vram, int pitch, const struct fos_hud *h, const struct fos_hud_palette *p);
 void fos_hud_plate_clear(uint8_t *vram, int pitch, const struct fos_hud_palette *p);
+/* the same a band at a time, to put together off-screen: screen rows y0 .. y0 + n
+ * into buf, whose first row is y0. The HUD leaves what it doesn't draw on as it
+ * was; fos_hud_spans says where in row y it draws (x0, x1 pairs; returns 2 or 4) */
+void fos_hud_draw_rows(uint8_t *buf, int pitch, int y0, int n, const struct fos_hud *h, const struct fos_hud_palette *p);
+void fos_hud_plate_rows(uint8_t *buf, int pitch, int y0, int n, const struct fos_hud *h, const struct fos_hud_palette *p);
+int  fos_hud_spans(int y, int x[4]);
 
 /* ---------------------------------------------------------------- the UI */
 
 void fos_ui_init();
 void fos_ui_run(int screen);
-void fos_ui_overdrawn();            /* the port saw something else draw on the screen: paint it all again */
+/* the port saw something else draw on rows y0 .. y1 of the screen: they are put back at once */
+void fos_ui_overdrawn(int y0, int y1);
 
 /* canister art, fos_film.c; quality 2 = everything, 1 = no texture
  * filtering, 0 = no reflections either (the UI lowers it on a slow camera) */

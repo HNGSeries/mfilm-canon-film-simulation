@@ -1,0 +1,9 @@
+# Delete roll (cardtest.sh): all of the roll above the newest waiting (the
+# top one if none is above): SET would be prints only, INFO is the whole roll
+noroll
+open darkroom
+1500 up
+1900 left
+2700 info
+3500 set
+6000 end

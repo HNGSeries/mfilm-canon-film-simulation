@@ -6,7 +6,10 @@
 #                              taller than wide = shot on its side), in turn, instead of test scenes
 #   CARD=out/cardp ./mkcard.sh --problems
 #                              instead, the rolls the darkroom has to find or explain (cardtest.sh):
-#                              shot as JPEG, Adobe RGB with a file deleted, across the IMG_9999 wrap
+#                              shot as JPEG, Adobe RGB with a file deleted, across the IMG_9999 wrap;
+#                              cardtest.sh then deletes them (Delete roll; FOS_KEEP: a file that can't go),
+#                              and develops them on a card that takes no long folder names
+#                              (FOS_LONG_DIRS_EMPTY, FOS_NO_RMDIR: port_files.c)
 set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p out

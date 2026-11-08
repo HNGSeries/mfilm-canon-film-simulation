@@ -4,7 +4,8 @@
  * camera frame by frame (a roll that ran into a new DCIM folder has a log
  * in each). Its prints are kept in ML/DARKROOM/Rnnn/, Fnn.BMP for frame nn
  * and SHEET.BMP for the contact sheet; a roll is developed when they are
- * all there.
+ * all there. A roll out of the camera can be deleted here too: its prints,
+ * or with them the frames its logs list and the logs.
  */
 
 #include "fos.h"
@@ -42,45 +43,85 @@ static int tagged(const char *dir, int roll)
     return f != 0;
 }
 
+/* a file, or an empty folder; 1 if it's still there */
+static int remove_logged(const char *path)
+{
+    if (!fos_port_remove(path)) return 0;
+    char msg[200];
+    snprintf(msg, sizeof(msg), "lab: can't remove %s", path);
+    fos_port_log(msg);
+    return 1;
+}
+
 static int make_tagged(const char *dir, int roll, int film)
 {
     if (fos_port_mkdir(dir) < 0) return 0;
     char path[128], text[96];
     snprintf(path, sizeof(path), "%s/ROLL%03d.TXT", dir, roll);
     void *f = fos_port_open(path, 1);
-    if (!f) return 0;
+    if (!f)
+    {
+        /* the folder was made, but nothing can be written into it (a long
+         * name on a 550D's exFAT card, #65): it goes again, still empty */
+        remove_logged(dir);
+        return 0;
+    }
     int n = snprintf(text, sizeof(text), "roll = %03d\nfilm = %s\n", roll, fos_films[film].key);
     fos_port_write(f, text, n);
     fos_port_close(f);
     return 1;
 }
 
+/* The day's names for the folder, in the order they are tried: k 0..8 are
+ * "Sep0906 Portra400", "Sep0906 Portra400 2" .. " 9" (another roll that
+ * day), k 9.. are SEP0906, SEP0906B .. SEP0906Z where the card takes no
+ * long names */
+#define DAY_LONG 9
+#define DAY_NAMES (DAY_LONG + 26)
+static void day_dir(char *buf, int size, int k, int m, int d, const char *film_name)
+{
+    static const char months[12][4] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    int short_name = k >= DAY_LONG;
+    char mon[4], suffix[3] = { 0, 0, 0 };
+    memcpy(mon, months[m - 1], 4);
+    if (short_name)
+    {
+        mon[1] -= 32;
+        mon[2] -= 32;
+        if (k > DAY_LONG) suffix[0] = (char) ('A' + k - DAY_LONG);
+    }
+    else if (k)
+    {
+        suffix[0] = ' ';
+        suffix[1] = (char) ('1' + k);
+    }
+    snprintf(buf, size, "%sDCIM/%s%02d%02d%s%s%s", fos_port_card(), mon, m, d, short_name ? "" : " ",
+             short_name ? "" : film_name, suffix);
+}
+
 int fos_lab_dcim_dir(char *buf, int size, int roll, int film, const char *when)
 {
-    static const char *const months[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
     int m = when && strlen(when) >= 10 ? atoi(when + 5) : 0, d = m ? atoi(when + 8) : 0;
     if (m < 1 || m > 12 || d < 1 || d > 31) return -1;
     film = fos_clamp(film, 0, fos_nfilms - 1);
     const char *film_name = fos_films[film].shortname ? fos_films[film].shortname : fos_films[film].key;
-    /* "Sep0906 Portra400", "Sep0906 Portra400 2" for another roll that day */
-    for (int k = 1; k < 10; k++)
+    /* developed before: its folder, long or short (so a card without long
+     * names doesn't get the long one tried again each time), whichever of
+     * the day's names it has: another roll deleted since leaves a gap */
+    for (int k = 0; k < DAY_NAMES; k++)
     {
-        if (k == 1) snprintf(buf, size, "%sDCIM/%s%02d%02d %s", fos_port_card(), months[m - 1], m, d, film_name);
-        else snprintf(buf, size, "%sDCIM/%s%02d%02d %s %d", fos_port_card(), months[m - 1], m, d, film_name, k);
-        if (dir_exists(buf)) { if (tagged(buf, roll)) return 0; continue; }
-        if (make_tagged(buf, roll, film) && dir_exists(buf)) return 0;
-        break;                          /* no long names on this card */
+        day_dir(buf, size, k, m, d, film_name);
+        if (dir_exists(buf) && tagged(buf, roll)) return 0;
     }
-    /* SEP0906, SEP0906B, ... */
-    char up[4] = { months[m - 1][0], (char) (months[m - 1][1] - 32), (char) (months[m - 1][2] - 32), 0 };
-    for (int k = 0; k < 26; k++)
+    /* else the first free name */
+    for (int k = 0; k < DAY_NAMES; k++)
     {
-        char suffix[2] = { (char) (k ? 'A' + k : 0), 0 };
-        snprintf(buf, size, "%sDCIM/%s%02d%02d%s", fos_port_card(), up, m, d, suffix);
-        if (dir_exists(buf)) { if (tagged(buf, roll)) return 0; continue; }
-        if (make_tagged(buf, roll, film)) return 0;
-        return -1;
+        day_dir(buf, size, k, m, d, film_name);
+        if (dir_exists(buf)) continue;
+        if (k >= DAY_LONG) return make_tagged(buf, roll, film) ? 0 : -1;
+        if (make_tagged(buf, roll, film) && dir_exists(buf)) return 0;
+        k = DAY_LONG - 1;               /* no long names on this card */
     }
     return -1;
 }
@@ -256,9 +297,13 @@ static int print_entry(void *ctx, const char *name, int is_dir)
     return 1;
 }
 
+/* paths found for a roll, to act on once their folders have been read */
+struct found { int roll, n; char paths[8][64]; };
+
 /* our folders in DCIM (not Canon's "100CANON"): which roll each holds, by
- * its tag file, and how many JPEGs */
-struct jpeg_scan { struct fos_lab_roll *rolls; int n; int roll, count; };
+ * its tag file, and how many JPEGs; with found, the paths of those that
+ * hold its roll */
+struct jpeg_scan { struct fos_lab_roll *rolls; int n; int roll, count; struct found *found; };
 
 static int jpeg_file(void *ctx, const char *name, int is_dir)
 {
@@ -281,6 +326,8 @@ static int jpeg_folder(void *ctx, const char *name, int is_dir)
     fos_port_list(dir, jpeg_file, s);
     for (int i = 0; i < s->n; i++)
         if (s->rolls[i].number == s->roll) s->rolls[i].jpegs += s->count;
+    struct found *f = s->found;
+    if (f && s->roll == f->roll && f->n < 8 && strlen(dir) < sizeof(f->paths[0])) strcpy(f->paths[f->n++], dir);
     return 1;
 }
 
@@ -300,7 +347,7 @@ int fos_lab_scan(struct fos_lab_roll *rolls, int max)
     }
     char dcim[64];
     snprintf(dcim, sizeof(dcim), "%sDCIM", fos_port_card());
-    struct jpeg_scan js = { rolls, s.n, -1, 0 };
+    struct jpeg_scan js = { rolls, s.n, -1, 0, 0 };
     fos_port_list(dcim, jpeg_folder, &js);
     /* newest first */
     for (int i = 1; i < s.n; i++)
@@ -421,4 +468,90 @@ int fos_lab_frames(int roll, struct fos_lab_frame *frames, int max)
         if (strlen(base) == 12 && base[8] == '.') memcpy(base, seen, 4);
     }
     return n;
+}
+
+/* ---------------------------------------------------------------- deleting a roll */
+
+/* A folder of ours: the roll's prints (ML/DARKROOM/Rnnn: Fnn.BMP, SHEET.BMP),
+ * or its folder in DCIM (IMG_0102.JPG and the roll's tag, ROLL012.TXT).
+ * Those files go, the tag last and only once the rest has (a folder that
+ * couldn't all go is still the roll's, to delete again), then the folder
+ * once nothing else is in it: one with anything left is never removed. The
+ * names are taken first and removed after, not while the folder is read.
+ * How many files couldn't be removed; a folder that stays adds to *dirs. */
+#define SWEEP_MAX (FOS_MAX_FRAMES + 2)
+struct sweep { int n; char names[SWEEP_MAX][13]; };
+
+static int sweep_entry(void *ctx, const char *name, int is_dir)
+{
+    struct sweep *s = ctx;
+    int len = (int) strlen(name);
+    if (!is_dir && len >= 5 && len <= 12 && s->n < SWEEP_MAX
+        && (!strcmp(name + len - 4, ".BMP") || !strcmp(name + len - 4, ".JPG")))
+        memcpy(s->names[s->n++], name, len + 1);
+    return 1;
+}
+
+static int sweep(const char *dir, int roll, int *dirs)
+{
+    struct sweep s;
+    s.n = 0;
+    fos_port_list(dir, sweep_entry, &s);
+    char path[160];
+    int failed = 0;
+    for (int i = 0; i <= s.n; i++)
+    {
+        if (i < s.n) snprintf(path, sizeof(path), "%s/%s", dir, s.names[i]);
+        else if (failed) break;
+        else snprintf(path, sizeof(path), "%s/ROLL%03d.TXT", dir, roll);      /* none in Rnnn: nothing to do */
+        failed += remove_logged(path);
+    }
+    int left = fos_port_list(dir, first_only, 0);       /* < 0: there was none */
+    *dirs += left ? left > 0 : remove_logged(dir);
+    return failed;
+}
+
+/* the roll's logs, one in each DCIM folder it ran into */
+static void logs_log(void *ctx, const char *folder, const char *name, int number)
+{
+    struct found *f = ctx;
+    if (number == f->roll && f->n < 8) snprintf(f->paths[f->n++], sizeof(f->paths[0]), "%sDCIM/%s/%s", fos_port_card(), folder, name);
+}
+
+int fos_lab_delete(int roll, int whole, struct fos_lab_frame *frames)
+{
+    struct fos_roll cam;
+    fos_port_roll(&cam);
+    if (cam.loaded && cam.number == roll) return -1;           /* never the one in the camera */
+    /* its prints: the darkroom's, and its folder in DCIM */
+    struct found f;
+    f.roll = roll;
+    f.n = 1;
+    snprintf(f.paths[0], sizeof(f.paths[0]), "%sML/DARKROOM/R%03d", fos_port_card(), roll);
+    struct jpeg_scan js = { 0, 0, -1, 0, &f };
+    char dcim[64];
+    snprintf(dcim, sizeof(dcim), "%sDCIM", fos_port_card());
+    fos_port_list(dcim, jpeg_folder, &js);
+    int failed = 0, dirs = 0;
+    for (int i = 0; i < f.n; i++) failed += sweep(f.paths[i], roll, &dirs);
+    if (whole)
+    {
+        /* its frames, only those its logs list, by the names the darkroom
+         * finds them by (Canon's _MG_ in Adobe RGB, a JPEG where it was
+         * shot as one, each in its folder across IMG_9999); then the logs,
+         * last and only once every file has gone (an empty folder that
+         * stays doesn't count), so a roll that couldn't all go is still
+         * there to delete again */
+        int n = fos_lab_frames(roll, frames, FOS_MAX_FRAMES);
+        for (int i = 0; i < n; i++)
+            if (!frames[i].missing || frames[i].jpeg) failed += remove_logged(frames[i].cr2);
+        f.n = 0;
+        if (!failed) each_log(logs_log, &f);
+        for (int i = 0; i < f.n; i++) failed += remove_logged(f.paths[i]);
+    }
+    failed += dirs;
+    char msg[64];
+    snprintf(msg, sizeof(msg), "lab: roll %03d: deleted %s, %d left", roll, whole ? "all" : "prints", failed);
+    fos_port_log(msg);
+    return failed;
 }

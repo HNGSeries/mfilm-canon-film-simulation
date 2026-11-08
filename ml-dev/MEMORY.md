@@ -25,8 +25,8 @@ stops at power on and blinks the card light **3 long, 3 short, a pause**, foreve
 | Camera | Boot method | Limit (bytes) | Full build | No darkroom | Verdict |
 |---|---|---|---|---|---|
 | EOS M | sized to fit | 727,072 (found on the camera) | 715,552 | | ✅ works |
-| 650D | sized to fit | at least 689,664 (no darkroom starts) | 743,680 (black screen) | 689,664 | ✅ starts without the darkroom: released that way |
-| 700D | sized to fit | unknown | 743,936 (black screen, #19) | | 🧪 released without the darkroom, as the 650D |
+| 650D | sized to fit | at least 689,664 (no darkroom starts) | 743,680 (black screen) | 689,664 | ✅ starts with the darkroom as a module (#54): released that way |
+| 700D | sized to fit | unknown: 523,520 starts (the module build, #19) | 743,936 (black screen, #19) | | ✅ starts with the darkroom as a module (#19): released that way |
 | 5D Mark III 1.1.3 | sized to fit | unknown | 737,536 | | try it |
 | 5D Mark III 1.2.3 | sized to fit | unknown | 733,440 | | try it |
 | 60D | sized to fit | unknown | 740,096 | | ✅ a tester's 60D starts (#3) |
@@ -54,8 +54,11 @@ that stays on.
 
 That is what happened: the full 650D and 700D builds give a black screen at power on (a 650D tester by message,
 the 700D in #19). The 650D tester built it `--no-darkroom` (689,664 bytes at boot) and it starts with the film
-interface. So both are `nodark` in cameras.txt: CI builds and releases them without the darkroom, under the
-usual zip name. Their rolls are developed with Darkrooms.
+interface. So from 0.1.3 to 0.1.5 both were `nodark` in cameras.txt: CI built and released them without the
+darkroom, under the usual zip name, and their rolls were developed with Darkrooms. The film OS as a module
+(below) brought the darkroom back: a 650D (#54) and a 700D (#19) start 0.1.5's module build and develop in the
+camera. Since then both are `:module` in cameras.txt, their one zip is the module build, and no camera is
+released without the darkroom.
 
 The 5D Mark II hangs at power on, or when the shutter is pressed, with the full build (#18, #20, #27, #32).
 Enzo-Reveillon left 19 Magic Lantern features M-Film doesn't use out of it (zebras, focus peaking, waveform,
@@ -64,7 +67,7 @@ with the in-camera darkroom. The fork does the same for it (`LEAN`): 706,048 byt
 
 The same cut doesn't build on the 650D (ML there needs FPS_OVERRIDE, FPS_RAMPING and FOCUS_PEAK). Without those
 three, a lean 650D with the darkroom takes 718,336 bytes: under the EOS M's 727,072, but above the 689,664 known
-to start on a 650D. Worth a tester's try before it replaces the no-darkroom release.
+to start on a 650D. It was never needed: the module build (below) has the darkroom at 523,264 bytes.
 
 ## The film OS as a module (`build_fork.sh --module`)
 
@@ -80,8 +83,8 @@ Boot size with `--module`, full film OS with the darkroom (2026-11, gcc 13.2):
 | Camera | Built in (the survey above) | As a module | Limit | |
 |---|---|---|---|---|
 | EOS M | 720,416 | 536,864 | 727,072 | |
-| 650D | 743,680 | 564,992 | 689,664 (no darkroom starts) | the darkroom back, under what starts |
-| 700D | 743,936 | 565,248 | unknown | as the 650D |
+| 650D | 743,680 | 523,264 (lean) | 689,664 (no darkroom starts) | ✅ starts, darkroom included (#54) |
+| 700D | 743,936 | 523,520 (lean) | unknown: this starts | ✅ starts, darkroom included (#19) |
 | 6D | 740,864 | 562,176 | 868,096 | |
 | 5D Mark III 1.1.3 / 1.2.3 | 737,536 / 733,440 | 558,592 / 554,496 | unknown | |
 | 60D | 740,096 | 561,152 | unknown | |
@@ -94,8 +97,9 @@ Boot size with `--module`, full film OS with the darkroom (2026-11, gcc 13.2):
 | 600D | 716,800 | 537,856 | 589,824 | ✅ fits |
 | 1100D | 672,000 | 493,056 | 524,032 | ✅ fits |
 
-The five fixed-reservation cameras are built this way (`testing:module` in `cameras.txt`), with nothing
-of Magic Lantern left out. The others keep the built-in film OS in their main zip; since 0.1.4 each release also has
+The five fixed-reservation cameras are built this way (`:module` in `cameras.txt`), with nothing
+of Magic Lantern left out. So are the 650D and 700D (lean, as their earlier builds), because it is the way they
+start with the darkroom. The others keep the built-in film OS in their main zip; since 0.1.4 each release also has
 `M-Film-camera-<camera>-module.zip` (CI job `camera-module`), so testers can try the module on every camera.
 
 What only a camera can tell:

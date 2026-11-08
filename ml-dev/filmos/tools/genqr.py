@@ -7,7 +7,7 @@ ignored). With no links, no file: the panel just says thanks.
 
 FOSQR.BIN: "FOSQ", count, then per code: label[48], url[80], its size in
 modules, and the modules row by row, 8 to a byte (most significant first).
-Needs segno (pip install segno).
+Needs segno: python3-segno on Ubuntu (setup_wsl.sh installs it), pip install segno in a venv.
 """
 
 import struct

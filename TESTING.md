@@ -1,9 +1,10 @@
 # Testing M-Film on your camera
 
-M-Film runs on the **Canon EOS M** and the **6D**. The same code now **builds** for 13 more cameras
-(100D, 650D, 700D, 70D, 5D Mark III on two firmwares, 550D, 600D, 60D, 1100D, 500D, 50D, 5D Mark II),
-but few have been tried yet. If you have one, you can be the first: it takes about 20 minutes, and you
-can always go back.
+M-Film was made on the **Canon EOS M**. The same code **builds** for 14 more cameras (100D, 650D,
+700D, 6D, 70D, 5D Mark III on two firmwares, 550D, 600D, 60D, 1100D, 500D, 50D, 5D Mark II), and
+testers have tried most of them: the [camera table](README.md#cameras) says how far each one got and
+what's still wrong. If yours needs a first tester, or has a known problem you can check, you can help:
+it takes about 20 minutes, and you can always go back.
 
 > **Is it safe?** Magic Lantern runs from the card and changes nothing permanent in the camera.
 > The worst that usually happens is that the camera doesn't start with the card in: take the
@@ -20,8 +21,8 @@ From the [latest release](../../releases/latest) (or the newest run under *Actio
 |---|---|---|
 | Canon EOS M | 2.0.2 | `M-Film-camera-EOSM.202.zip` · `M-Film-camera-EOSM.202-module.zip` |
 | Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | `M-Film-camera-100D.101.zip` |
-| Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | `M-Film-camera-650D.104.zip` · `M-Film-camera-650D.104-module.zip` |
-| Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | `M-Film-camera-700D.115.zip` · `M-Film-camera-700D.115-module.zip` |
+| Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | `M-Film-camera-650D.104.zip` |
+| Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | `M-Film-camera-700D.115.zip` |
 | Canon EOS 6D | 1.1.6 | `M-Film-camera-6D.116.zip` · `M-Film-camera-6D.116-module.zip` |
 | Canon EOS 70D | 1.1.2 | `M-Film-camera-70D.112.zip` |
 | Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | `M-Film-camera-5D3.113.zip` · `M-Film-camera-5D3.113-module.zip` |
@@ -40,10 +41,12 @@ The firmware must match exactly (MENU → last settings tab → *Firmware ver.*)
 **Two files for most cameras (since 0.1.4).** `M-Film-camera-<camera>.zip` has the film OS built into
 Magic Lantern, as before. `M-Film-camera-<camera>-module.zip` has it as a module that loads after the
 camera has started, which takes about 180 KB less of the memory a camera can spare at power on
-([MEMORY.md](ml-dev/MEMORY.md)). It's new and untried: please test it too, especially if the first one
-hangs at power on (5D Mark II, 650D, 700D). The 100D, 70D, 550D, 600D and 1100D only fit this way, so
-their one zip is the module one. If the film shelf doesn't appear and you see Magic Lantern's own menu
-instead, the module didn't load: its line in the *Modules* tab says why. Tell us what it says.
+([MEMORY.md](ml-dev/MEMORY.md)). Please test it too, especially if the first one hangs at power on
+(5D Mark II). Where the table has one zip, it is the module one: on the 100D, 70D, 550D, 600D and 1100D
+the film OS only fits this way, and on the 650D and 700D it is the way it starts with the in-camera
+darkroom (in 0.1.5 that is their `-module.zip`: the plain one there has no darkroom). If the film shelf
+doesn't appear and you see Magic Lantern's own menu instead, the module didn't load: its line in the
+*Modules* tab says why. Tell us what it says.
 
 ## 2. Install
 
@@ -66,8 +69,12 @@ Go through these and note what happens (a photo of the screen helps a lot):
 - [ ] **Trash** opens Home; **PLAY** opens the prints instead of Canon's playback.
 - [ ] Load a roll and shoot a few frames **through the viewfinder**, and a few in **LiveView**.
       Does the frame count go up? Is the HUD drawn in LiveView?
+- [ ] With a manual (adapted) lens, turn off *Viewfinder → Exposure simulation*. Is LiveView bright enough
+      to focus? Does the HUD's meter needle still move when you half-press?
 - [ ] Rewind the roll and **develop it in the camera** (Darkroom). Do prints come out? How long per frame?
-- [ ] Open the card in the **M-Film program** on a computer: are the rolls and films there?
+- [ ] In the Darkroom, **◀** on a developed roll: *Delete roll* → *Prints only* → *Delete*. On a computer:
+      are its JPEG folder in `DCIM` and `ML/DARKROOM/Rnnn` gone, with no empty folder left?
+- [ ] Open the card in **Darkrooms** on a computer: are the rolls and films there?
 
 Then [open an issue](../../issues/new/choose) with: your camera and firmware, what worked, what didn't,
 and the file **`ML/FILMROLL.LOG`** from the card attached.
@@ -76,11 +83,48 @@ and the file **`ML/FILMROLL.LOG`** from the card attached.
 
 The camera found no update file it accepts on the card:
 - The Canon firmware isn't exactly the one in the table: `ML-SETUP.FIR` only works on that version.
-- `ML-SETUP.FIR` isn't at the top of the card. Unzipping on a Mac often makes a folder
-  (`M-Film-camera-EOSM.202/`). The card's top level should show `autoexec.bin`, `ML-SETUP.FIR` and `ML`.
+- `ML-SETUP.FIR` isn't at the top of the card. Unzipping on a Mac, or with Windows' *Extract All*, often
+  makes a folder (`M-Film-camera-EOSM.202/`). The card's top level should show `autoexec.bin`,
+  `ML-SETUP.FIR` and `ML`.
 - On a Mac, hidden `._` files next to them can trip the camera. With the card in the reader, run
   `dot_clean -m /Volumes/EOS_DIGITAL` in *Terminal* (your card's name in place of `EOS_DIGITAL`),
   then eject the card before taking it out.
+
+### If the camera says "ML directory not found"
+
+Magic Lantern's installer (`ML-SETUP.FIR`, run by *Firmware ver.* → update) prints this, with
+"Please copy all ML files.": it found `autoexec.bin` at the top of the card, but no `ML` folder next to
+it ([#42](../../issues/42)). On a computer, the card's top level should look like this, with no folder
+around it:
+
+```
+autoexec.bin
+ML-SETUP.FIR
+ML/
+```
+
+- Unzipping often makes a folder (`M-Film-camera-6D.116/`; Windows' *Extract All* does too). Copy what
+  is inside it, the `ML` folder included, not the folder itself.
+- Format the card **in the camera** first, not on the computer, then copy the files onto it.
+- A card bigger than 32 GB is formatted as exFAT. If a big card keeps saying this, a card of 32 GB or
+  less is a good second try.
+
+### If Canon's screen flickers over M-Film's
+
+Some DSLRs keep drawing their own screen over M-Film's (the top plate, the HUD or a film OS page).
+M-Film puts its own back as soon as it sees that. With **System → Debug log** on, `ML/FILMROLL.LOG`
+says what it saw. A line with "seen N times so far" is written the 1st, 51st, 101st... time: N counts
+the times, not the lines.
+- `hud: the plate: Canon drew over rows 22-60 (39 of them), put back; seen 51 times so far, logged every 50th`
+  (`film os:` on a film OS page).
+- `Canon took its screen back, held again`: Canon let go of the hold M-Film keeps on its screen.
+- `screen: Canon put its other buffer on the screen`: Canon showed its own copy of the screen in
+  front of M-Film's, rather than drawing over it.
+- `drawn over for 2 s on end ..., not checking for 5 s`: Canon draws there all the time, and M-Film
+  stops putting its screen back for a while.
+
+Attach the log and say when the flicker happens: when the camera is idle, when the meter moves,
+after each shot, or when you switch screens.
 
 ### If you turned on Magic Lantern's console
 
@@ -91,8 +135,8 @@ reached while M-Film runs. On a computer, open `ML/SETTINGS/magic.cfg` on the ca
 ### If it doesn't start
 
 Battery out, card out. Then please tell us, because it most likely means the program is too big for
-that camera's memory (on the EOS M the limit is about 727 KB at boot; the other builds are 670–750 KB, and
-nobody knows their limits yet). Say
+that camera's memory (on the EOS M the limit is about 727 KB at boot; the built-in builds take 700–750 KB,
+the module ones 490–575 KB, and most cameras' limits aren't known yet). Say
 which camera and firmware, and whether the card light stayed on.
 
 ## 4. Remove it

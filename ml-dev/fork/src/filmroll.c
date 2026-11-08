@@ -89,6 +89,7 @@ static CONFIG_INT("filmroll.scr_sat",   scr_sat,          0);   /* -6..6 */
 static CONFIG_INT("filmroll.scr_warm",  scr_warm,         0);
 static CONFIG_INT("filmroll.scr_bright", scr_bright,      0);
 static CONFIG_INT("filmroll.scr_flip",  scr_flip,         0);   /* 0 Canon's hinge, 1 normal, 2 upside down, 3 mirrored */
+static CONFIG_INT("filmroll.expsim",    expsim_set,      -1);   /* LiveView's exposure simulation: 1 on, 0 off, -1 as Canon has it */
 
 /* roll state, kept across power cycles */
 static CONFIG_INT("filmroll.loaded",    roll_loaded,      0);
@@ -289,6 +290,69 @@ static void apply_film(int index)
     lens_set_rawiso(iso_to_raw(f->iso));
 }
 
+/* Exposure simulation (Viewfinder > Exposure simulation, #66). On, LiveView
+ * shows the exposure the frame will get: at a slow film's ISO (loading a roll
+ * sets it) and with a manual lens stopped down, too dark to focus. Off, Canon
+ * shows LiveView at a brightness you can focus by, whatever the exposure. It
+ * is Canon's own setting (PROP_LIVE_VIEW_VIEWTYPE), which Magic Lantern's
+ * ExpSim item sets; that menu is gone (see the top), so it is here. Until it
+ * is set here Canon's is left as it is; once it is, it goes back in when it
+ * changes, when LiveView starts and after a roll is loaded. The HUD's meter
+ * is Canon's reading of the exposure (get_ae_value), not of the picture on
+ * the screen; that Canon keeps metering with it off wants checking on a
+ * camera (the log has the reading each time it is set). Magic Lantern can't
+ * set it on the 600D and 1100D (no CONFIG_EXPSIM): there the item isn't shown. */
+static volatile int expsim_due = 0;     /* set it at the next chance */
+
+static int expsim_get()
+{
+#ifdef CONFIG_EXPSIM
+    return expsim_set >= 0 ? expsim_set : get_expsim() != 0;
+#else
+    return -1;
+#endif
+}
+
+/* called from the main loop */
+static void expsim_step()
+{
+#ifdef CONFIG_EXPSIM
+    static int was_lv = 0, tries = 0, wait_until = 0;
+    int now = get_ms_clock();
+    if (lv && !was_lv)
+    {
+        expsim_due = 1;
+        wait_until = now + 1000;        /* LiveView started: once it has settled */
+    }
+    was_lv = lv;
+    if (!expsim_due) return;
+    if (expsim_set < 0)
+    {
+        expsim_due = 0;
+        return;
+    }
+    /* photo LiveView only (the 5D Mark II's movie display is its own), between pictures,
+     * and not on a half-press: not while Canon focuses and meters (a roll just loaded,
+     * the first thing done is often to half-press) */
+    if (!lv || is_movie_mode() || get_halfshutter_pressed() || !job_state_ready_to_take_pic() || now - wait_until < 0)
+        return;
+    int want = expsim_set ? 1 : 0;
+    if (get_expsim() != want && tries < 5)
+    {
+        tries++;
+        set_expsim(want);
+        dbg("expsim: %s, Canon's now %d (try %d), meter %d", want ? "on" : "off", get_expsim(), tries, get_ae_value());
+        if (get_expsim() != want)
+        {
+            wait_until = get_ms_clock() + 1000;
+            return;
+        }
+    }
+    expsim_due = 0;
+    tries = 0;
+#endif
+}
+
 /* each frame is saved with a full-size RAW (RAW, or RAW+JPEG), so the
  * darkroom can develop it; a JPEG, mRAW or sRAW alone it can't */
 static int saves_raw()
@@ -483,6 +547,12 @@ static void poll_frames()
 
 static volatile int ui_running = 0;     /* the film OS owns the screen and the buttons */
 static volatile int ui_abort = 0;
+#if !FOS_LV_ONLY
+static volatile int canon_handover = 0; /* the film OS closed with Canon's screen still held, for the HUD or the plate (hud_step) */
+#endif
+/* the bitmap buffer on the screen as we last drew in it (vram_moved); 0 once
+ * Canon has its screen back, when its own flips are none of ours */
+static const uint8_t *vram_shown = 0;
 static int ui_after = 0;                /* what to do once it has let go */
 static int ui_last_mode_poke = 0;
 static int ui_last_palette = 0;
@@ -554,14 +624,21 @@ static void palette_canon()
 /* Take the display from Canon's GUI the same way the ML menu does:
  * switch Canon to the ML menu GUI mode (LiveView stops drawing its
  * overlays and stops handling keys), stop Canon from flipping its own
- * bitmap buffer, then turn the bitmap layer back on for us. */
+ * bitmap buffer, then turn the bitmap layer back on for us. Its buffer is
+ * held from before the switch, and again while it lands: outside LiveView
+ * that mode is Canon's own menu, which showed for a moment as the film OS
+ * opened (#19), and opening it can let go of the hold. */
 static void film_ui_open()
 {
     NotifyBoxHide();
     if (lv) bmp_off();
-    SetGUIRequestMode(GUIMODE_ML_MENU);
-    msleep(200);
     canon_gui_disable_front_buffer();
+    SetGUIRequestMode(GUIMODE_ML_MENU);
+    for (int i = 0; i < 10; i++)
+    {
+        msleep(20);
+        canon_gui_disable_front_buffer();       /* nothing to do while it is still held */
+    }
     CancelDateTimer();
     clrscr();
     bmp_on();
@@ -570,10 +647,30 @@ static void film_ui_open()
 
 static void film_ui_close()
 {
+    /* a page left at once (the shutter button, a Canon dialog) is still on
+     * the screen: off it before Canon's palette comes back, or it shows in
+     * Canon's colours while the GUI mode changes (#19). In LiveView bmp_off
+     * hides it. */
+    if (!lv) clrscr();
     palette_canon();
     if (lv) bmp_off();
     SetGUIRequestMode(0);
     msleep(100);
+#if !FOS_LV_ONLY
+    /* back to the HUD or the plate: Canon's screen stays held, so it doesn't
+     * show between ours (#19, #64). hud_step gives it back if ours doesn't
+     * come; Canon's menu (AFTER_CANON_MENU) gets it now. */
+    canon_handover = 0;
+    if (hud_enabled && roll_loaded && DISPLAY_IS_ON && !is_movie_mode() && !(ui_after & AFTER_CANON_MENU))
+    {
+        canon_gui_disable_front_buffer();
+        clrscr();
+        canon_handover = 1;
+        if (lv) bmp_on();
+        return;
+    }
+#endif
+    vram_shown = 0;
     canon_gui_enable_front_buffer(0);
     clrscr();
     redraw();
@@ -611,6 +708,7 @@ static void ui_task(int open)
     if (ui_after & AFTER_APPLY)
     {
         apply_film(roll_film);
+        expsim_due = 1;
         beep();
         film_capture_check();
     }
@@ -646,7 +744,7 @@ int fos_port_ms()
     return get_ms_clock();
 }
 
-static void ui_overdrawn_check();
+static void ui_overdrawn_check(int at_once);
 
 void fos_port_sleep(int ms)
 {
@@ -673,7 +771,16 @@ void fos_port_sleep(int ms)
         palette_ours();
         ui_last_palette = now;
     }
-    ui_overdrawn_check();
+    /* Canon can let go of the hold on its screen by itself (a dialog of its
+     * own changing under us): take it again, and look for what it drew now */
+    int let_go = !canon_gui_front_buffer_disabled();
+    if (let_go)
+    {
+        static int times = 0;
+        canon_gui_disable_front_buffer();
+        if (times++ % 50 == 0) dbg("film os: Canon took its screen back, held again (seen %d time%s so far)", times, times == 1 ? "" : "s");
+    }
+    ui_overdrawn_check(let_go);
 }
 
 int fos_port_key()
@@ -710,15 +817,18 @@ int fos_port_abort()
 
 /* Canon drawing over our screen. On some DSLRs Canon keeps drawing its own
  * screen straight onto the one we show, with its buffer held or not: over
- * the top plate on the 50D and 500D (#43 #44), over the film OS on the 60D
- * (its exposure scale, #25 #49) and the 550D (its battery icon, #50). Each
- * row we put on the screen leaves a sum of what it holds (the film OS's rows
- * as they're presented, the plate's after it is drawn: the two never show at
- * once, so they share it). Every 50 ms half the rows are read back; a row
- * that no longer matches means Canon drew there, and the screen is painted
- * again at once. If it never matches for 2 s (Canon drawing all the time,
- * or a camera that doesn't read back what we wrote), the check rests for
- * 5 s, then 10, up to a minute, so it can't keep painting without end. */
+ * the top plate on the 50D, 500D, 550D, 600D and 6D (#43 #44 #64 #17), over
+ * the film OS on the 60D (its exposure scale, #25 #49), the 550D (its
+ * battery icon, #50) and the 600D (#64). Each row we put on the screen
+ * leaves a sum of what it holds (the film OS's rows as they're presented,
+ * the plate's as they're copied: the two never show at once, so they share
+ * it). Every 50 ms half the rows are read back; once a row no longer
+ * matches, all of them are, and the rows Canon drew on are put back at
+ * once, from what we drew (the film OS's canvas, the plate's rows). If it
+ * never matches for 2 s (Canon drawing all the time, or a camera that
+ * doesn't read back what we wrote), the check rests for 5 s, then 10, up to
+ * a minute, so it can't keep painting without end. The log counts how many
+ * times it found Canon's drawing and says on which rows, every 50th time. */
 static uint16_t shown_sum[FOS_H];        /* 16 bits a row: 1 KB less at boot, and a 1 in 65,536 miss */
 
 static uint16_t row_sum(const uint8_t *row)
@@ -732,8 +842,26 @@ static uint16_t row_sum(const uint8_t *row)
 
 struct overdraw_check { const char *what; int half, in_a_row, rest, resting_until, times; };
 
-/* 1 if Canon has drawn over vram since its rows' sums were taken */
-static int overdrawn(struct overdraw_check *o, const uint8_t *vram)
+/* 1 if the buffer on the screen isn't the one we last drew in: Canon put
+ * its other one in front (its screen, not ours, until we draw it there).
+ * Logged, so a tester's log tells that apart from Canon drawing over ours;
+ * not after Canon had its screen back (vram_shown 0), when flipping its
+ * buffers is its own business. */
+static int vram_moved(const uint8_t *vram)
+{
+    static int times = 0;
+    if (vram == vram_shown) return 0;
+    if (vram_shown && times++ % 50 == 0)
+        dbg("screen: Canon put its other buffer on the screen, %x -> %x (seen %d time%s so far)",
+            (uint32_t) (uintptr_t) vram_shown, (uint32_t) (uintptr_t) vram, times, times == 1 ? "" : "s");
+    vram_shown = vram;
+    return 1;
+}
+
+/* how many rows of vram Canon has drawn over since their sums were taken:
+ * the first and the last in *y0, *y1, each marked in stale (a bit a row)
+ * if it is given */
+static int overdrawn(struct overdraw_check *o, const uint8_t *vram, uint8_t *stale, int *y0, int *y1)
 {
     int now = get_ms_clock();
     if (o->resting_until && now - o->resting_until < 0) return 0;
@@ -743,7 +871,16 @@ static int overdrawn(struct overdraw_check *o, const uint8_t *vram)
     for (; y < FOS_H; y += 2)
         if (row_sum(vram + y * BMPPITCH) != shown_sum[y])
             break;
-    if (y >= FOS_H)
+    int n = 0;
+    if (y < FOS_H)
+        for (y = 0; y < FOS_H; y++)
+            if (row_sum(vram + y * BMPPITCH) != shown_sum[y])
+            {
+                if (!n++) *y0 = y;
+                *y1 = y;
+                if (stale) stale[y >> 3] |= 1 << (y & 7);
+            }
+    if (!n)
     {
         o->in_a_row = 0;
         o->rest = 0;
@@ -754,24 +891,29 @@ static int overdrawn(struct overdraw_check *o, const uint8_t *vram)
         o->in_a_row = 0;
         o->rest = o->rest ? MIN(o->rest * 2, 60000) : 5000;
         o->resting_until = (now + o->rest) ? now + o->rest : 1;
-        dbg("%s: drawn over for 2 s on end (row %d), not checking for %d s", o->what, y, o->rest / 1000);
+        dbg("%s: drawn over for 2 s on end (rows %d-%d), not checking for %d s", o->what, *y0, *y1, o->rest / 1000);
         return 0;
     }
-    if (o->times++ % 50 == 0) dbg("%s: Canon drew over it (%d times, row %d)", o->what, o->times, y);
-    return 1;
+    if (o->times++ % 50 == 0)
+        dbg("%s: Canon drew over rows %d-%d (%d of them), put back; seen %d time%s so far, logged every 50th",
+            o->what, *y0, *y1, n, o->times, o->times == 1 ? "" : "s");
+    return n;
 }
 
-static void ui_overdrawn_check()
+static void ui_overdrawn_check(int at_once)
 {
     static struct overdraw_check check = { .what = "film os" };
     static int last = 0;
     int now = get_ms_clock();
-    if (now - last < 50) return;
+    if (now - last < 50 && !at_once) return;
     last = now;
     uint8_t *vram = bmp_vram_real();
     if (!vram || !DISPLAY_IS_ON) return;
-    if (overdrawn(&check, vram))
-        fos_ui_overdrawn();
+    int y0, y1;
+    if (vram_moved(vram))
+        fos_ui_overdrawn(0, FOS_H);
+    else if (overdrawn(&check, vram, 0, &y0, &y1))
+        fos_ui_overdrawn(y0, y1 + 1);
 }
 
 void fos_port_present(const uint8_t *rows, int pitch, int y0, int y1)
@@ -920,6 +1062,18 @@ int fos_port_mkdir(const char *path)
     return is_dir(path) ? 0 : -1;
 }
 
+/* Canon's FIO_RemoveFile, for a file or an empty folder. Whether it takes a
+ * folder on every camera isn't known, so what counts is that the path is
+ * gone afterwards, as a folder and as a file. */
+int fos_port_remove(const char *path)
+{
+    FIO_RemoveFile(path);
+    if (is_dir(path)) return -1;
+    FILE *f = FIO_OpenFile(path, O_RDONLY | O_SYNC);
+    if (f) FIO_CloseFile(f);
+    return f ? -1 : 0;
+}
+
 void *fos_port_alloc(int size)
 {
     void *p = tmp_malloc(size);
@@ -1030,6 +1184,7 @@ static int *setting_var(int s)
         case FS_SCR_WARM:   return &scr_warm;
         case FS_SCR_BRIGHT: return &scr_bright;
         case FS_SCR_FLIP:   return &scr_flip;
+        case FS_EXPSIM:     return &expsim_set;
     }
     return 0;
 }
@@ -1039,6 +1194,7 @@ int fos_port_get(int s)
     int *v = setting_var(s);
     if (s == FS_FSTOP) return current_fstop();
     if (s == FS_SCR_FLIP && !CAN_FLIP) return -1;
+    if (s == FS_EXPSIM) return expsim_get();
     return v ? *v : 0;
 }
 
@@ -1048,6 +1204,7 @@ void fos_port_set(int s, int value)
     if (v) *v = value;
     hud_dirty = 1;
     if (s == FS_SCR_FLIP) flip_step(1);
+    if (s == FS_EXPSIM) expsim_due = 1;
     /* screen colour: the whole film OS changes at once */
     if (s == FS_SCR_STD || s == FS_SCR_SAT || s == FS_SCR_WARM || s == FS_SCR_BRIGHT)
     {
@@ -1196,7 +1353,171 @@ static void shutter_led(char *buf, int size)
     buf[n] = 0;
 }
 
-static void hud_draw(int lit, int blink, int plate)
+static int hud_stale = 0;               /* some rows are stale, nothing else changed: copy just those */
+
+#if !FOS_LV_ONLY
+/* On a DSLR the HUD and the plate are put together off-screen, a band of
+ * rows at a time, and only the rows that differ from what is on the screen
+ * go to it. Drawn straight onto the screen, each redraw showed for a moment
+ * what it starts with: the plate's black, then its digits, the HUD's strip
+ * without its scale. The plate was redrawn so every 400 ms for its blink,
+ * and on each of Canon's overdraws: the meter and the settings flickering
+ * to black and back (#44, #64). Rows Canon drew over, or that were wiped,
+ * are stale: they go to the screen whatever their sum. The EOS M draws its
+ * HUD straight onto the screen as before: its boot memory is short
+ * (MEMORY.md), and no flicker has been reported there. */
+#define BAND 48                         /* rows at a time: 34 KB, from malloc the first time */
+static uint8_t *band;
+static uint32_t *put_sum;               /* each row as we last put it on the screen, all its pixels (in band's block) */
+static uint8_t *stale;                  /* a bit a row (in band's block) */
+
+static void hud_all_stale()
+{
+    if (stale) memset(stale, 0xFF, FOS_H / 8);
+}
+
+/* the pixels of a row in [x0, x1) pairs, to tell when it changed */
+static uint32_t span_sum(const uint8_t *row, const int *x, int n)
+{
+    uint32_t a = 1, b = 0;
+    for (int i = 0; i < n; i += 2)
+    {
+        int j = x[i], end = x[i + 1];
+        for (; j < end && (j & 3); j++) { a += row[j]; b += a; }
+        for (; j + 4 <= end; j += 4) { a += *(const uint32_t *) (row + j); b += a; }
+        for (; j < end; j++) { a += row[j]; b += a; }
+    }
+    return a ^ (b << 16) ^ (b >> 16);
+}
+
+/* What Canon drew on LiveView while it had let go of its screen, wiped
+ * around the HUD: its own parts stay as they are and go back from band
+ * (all stale). clrscr() would show LiveView without the HUD until then,
+ * and on the 50D that came ten times a second: in LiveView with Canon's
+ * display not the clean one, ML's own kill-flicker gives Canon its screen
+ * back every 100 ms (powersave.c), and hud_step takes it again. */
+static void hud_wipe_around()
+{
+    uint8_t *vram = bmp_vram();
+    if (!vram) return;
+    if (!band) { clrscr(); return; }        /* drawn straight onto the screen anyway */
+    for (int y = 0; y < FOS_H; y++)
+    {
+        int x[4], n = fos_hud_spans(y, x), at = 0;
+        uint8_t *row = vram + y * BMPPITCH;
+        for (int i = 0; i < n; i += 2)
+        {
+            if (x[i] > at) memset(row + at, hud_pal.clear, x[i] - at);
+            at = x[i + 1];
+        }
+        if (at < FOS_W) memset(row + at, hud_pal.clear, FOS_W - at);
+    }
+}
+#else
+static void hud_all_stale() {}
+#endif
+
+/* The HUD (plate 0) or the plate onto the screen: the rows that changed and
+ * the stale ones, or every row (all). only_stale: nothing on it changed, so
+ * only the bands with stale rows need putting together. Returns how many
+ * rows it copied, -1 if it drew straight onto the screen (no memory). */
+static int hud_put(const struct fos_hud *h, int plate, int all, int only_stale)
+{
+    uint8_t *vram = bmp_vram();
+    if (!vram) return 0;
+#if FOS_LV_ONLY
+    (void) plate; (void) all; (void) only_stale;
+    fos_hud_draw(vram, BMPPITCH, h, &hud_pal);
+    return -1;
+#else
+    static int no_band = 0;
+    if (!band && !no_band)
+    {
+        band = malloc(BAND * FOS_W + FOS_H * sizeof(uint32_t) + FOS_H / 8);
+        if (band)
+        {
+            put_sum = (uint32_t *) (band + BAND * FOS_W);
+            stale = (uint8_t *) (put_sum + FOS_H);
+            hud_all_stale();
+        }
+        else
+        {
+            no_band = 1;
+            dbg("hud: no memory to put it together off-screen, drawing it straight onto the screen");
+        }
+    }
+    if (!band)
+    {
+        if (plate) fos_hud_plate(vram, BMPPITCH, h, &hud_pal);
+        else fos_hud_draw(vram, BMPPITCH, h, &hud_pal);
+        return -1;
+    }
+
+    if (vram_moved(vram)) hud_all_stale();
+    int copied = 0;
+    for (int y0 = 0; y0 < FOS_H; y0 += BAND)
+    {
+        int n = MIN(BAND, FOS_H - y0);
+        if (only_stale && !all)
+        {
+            int any = 0;
+            for (int y = y0; y < y0 + n; y += 8) any |= stale[y >> 3];
+            if (!any) continue;
+        }
+        memset(band, hud_pal.clear, n * FOS_W);
+        if (plate) fos_hud_plate_rows(band, FOS_W, y0, n, h, &hud_pal);
+        else fos_hud_draw_rows(band, FOS_W, y0, n, h, &hud_pal);
+        for (int y = y0; y < y0 + n; y++)
+        {
+            int x[4] = { 0, FOS_W }, nx = plate ? 2 : fos_hud_spans(y, x);
+            const uint8_t *src = band + (y - y0) * FOS_W;
+            uint32_t sum = span_sum(src, x, nx);
+            uint8_t bit = 1 << (y & 7);
+            if (!all && !(stale[y >> 3] & bit) && sum == put_sum[y]) continue;
+            uint8_t *dst = vram + y * BMPPITCH;
+            for (int i = 0; i < nx; i += 2)
+                memcpy(dst + x[i], src + x[i], x[i + 1] - x[i]);
+            put_sum[y] = sum;
+            stale[y >> 3] &= ~bit;
+            if (plate) shown_sum[y] = row_sum(dst);     /* for the check, as it reads back */
+            copied++;
+        }
+    }
+    return copied;
+#endif
+}
+
+#if !FOS_LV_ONLY
+/* The top plate's watchdog (Canon drawing over our screen, above): checked
+ * every 50 ms while the plate is up, from hud_step and the main loop. */
+static volatile int plate_on_screen = 0;
+
+static void plate_sums()
+{
+    uint8_t *vram = bmp_vram();
+    if (!vram) return;
+    for (int y = 0; y < FOS_H; y++)
+        shown_sum[y] = row_sum(vram + y * BMPPITCH);
+}
+
+/* 1 if Canon drew over the plate: its rows are stale, for hud_step to put back */
+static int plate_overdrawn()
+{
+    static struct overdraw_check check = { .what = "hud: the plate" };
+    /* not up, or about to be drawn or put back anyway: the main loop's check
+     * between hud_steps calls hud_step, whose own check would otherwise find
+     * the same rows again, count them twice and read the screen twice */
+    if (!plate_on_screen || hud_dirty || hud_stale) return 0;
+    uint8_t *vram = bmp_vram();
+    int y0, y1;
+    if (!vram || !overdrawn(&check, vram, stale, &y0, &y1)) return 0;
+    if (stale) hud_stale = 1;
+    else hud_dirty = 1;                             /* drawn straight onto the screen: all of it again */
+    return 1;
+}
+#endif
+
+static void hud_draw(int lit, int blink, int plate, int all, int only_stale)
 {
     struct fos_hud h;
     memset(&h, 0, sizeof(h));
@@ -1218,12 +1539,12 @@ static void hud_draw(int lit, int blink, int plate)
     h.focus_screen = focus_screen;
     h.film = fos_films[COERCE(roll_film, 0, fos_nfilms - 1)].name;
     h.iso = fos_films[COERCE(roll_film, 0, fos_nfilms - 1)].box_iso;
-    uint8_t *vram = bmp_vram();
+    int put = hud_put(&h, plate, all, only_stale);
 #if !FOS_LV_ONLY
-    if (vram && plate) fos_hud_plate(vram, BMPPITCH, &h, &hud_pal);
-    else
+    if (put < 0 && plate) plate_sums();
+#else
+    (void) put;
 #endif
-    if (vram) fos_hud_draw(vram, BMPPITCH, &h, &hud_pal);
 }
 
 static void hud_clear()
@@ -1231,37 +1552,14 @@ static void hud_clear()
     uint8_t *vram = bmp_vram();
     if (vram)
         fos_hud_clear(vram, BMPPITCH, &hud_pal);
+    hud_all_stale();
 }
-
-#if !FOS_LV_ONLY
-/* The top plate's watchdog (Canon drawing over our screen, above): checked
- * every 50 ms while the plate is up, from hud_step and the main loop. */
-static volatile int plate_on_screen = 0;
-
-static void plate_sums()
-{
-    uint8_t *vram = bmp_vram();
-    if (!vram) return;
-    for (int y = 0; y < FOS_H; y++)
-        shown_sum[y] = row_sum(vram + y * BMPPITCH);
-}
-
-static int plate_overdrawn()
-{
-    static struct overdraw_check check = { .what = "hud: the plate" };
-    if (!plate_on_screen || hud_dirty) return 0;    /* not up, or about to be drawn anyway */
-    uint8_t *vram = bmp_vram();
-    if (!vram || !overdrawn(&check, vram)) return 0;
-    hud_dirty = 1;
-    return 1;
-}
-#endif
 
 /* one HUD refresh; called from the main loop */
 static void hud_step()
 {
     static int last_sig = -1;
-    static int last_draw = 0;
+    static int last_all = 0;
     static int drawn = 0;
     static int was_visible = -1;
     static int plate_drawn = 0;
@@ -1273,6 +1571,7 @@ static void hud_step()
         dbg("hud: visible %d plate %d (enabled %d roll %d lv %d movie %d ui %d)",
             visible, plate, hud_enabled, roll_loaded, lv, is_movie_mode(), ui_running);
         was_visible = visible * 2 + plate;
+        hud_all_stale();                    /* someone else's screen was there */
     }
     hud_showing = visible;
 
@@ -1283,23 +1582,42 @@ static void hud_step()
      * HUD or the plate is up, stop Canon flipping its buffer, as the ML menu
      * does, and wipe what it left. Canon gets the screen back as soon as ours
      * goes (a Canon menu, playback, the display off). The film OS's own pages
-     * take the buffer themselves (film_ui_open). */
+     * take the buffer themselves (film_ui_open), and leave it held for ours
+     * when they close (film_ui_close). */
     /* Canon's screen comes back only once ours has been gone a moment: the
      * display isn't idle for a blink while a frame is taken, and giving the
      * screen back then (and taking it again) flashed Canon's screen, and its
      * picture of the frame, over ours (#17). The film OS's pages take the
      * screen at once, and so does anything that isn't a blink. */
     static int canon_held = 0, gone_since = 0;
+    if (canon_handover && !ui_running)      /* once the film OS has gone, or the hold would be dropped below */
+    {
+        canon_handover = 0;
+        canon_held = 1;
+        dbg("hud: Canon's screen still held from the film OS");
+    }
     if (visible)
     {
         gone_since = 0;
         if (!canon_held)
         {
             canon_gui_disable_front_buffer();
-            clrscr();
+            if (!plate) clrscr();           /* the plate covers all of it */
             canon_held = 1;
+            hud_all_stale();
             hud_dirty = 1;
             dbg("hud: Canon's screen held");
+        }
+        else if (!canon_gui_front_buffer_disabled())
+        {
+            /* Canon let go of the hold by itself, and would draw over ours
+             * from now on (#64): take it again, and put all of ours back */
+            static int times = 0;
+            canon_gui_disable_front_buffer();
+            if (!plate) hud_wipe_around();
+            hud_all_stale();
+            hud_stale = 1;
+            if (times++ % 50 == 0) dbg("hud: Canon took its screen back, held again (seen %d time%s so far)", times, times == 1 ? "" : "s");
         }
     }
     else if (canon_held)
@@ -1317,7 +1635,7 @@ static void hud_step()
         {
             canon_held = 0;
             gone_since = 0;
-            if (!ui_running) canon_gui_enable_front_buffer(1);
+            if (!ui_running) { vram_shown = 0; canon_gui_enable_front_buffer(1); }
             dbg("hud: Canon's screen given back%s", ui_running ? " (to the film OS)" : asked ? " (a button)" : "");
         }
     }
@@ -1334,6 +1652,7 @@ static void hud_step()
 #if !FOS_LV_ONLY
         plate_on_screen = 0;
 #endif
+        hud_all_stale();
         last_sig = -1;
     }
 
@@ -1361,17 +1680,21 @@ static void hud_step()
     int sig = lit | blink << 1 | need_wind << 2 | (frames_shot & 0xFF) << 3
             | lens_info.raw_shutter << 11 | (ev8 & 0xFF) << 19 | (current_fstop() & 0x1F) << 27;
 
-    /* redraw on change, and every second to win over Canon's overlays */
-    if (sig != last_sig || hud_dirty || now - last_draw > 1000)
+    /* put together on change (the rows that changed go to the screen), the
+     * stale rows put back, and every second all of it, to win over Canon's
+     * overlays where the check doesn't see them */
+    int changed = sig != last_sig || hud_dirty;
+    int all = now - last_all > 1000;
+    if (changed || all || hud_stale)
     {
         hud_dirty = 0;
+        hud_stale = 0;
         last_sig = sig;
-        last_draw = now;
-        hud_draw(lit, blink, plate);
+        if (all || FOS_LV_ONLY) last_all = now;     /* the EOS M draws all of it each time */
+        hud_draw(lit, blink, plate, all, !changed);
         plate_drawn = plate;
 #if !FOS_LV_ONLY
         plate_on_screen = plate;
-        if (plate) plate_sums();
 #endif
     }
 }
@@ -1686,6 +2009,7 @@ static void filmroll_task()
         {
             hud_step();                     /* every 100 ms */
             flip_step(0);
+            expsim_step();
         }
 #if !FOS_LV_ONLY
         else if (plate_overdrawn())

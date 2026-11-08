@@ -3,8 +3,11 @@
  *
  * Unlike the film OS screens this draws with Canon's palette (LiveView
  * shows through index 0, and Canon keeps drawing its own bits), so it
- * takes the indices it may use from the caller and draws straight into
- * the overlay buffer.
+ * takes the indices it may use from the caller. The camera puts it
+ * together off-screen a band of rows at a time (fos_hud_draw_rows,
+ * fos_hud_plate_rows) and copies to the screen only the rows that changed:
+ * drawn straight onto the screen, each redraw showed for a moment what it
+ * starts with (#44, #64).
  */
 
 #include "fos.h"
@@ -18,18 +21,32 @@
 #define THIRD_PX 14                     /* scale spacing per 1/3 stop */
 #define SCALE_TOP 26                    /* y of f/22; f/1 sits 27 thirds below */
 
+/* the focusing screen's box in the middle of the view */
+#define BOX_N    129
+#define BOX_X    (VIEW_W / 2 - 64)
+#define BOX_Y    (VIEW_H / 2 - 64)
+
 static uint8_t *vr;
 static int vp;
 static const struct fos_hud_palette *pal;
+/* the band being drawn: screen rows org_y .. org_y + band_h, vr is org_y */
+static int org_y = 0, band_h = H;
 
 static void fill(int x, int y, int w, int h, uint8_t c)
 {
+    y -= org_y;
     if (x < 0) { w += x; x = 0; }
     if (y < 0) { h += y; y = 0; }
     if (x + w > W) w = W - x;
-    if (y + h > H) h = H - y;
+    if (y + h > band_h) h = band_h - y;
     for (int j = 0; j < h; j++)
         memset(vr + (y + j) * vp + x, c, w > 0 ? w : 0);
+}
+
+static void band(uint8_t *buf, int pitch, int y0, int n, const struct fos_hud_palette *p)
+{
+    vr = buf; vp = pitch; pal = p;
+    org_y = y0; band_h = n;
 }
 
 static int fstop_y(int index)
@@ -44,7 +61,7 @@ static int text_gray(const struct fos_font *f, int x, int y, const char *s, int 
     map[0] = 0;
     for (int i = 1; i < 16; i++)
         map[i] = i < 3 ? 0 : pal->gray[pct * i / 15];
-    return fos_text_map(vr, vp, W, H, f, x, y, s, map, track);
+    return fos_text_map(vr, vp, W, band_h, f, x, y - org_y, s, map, track);
 }
 
 static int text_led(const struct fos_font *f, int x, int y, const char *s, int on, int track)
@@ -52,7 +69,7 @@ static int text_led(const struct fos_font *f, int x, int y, const char *s, int o
     uint8_t map[16];
     for (int i = 0; i < 16; i++)
         map[i] = i < 5 ? 0 : !on ? pal->gray[i < 10 ? 6 : 9] : i < 10 ? pal->dark_red : pal->red;
-    return fos_text_map(vr, vp, W, H, f, x, y, s, map, track);
+    return fos_text_map(vr, vp, W, band_h, f, x, y - org_y, s, map, track);
 }
 
 /* ---------------------------------------------------------------- seven segments */
@@ -89,6 +106,7 @@ static void seg_size(int w, int h, int t, int gap)
  * you can just see behind a real viewfinder mask */
 static void seg_digit(int x, int y, int bits, uint8_t on, uint8_t off)
 {
+    if (y - org_y >= band_h || y + DIG_H - org_y <= 0) return;     /* not in this band */
     int half = DIG_H / 2;
     for (int r = 0; r < DIG_H; r++)
     {
@@ -155,7 +173,27 @@ static void needle(int y, uint8_t c)
 
 void fos_hud_draw(uint8_t *vram, int pitch, const struct fos_hud *h, const struct fos_hud_palette *p)
 {
-    vr = vram; vp = pitch; pal = p;
+    fos_hud_draw_rows(vram, pitch, 0, H, h, p);
+}
+
+#ifndef CONFIG_EOSM
+/* the parts of screen row y the HUD draws on, as x0, x1 pairs: the meter
+ * strip, the focusing screen's box and the LED bar (what fos_hud_clear
+ * wipes). Returns how many numbers it put in x: 2 or 4. (The EOS M draws
+ * its HUD straight onto the screen: filmroll.c) */
+int fos_hud_spans(int y, int x[4])
+{
+    int n = 0;
+    if (y >= VIEW_H) { x[0] = 0; x[1] = W; return 2; }
+    if (y >= BOX_Y && y < BOX_Y + BOX_N) { x[n++] = BOX_X; x[n++] = BOX_X + BOX_N; }
+    x[n++] = W - STRIP_W; x[n++] = W;
+    return n;
+}
+#endif
+
+void fos_hud_draw_rows(uint8_t *buf, int pitch, int y0, int rows, const struct fos_hud *h, const struct fos_hud_palette *p)
+{
+    band(buf, pitch, y0, rows, p);
     uint8_t bg = p->black;
     char label[8];
 
@@ -253,15 +291,16 @@ void fos_hud_draw(uint8_t *vram, int pitch, const struct fos_hud *h, const struc
         }
         fill(cx - 28, cy, 57, 1, p->white);
     }
+    band(vr, vp, 0, H, p);
 }
 
 /* make our strips transparent again so LiveView shows through */
 void fos_hud_clear(uint8_t *vram, int pitch, const struct fos_hud_palette *p)
 {
-    vr = vram; vp = pitch; pal = p;
+    band(vram, pitch, 0, H, p);
     fill(W - STRIP_W, 0, STRIP_W, VIEW_H, p->clear);
     fill(0, VIEW_H, W, BAR_H, p->clear);
-    fill(VIEW_W / 2 - 64, VIEW_H / 2 - 64, 129, 129, p->clear);
+    fill(BOX_X, BOX_Y, BOX_N, BOX_N, p->clear);
 }
 
 /* ---------------------------------------------------------------- the top plate */
@@ -277,7 +316,12 @@ void fos_hud_clear(uint8_t *vram, int pitch, const struct fos_hud_palette *p)
  * film and its speed. */
 void fos_hud_plate(uint8_t *vram, int pitch, const struct fos_hud *h, const struct fos_hud_palette *p)
 {
-    vr = vram; vp = pitch; pal = p;
+    fos_hud_plate_rows(vram, pitch, 0, H, h, p);
+}
+
+void fos_hud_plate_rows(uint8_t *buf, int pitch, int y0, int rows, const struct fos_hud *h, const struct fos_hud_palette *p)
+{
+    band(buf, pitch, y0, rows, p);
     char b[24];
     fill(0, 0, W, H, p->black);
 
@@ -360,12 +404,13 @@ void fos_hud_plate(uint8_t *vram, int pitch, const struct fos_hud *h, const stru
     const char *hint = "TRASH  Home     PLAY  Prints";
     int hw = fos_text_w(&fos_font_xs, hint, 24);
     text_gray(&fos_font_xs, W - 28 - hw, H - 22, hint, 36, 24);
+    band(vr, vp, 0, H, p);
 }
 
 /* the plate off: Canon's screen shows again */
 void fos_hud_plate_clear(uint8_t *vram, int pitch, const struct fos_hud_palette *p)
 {
-    vr = vram; vp = pitch; pal = p;
+    band(vram, pitch, 0, H, p);
     fill(0, 0, W, H, p->clear);
 }
 #endif

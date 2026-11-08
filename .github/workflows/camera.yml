@@ -1,7 +1,8 @@
 name: M-Film camera
 
 # Builds the camera files (Magic Lantern + Film OS) for every camera in ml-dev/cameras.txt
-# that is "working" or "testing". (Darkrooms, the desktop program, is built in its own repository.)
+# that is "working", "issues", "testing" or "nodark". (Darkrooms, the desktop program, is built in its
+# own repository.)
 #   git tag v0.1.0 && git push origin v0.1.0     builds and publishes the zips under Releases
 #                                                (the tag must match the VERSION file)
 #   Actions > "M-Film camera" > Run workflow     builds and keeps the zips as artifacts; with a
@@ -25,7 +26,8 @@ permissions:
 
 jobs:
   # the darkroom on the PC simulator, on a card of rolls it has to find or explain: shot as JPEG,
-  # Adobe RGB with a file deleted, across the IMG_9999 wrap (ml-dev/filmos/sim/cardtest.sh)
+  # Adobe RGB with a file deleted, across the IMG_9999 wrap; then Delete roll on them, and a card
+  # that can't take long folder names (ml-dev/filmos/sim/cardtest.sh)
   darkroom:
     runs-on: ubuntu-24.04
     name: darkroom (simulator)
@@ -49,10 +51,12 @@ jobs:
     runs-on: ubuntu-24.04
     name: camera ${{ matrix.platform }}
     env:
-      # built and released without the in-camera darkroom: the full build doesn't fit at boot (cameras.txt)
-      NODARK: "650D.104 700D.115"
+      # built and released without the in-camera darkroom: the full build doesn't fit at boot (cameras.txt
+      # "nodark"). None at the moment: the 650D and 700D were until 0.1.5, and now start as modules with it.
+      # The release text below says every zip has the darkroom: if a camera comes back here, change it.
+      NODARK: ""
       # built with the film OS as a module (ML/modules/filmos.mo), loaded after boot (cameras.txt ":module")
-      MODULE: "100D.101 70D.112 550D.109 600D.102 1100D.105"
+      MODULE: "100D.101 650D.104 700D.115 70D.112 550D.109 600D.102 1100D.105"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -99,7 +103,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [EOSM.202, 650D.104, 700D.115, 6D.116, 5D3.113, 5D3.123, 60D.111, 500D.111, 50D.109, 5D2.212]  # from ml-dev/cameras.txt: built, and not ":module"
+        platform: [EOSM.202, 6D.116, 5D3.113, 5D3.123, 60D.111, 500D.111, 50D.109, 5D2.212]  # from ml-dev/cameras.txt: built, and not ":module"
     runs-on: ubuntu-24.04
     name: camera ${{ matrix.platform }} (film OS as a module)
     steps:
@@ -199,7 +203,8 @@ jobs:
           files: zips/*.zip
           body: |
             **On the camera** (`M-Film-camera-<camera>.zip`): the Film OS with Magic Lantern. Unzip it onto the card
-            and run *Firmware ver.* → update once (see M-FILM-README.txt in the zip). The EOS M build is tried on
-            the camera; the others build but nobody has tried them yet: see TESTING.md before you put one on your camera.
-            The 650D and 700D builds have no in-camera darkroom (the full one is too big for them at boot):
-            develop their rolls with Darkrooms on a computer.
+            and run *Firmware ver.* → update once (see M-FILM-README.txt in the zip). How far testers have got on
+            each camera, and what's still wrong, is in the README's camera table: see TESTING.md before you put it
+            on a camera nobody has tried yet. Every zip has the in-camera darkroom. Where the film OS is a module
+            (ML/modules/filmos.mo, loaded after boot), that is the camera's one zip; the other cameras also have
+            `M-Film-camera-<camera>-module.zip`, for testers to try.

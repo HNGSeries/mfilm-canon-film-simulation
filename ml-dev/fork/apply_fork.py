@@ -131,7 +131,9 @@ edit("src/boot-d45-am.c",
      "    #elif defined(CONFIG_100D) || defined(CONFIG_70D)\n",
      "film-mode fork: R0 0x44C000 -> 0x520000")
 
-LEAN = {"5D2.212", "650D.104", "700D.115"}     # 650D, 700D: their no-darkroom builds, with room to spare
+# 650D, 700D: lean since their no-darkroom builds (0.1.3 to 0.1.5); the module builds testers have tried
+# on them with the darkroom (#54, #19) are lean too
+LEAN = {"5D2.212", "650D.104", "700D.115"}
 # features a camera's Magic Lantern doesn't build without (650D, 700D: fps-engio.c's evfstate timers)
 LEAN_KEEP = {"650D.104": ("FPS_OVERRIDE", "FPS_RAMPING"), "700D.115": ("FPS_OVERRIDE", "FPS_RAMPING")}
 LEAN_FEATURES = ["ZEBRA", "ZEBRA_FAST", "FOCUS_PEAK", "GHOST_IMAGE", "SPOTMETER", "FALSE_COLOR", "WAVEFORM",

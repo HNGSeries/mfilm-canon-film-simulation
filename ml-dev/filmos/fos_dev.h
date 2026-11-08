@@ -81,6 +81,11 @@ extern const uint8_t fos_fixed_rgb[FOS_FIXED_N][3];
 #define FOS_BMP_SIZE    (FOS_BMP_THUMB + FOS_THUMB_SIZE)
 
 /* in fos_print.c, which every build has (the shelf's samples are prints too) */
+/* a print's headers while it is read or written: one for the readers here and
+ * the darkroom's writer, which never use it at the same time (all on the film
+ * OS's task, each done with it before it returns), so the boot memory holds
+ * it once and not three times */
+extern uint8_t fos_bmp_head[FOS_BMP_PIXELS];
 int  fos_print_load(const char *path, struct fos_print *p);     /* allocates p->px; 0 on failure */
 void fos_print_free(struct fos_print *p);
 int  fos_print_thumb(const char *path, uint8_t *thumb);         /* FOS_THUMB_W x FOS_THUMB_H RGB */
@@ -165,5 +170,10 @@ void fos_lab_cache_dir(char *buf, int size);                            /* where
  * (month, month number, day of its first frame; when: "2026-09-06 10:15")
  * or SEP0906 where the card takes no long names. 0 = ok */
 int  fos_lab_dcim_dir(char *buf, int size, int roll, int film, const char *when);
+/* delete a roll that isn't in the camera: its prints (in the darkroom and
+ * its folder in DCIM), and with whole also the frames its logs list and
+ * the logs. frames: room for FOS_MAX_FRAMES to work in. Returns how many
+ * files or folders couldn't be removed; -1 for the roll in the camera */
+int  fos_lab_delete(int roll, int whole, struct fos_lab_frame *frames);
 
 #endif

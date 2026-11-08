@@ -8,6 +8,8 @@
 #include "fos_dev.h"
 #include <string.h>
 
+uint8_t fos_bmp_head[FOS_BMP_PIXELS];
+
 static int u16le(const uint8_t *p) { return p[0] | p[1] << 8; }
 static unsigned u32le(const uint8_t *p) { return p[0] | p[1] << 8 | p[2] << 16 | (unsigned) p[3] << 24; }
 
@@ -21,7 +23,7 @@ int fos_print_thumb(const char *path, uint8_t *thumb)
 {
     void *f = fos_port_open(path, 0);
     if (!f) return 0;
-    static uint8_t h[FOS_BMP_PIXELS];
+    uint8_t *h = fos_bmp_head;
     int ok = fos_port_read(f, h, FOS_BMP_PIXELS) == FOS_BMP_PIXELS && is_print(h)
           && fos_port_seek(f, FOS_BMP_THUMB) >= 0 && fos_port_read(f, thumb, FOS_THUMB_SIZE) == FOS_THUMB_SIZE;
     fos_port_close(f);
@@ -33,7 +35,7 @@ int fos_print_load(const char *path, struct fos_print *p)
     memset(p, 0, sizeof(*p));
     void *f = fos_port_open(path, 0);
     if (!f) return 0;
-    static uint8_t h[FOS_BMP_PIXELS];
+    uint8_t *h = fos_bmp_head;
     int ok = fos_port_read(f, h, FOS_BMP_PIXELS) == FOS_BMP_PIXELS && is_print(h);
     if (ok)
     {

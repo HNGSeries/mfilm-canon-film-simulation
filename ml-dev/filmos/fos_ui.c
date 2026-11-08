@@ -23,6 +23,7 @@ static uint8_t *buf_cv, *buf_bg, *buf_snap;
 
 static int screen, screen_from;
 static int dmg_y0 = FOS_H, dmg_y1 = 0;
+static int cv_on_screen;                    /* the screen shows the canvas as it is (no screen change on its way) */
 
 /* screen change in progress */
 static int tr_how, tr_t, tr_len;            /* tr_t counts up to tr_len (ms) */
@@ -95,8 +96,18 @@ void ui_damage_all()
     ui_damage(0, FOS_H);
 }
 
-void fos_ui_overdrawn()
+/* Canon drew over the screen: the canvas still holds what was presented
+ * last, so those rows go back from it now, before Canon's show for another
+ * frame (#49, #64). In a screen change the next frame paints them anyway. */
+void fos_ui_overdrawn(int y0, int y1)
 {
+    y0 = fos_clamp(y0, 0, FOS_H);
+    y1 = fos_clamp(y1, y0, FOS_H);
+    if (cv_on_screen && cv && y1 > y0)
+    {
+        fos_port_present(cv->px + y0 * FOS_W, FOS_W, y0, y1);
+        return;
+    }
     ui_clobbered = 1;
     ui_damage_all();
 }
@@ -215,15 +226,15 @@ void ui_status_bar(const char *title)
 
 int ui_keycap(int x, int base, const char *key)
 {
-    /* arrows are drawn, words are written */
+    /* arrows are drawn ("<>", "^v", or "<" alone), words are written */
     int w;
-    if (!strcmp(key, "<>") || !strcmp(key, "^v"))
+    if (key[0] == '<' || key[0] == '^')
     {
-        w = 34;
+        w = key[1] ? 34 : 22;
         fos_rrect_line(cv, x, base - 15, w, 20, 6, 1, FC(RAMP_GRAY, 90), OPAQUE);
         int vert = key[0] == '^';
         fos_tri(cv, x + 11, base - 5, 7, vert ? 3 : 2, C_TEXT2, OPAQUE);
-        fos_tri(cv, x + 23, base - 5, 7, vert ? 1 : 0, C_TEXT2, OPAQUE);
+        if (key[1]) fos_tri(cv, x + 23, base - 5, 7, vert ? 1 : 0, C_TEXT2, OPAQUE);
         return w;
     }
     w = fos_text_w(&fos_font_xs, key, 16) + 14;
@@ -234,7 +245,7 @@ int ui_keycap(int x, int base, const char *key)
 
 static int keycap_w(const char *key)
 {
-    return !strcmp(key, "<>") || !strcmp(key, "^v") ? 34 : fos_text_w(&fos_font_xs, key, 16) + 14;
+    return key[0] == '<' || key[0] == '^' ? (key[1] ? 34 : 22) : fos_text_w(&fos_font_xs, key, 16) + 14;
 }
 
 void ui_hints(const struct hint *h, int n)
@@ -779,6 +790,7 @@ void fos_ui_run(int open)
     /* what is under the shutter while it closes: LiveView */
     memset(buf_cv, IX_CLEAR, FOS_W * FOS_H);
     ui_clobbered = 1;
+    cv_on_screen = 0;
     fos_port_palette();
 
     boot_then_leave = open == FOS_OPEN_BOOT_LV;
@@ -892,6 +904,7 @@ void fos_ui_run(int open)
             ui_iris(open_k, ang);
             ui_clobbered = 1;
             fos_port_present(cv->px, FOS_W, 0, FOS_H);
+            cv_on_screen = 1;
             if (!opened) { opened = 1; stat.open_ms = fos_port_ms() - t_open; }
             dmg_y0 = FOS_H; dmg_y1 = 0;
             fos_port_sleep(frame_rest(now));
@@ -905,6 +918,7 @@ void fos_ui_run(int open)
             t_present = fos_port_ms();
             present_transition((float) tr_t / tr_len);
             ui_clobbered = 1;       /* the screen only reached the panel composed */
+            cv_on_screen = 0;
             dmg_y0 = FOS_H; dmg_y1 = 0;
         }
         else
@@ -925,6 +939,7 @@ void fos_ui_run(int open)
             if (dmg_y1 > dmg_y0)
             {
                 fos_port_present(cv->px + dmg_y0 * FOS_W, FOS_W, dmg_y0, dmg_y1);
+                if (dmg_y0 == 0 && dmg_y1 == FOS_H) cv_on_screen = 1;
                 if (!opened) { opened = 1; stat.open_ms = fos_port_ms() - t_open; }
             }
             dmg_y0 = FOS_H; dmg_y1 = 0;

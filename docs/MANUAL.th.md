@@ -41,7 +41,7 @@
 
 ### สนับสนุน
 System > Support M·FILM แสดง QR code ของลิงก์โดเนท (สูงสุด 2 อัน) ใส่ลิงก์ใน `ml-dev/donate.txt`
-บรรทัดละ `ชื่อ URL` แล้ว build ใหม่ (`tools/genqr.py`, ต้องมี `pip install segno`)
+บรรทัดละ `ชื่อ URL` แล้ว build ใหม่ (`tools/genqr.py`, ต้องมี segno: `setup_wsl.sh` ลง `python3-segno` ให้)
 ไม่มีลิงก์ หน้านี้จะขึ้นคำขอบคุณแทน
 
 ### ห้องมืด: ล้างฟิล์มในกล้อง
@@ -49,7 +49,7 @@ System > Support M·FILM แสดง QR code ของลิงก์โดเ�
 | | |
 |---|---|
 | ![](../ml-dev/filmos/preview/end-of-roll.png) | ![](../ml-dev/filmos/preview/darkroom.png) |
-| **ถ่ายครบม้วน** กล้องถามเอง: ล้างเลย (SET) หรือใส่ม้วนใหม่ก่อน (INFO) | **Darkroom** ม้วนที่ยังไม่ล้าง / ล้างแล้ว / ยังอยู่ในกล้อง เลือกบางม้วน (SET) หรือล้างทั้งหมด (INFO) |
+| **ถ่ายครบม้วน** กล้องถามเอง: ล้างเลย (SET) หรือใส่ม้วนใหม่ก่อน (INFO) | **Darkroom** ม้วนที่ยังไม่ล้าง / ล้างแล้ว / ยังอยู่ในกล้อง เลือกบางม้วน (SET) ล้างทั้งหมด (INFO) หรือลบม้วน (◀) |
 | ![](../ml-dev/filmos/preview/developing.png) | ![](../ml-dev/filmos/preview/developing-line.png) |
 | **กำลังล้าง** ใต้ไฟแดง: ภาพแฝงค่อยๆ ขึ้นบนกระดาษในถาดน้ำยาตามที่ CPU อ่าน RAW ได้ แล้วภาพเข้มขึ้นจนเต็ม | ภาพที่เสร็จแล้วถูกยกขึ้นไปตากบนราว นาฬิกาจับเวลาห้องมืดเดินรอบละรูป จุดรอบหน้าปัดคือรูปทั้งม้วน |
 | ![](../ml-dev/filmos/preview/prints-sheet.png) | ![](../ml-dev/filmos/preview/prints-frame.png) |
@@ -62,6 +62,12 @@ System > Support M·FILM แสดง QR code ของลิงก์โดเ�
 - **กล้อง DSLR ตอนถ่ายผ่านช่องมอง** (ไม่ได้เปิด LiveView): จอหลังแสดง "ฝาบนกล้องฟิล์ม" แทนหน้าข้อมูลของ Canon
   ชัตเตอร์, ค่า f และนับรูปเป็นตัวเลข LED สีแดง, เข็มวัดแสงตอนกดชัตเตอร์ครึ่งเดียว, ฟิล์มกับ ISO
   ปิดได้พร้อม HUD (Viewfinder > Viewfinder HUD) ไม่มีใน EOS M
+- **Exposure simulation** (Viewfinder > Exposure simulation, #66): **On** LiveView แสดงแสงตามที่รูปจะได้จริง
+  (ISO ของฟิล์มที่ตั้งตอนโหลดม้วน และรูรับแสงของเลนส์) **Off** Canon ปรับ LiveView ให้สว่างพอโฟกัสได้
+  ไม่ว่าค่าแสงจะเป็นเท่าไร เหมาะกับเลนส์แมนนวลที่หรี่รูรับแสงไว้ หรือฟิล์มช้าในที่แสงน้อย
+  เป็นค่าเดียวกับ Exposure simulation ของ Canon (ExpSim ในเมนู Magic Lantern) ถ้ายังไม่เคยตั้งที่นี่
+  กล้องใช้ค่าของ Canon ตามเดิม ตั้งแล้ว M-Film ใส่ค่านี้กลับทุกครั้งที่เปิด LiveView และหลังโหลดม้วน
+  เข็มวัดแสงใน HUD อ่านค่าวัดแสงของ Canon ไม่ใช่ความสว่างบนจอ ไม่มีใน 600D และ 1100D (Magic Lantern ตั้งค่านี้ไม่ได้)
 - **โหมดฟิล์ม** (System > Film mode): **Basic** (ค่าเริ่มต้น) ไม่ต้องกรอฟิล์ม ถ่ายครบม้วนแล้วส่งเข้าห้องมืดได้เลย
   ม้วนที่ถ่ายครบแต่ยังอยู่ในกล้องก็ล้างได้ จะจบกลางม้วนใช้ Finish roll ที่หน้า Roll
   **Realistic** ต้องกรอฟิล์มกลับก่อนถึงจะล้างได้ เหมือนกล้องฟิล์มจริง ใน log ของม้วนเหมือนกันทั้งสองโหมด
@@ -86,11 +92,21 @@ System > Support M·FILM แสดง QR code ของลิงก์โดเ�
 - รูปที่ล้างแล้วเป็น JPEG สีเต็ม (720×480, มี EXIF วันที่ ฟิล์ม และค่า f) อยู่ใน DCIM
   โฟลเดอร์ละม้วน ตั้งชื่อตามวันที่ถ่ายรูปแรกและฟิล์ม: `DCIM/Sep0906 Portra400/IMG_0102.JPG`
   (เดือนย่อ, เลขเดือน, วันที่) ม้วนที่สองของฟิล์มเดียวกันในวันเดียวกันเป็น `Sep0906 Portra400 2`
-  ถ้าการ์ดสร้างชื่อยาวไม่ได้ จะเป็น `SEP0906` แทน (log: `darkroom: JPEGs in ...`)
+  ถ้าการ์ดสร้างชื่อยาวไม่ได้ จะเป็น `SEP0906` แทน (log: `darkroom: JPEGs in ...`) โดยไม่ทิ้งโฟลเดอร์ชื่อยาวที่ว่างไว้
+  (การ์ดบางใบสร้างโฟลเดอร์ชื่อยาวได้แต่เขียนไฟล์ลงไปไม่ได้ เช่น exFAT บน 550D #65: โฟลเดอร์นั้นจะถูกลบทิ้งทันที)
   ม้วนที่มี JPEG ไม่ครบทุกรูป (เช่นล้างไว้ก่อนมีฟีเจอร์นี้) จะกลับมาเป็น TO DEVELOP
   ล้างอีกครั้งจะทำเฉพาะรูปที่ยังไม่มี JPEG
 - สำหรับดูในกล้องยังมี `ML/DARKROOM/R<ม้วน>/F<รูป>.BMP` (240 สี) และ `SHEET.BMP` (contact sheet)
   ม้วนถือว่าล้างแล้วเมื่อมี `SHEET.BMP` ไฟล์ CR2 เดิมยังอยู่ครบ เอาไปล้างละเอียดเต็มขนาดด้วย Darkrooms บนคอมได้เหมือนเดิม
+- **ลบม้วน** (◀ ที่หน้า Darkroom) ได้เฉพาะม้วนที่ไม่ได้อยู่ในกล้อง จะล้างแล้วหรือยังก็ได้ เลือกแล้วกล้องถามยืนยันอีกครั้งเสมอ
+  - **Prints only** (SET): ลบภาพที่ล้างแล้ว คือโฟลเดอร์ JPEG ของม้วนใน DCIM และ `ML/DARKROOM/R<ม้วน>/`
+    RAW กับ log ของม้วนยังอยู่ ม้วนกลับเป็น TO DEVELOP ล้างใหม่ได้ (ในกล้องหรือ Darkrooms)
+  - **Whole roll** (INFO): ลบภาพเหล่านั้น รูปทุกรูปที่ log ของม้วน (`ROLL_nnn.TXT`) ระบุ แล้วลบ log เป็นอย่างสุดท้าย
+    หาไฟล์แบบเดียวกับตอนล้าง: ชื่อที่กล้องตั้งจริง (`_MG_` ใน Adobe RGB, prefix ที่ตั้งเอง), JPG ถ้าถ่ายเป็น JPEG,
+    และทุกโฟลเดอร์ใน DCIM ที่ม้วนข้ามไปหลัง IMG_9999 ม้วนที่ไม่มีภาพเลยจะข้ามไปถามยืนยันลบทั้งม้วนเลย
+  - ไม่ลบไฟล์ที่ log ไม่ได้ระบุ (เช่น JPEG ที่กล้องเขียนคู่กับ RAW ตอนตั้ง RAW+JPEG ยังอยู่) และไม่ลบม้วนที่อยู่ในกล้อง
+  - ถ้าลบได้ไม่ครบ กล้องจะขึ้นว่า *Not all of it could be deleted* (รายละเอียดอยู่ใน log บรรทัด `lab: ...` ถ้าเปิด Debug log ไว้)
+    ไฟล์ที่ลบไม่ได้ทำให้ log ของม้วน (และไฟล์ ROLLnnn.TXT ในโฟลเดอร์ JPEG) ยังอยู่ ม้วนจึงยังอยู่ในรายการ ลบซ้ำได้
 
 ### สีบนจอ
 สีของ Film OS ส่งไปที่จอแบบเดียวกับที่ Canon แปลงสีของตัวเอง (BT.601 Y'CbCr, ขาวที่ระดับ 235)
@@ -119,6 +135,7 @@ Brightness (โทนกลาง) และ Conversion (Canon / Rec.709 แบ�
 | Home | ▲ ▼ / หมุนวงล้อ, SET | เลือก, เปิด (PLAY = Prints) |
 | Darkroom | SET | ทำเครื่องหมายม้วนที่จะล้าง / เปิด Prints ของม้วนที่ล้างแล้ว |
 | | INFO | ล้างม้วนที่เลือก (ไม่ได้เลือก = ล้างทั้งหมด) |
+| | ◀ | ลบม้วน (ไม่ใช่ม้วนในกล้อง): Prints only (SET) หรือ Whole roll (INFO) แล้วยืนยัน (SET) / MENU ยกเลิก |
 | กำลังล้าง | MENU | หยุด (รูปที่เสร็จแล้วยังอยู่) |
 | Prints | ◀ ▶ ▲ ▼, SET | เลือกรูปใน contact sheet, เปิดเต็มจอ |
 | | หมุนวงล้อ | ม้วนอื่น (ใน contact sheet) / รูปถัดไป (เต็มจอ) |
@@ -170,12 +187,17 @@ Brightness (โทนกลาง) และ Conversion (Canon / Rec.709 แบ�
   - `sim/` ตัวจำลองบนคอม, `preview/` ภาพตัวอย่าง
 - `ml-dev/fork/src/filmroll.c` ส่วนเชื่อมกับกล้อง: ม้วนฟิล์ม, log, ตั้งค่ากล้องตามฟิล์ม,
   การยึดหน้าจอและปุ่มให้ Film OS, palette
-- `ml-dev/fork/apply_fork.py` และ `fork/film-mode.patch` การแก้ไขบน
+- `ml-dev/fork/apply_fork.py` การแก้ไขบน
   [magiclantern_simplified](https://github.com/reticulatedpines/magiclantern_simplified)
-  commit `ed3e7c0df` (ตรงกับ build ทางการ 2025-06-20.EOSM.202)
-- `setup_wsl.sh` ตั้งเครื่อง build ใน WSL Ubuntu
+  commit `ed3e7c0df` (ตรงกับ build ทางการ 2025-06-20.EOSM.202) ทุกครั้งที่ build
+  จะได้ diff ทั้งหมดของ fork สำหรับกล้องรุ่นนั้นไว้ดูที่ `ml-dev/out/film-mode-<รุ่น>.patch`
+  (เช่น `film-mode-EOSM.202.patch`, `film-mode-70D.112-module.patch`)
+- `setup_wsl.sh` ตั้งเครื่อง build ใน WSL Ubuntu รวม Python modules ที่ build ใช้ (docutils, numpy, segno)
+  `build_fork.sh` เช็กก่อนเริ่ม build ถ้าขาดตัวไหนจะบอกชื่อ package ที่ต้องลง
 - `build_fork.sh` build fork แล้วเก็บไฟล์สำหรับลงการ์ดไว้ที่ `ml-dev/out/fork/`
 - `install_fork.ps1` / `restore_official.ps1` ลง fork บนการ์ด / คืน ML ทางการ
+  ทุกครั้งที่ลง `install_fork.ps1` เก็บ build ที่อยู่บนการ์ดก่อนหน้าไว้ที่ `ml-dev/card_backup/previous/`
+  (ยกเว้นบนการ์ดเป็น build เดียวกันอยู่แล้ว) `restore_official.ps1 -Previous` คืน build นั้นกลับไป
 - `push_fork.ps1` push branch `film-mode` ของ fork ทั้งชุดขึ้น
   [HNGSeries/magiclantern-eosm-film](https://github.com/HNGSeries/magiclantern-eosm-film) (private)
 - `filmroll/` โหมดฟิล์มรุ่นแรกที่ทำเป็น ML module (เก็บไว้อ้างอิง ไม่ได้ใช้แล้ว)
@@ -187,6 +209,7 @@ Brightness (โทนกลาง) และ Conversion (Canon / Rec.709 แบ�
 (ขนาดใหญ่สุดที่เคยเปิดได้) ฟอนต์ของ Film OS จึงอยู่ในไฟล์ `ML/DATA/FOSFONT.BIN` บนการ์ด (`tools/fontblob.c`)
 โหลดหลังบูต และตารางของห้องมืดจองหน่วยความจำเฉพาะตอนเปิด Film OS
 ถ้ากล้องค้างแบบนั้น: ถอดแบต ถอดการ์ด เปิดกล้องได้ตามปกติ แล้วคืน ML ทางการด้วย `restore_official.ps1`
+หรือคืน build ก่อนหน้าที่เคยใช้ได้ด้วย `restore_official.ps1 -Previous`
 
 ### ตัวจำลอง
 ```

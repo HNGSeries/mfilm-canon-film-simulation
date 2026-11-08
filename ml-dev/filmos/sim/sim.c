@@ -38,7 +38,7 @@ static int settings[FS_COUNT] = {
     [FS_HUD] = 1, [FS_LEDS] = 1, [FS_FOCUS] = 1, [FS_WIND] = 1,
     [FS_APKEYS] = 0, [FS_LENS_WIDE] = 6, [FS_FSTOP] = 10,
     [FS_STARTUP] = 2, [FS_PLAYLOCK] = 1, [FS_BOOTANIM] = 1, [FS_DEBUG] = 0, [FS_MODE] = 0,
-    [FS_FILM] = 0, [FS_EXP] = 0, [FS_SCR_FLIP] = 0,
+    [FS_FILM] = 0, [FS_EXP] = 0, [FS_SCR_FLIP] = 0, [FS_EXPSIM] = 1,
 };
 static struct fos_roll roll = { 1, 12, 1, 36, 14, 0, "2026-10-21 18:02", 3,
     { { 14, "21:47", "2" }, { 13, "21:40", "2" }, { 12, "21:33", "2.8" } } };
@@ -48,9 +48,15 @@ int fos_port_ms() { return now_ms; }
 /* the palette on the screen now, 0xRRGGBB; each dumped frame gets a copy */
 static uint32_t cur_pal[256];
 
+/* FOS_OVERDRAW (below): the rows "Canon" scribbled on, not painted again yet */
+static uint8_t overdrawn_row[FOS_H];
+static int overdraw_wait, overdraw_n, overdraw_missed, overdraw_shown;
+
 static void dump()
 {
     char path[512];
+    /* a frame that shows a scribble still there (FOS_OVERDRAW) */
+    for (int y = 0; y < FOS_H; y++) if (overdrawn_row[y]) { overdraw_shown++; break; }
     if (!strcmp(outdir, "-")) { frame_no++; last_dump = now_ms; return; }   /* measuring only */
     snprintf(path, sizeof(path), "%s/f_%05d_%06d.idx", outdir, frame_no, now_ms);
     FILE *f = fopen(path, "wb");
@@ -64,12 +70,10 @@ static void dump()
 }
 
 /* FOS_OVERDRAW=1: "Canon" scribbles on the screen every 700 ms, as the 60D
- * and 550D do, and the port tells the film OS (fos_ui_overdrawn), as the
- * camera's check does. Every scribbled row must be painted again within
- * three frames, or the screen on show doesn't repaint all of itself. */
-static uint8_t overdrawn_row[FOS_H];
-static int overdraw_wait, overdraw_n, overdraw_missed;
-
+ * and 550D do, and the port tells the film OS which rows (fos_ui_overdrawn),
+ * as the camera's check does. The film OS puts them back at once, or in a
+ * screen change with its next frames: every scribbled row must be painted
+ * again within three frames, or the screen on show doesn't repaint all of itself. */
 static void overdraw_step()
 {
     static int on = -1, last = 0;
@@ -96,7 +100,7 @@ static void overdraw_step()
     }
     overdraw_n++;
     overdraw_wait = 3;
-    fos_ui_overdrawn();
+    fos_ui_overdrawn(y0, y0 + 30);
 }
 
 void fos_port_sleep(int ms)
@@ -179,6 +183,8 @@ int  fos_port_get(int s)
 {
     /* the screen orientation is only on swivel screens: not on the EOS M, unless FOS_SWIVEL=1 */
     if (s == FS_SCR_FLIP && !getenv("FOS_SWIVEL")) return -1;
+    /* exposure simulation: FOS_NOEXPSIM=1 is a camera Magic Lantern can't set it on (600D, 1100D) */
+    if (s == FS_EXPSIM && getenv("FOS_NOEXPSIM")) return -1;
     return s >= 0 && s < FS_COUNT ? settings[s] : 0;
 }
 void fos_port_set(int s, int v)
@@ -236,11 +242,14 @@ int main(int argc, char **argv)
     while (fgets(line, sizeof(line), f))
     {
         char a[64], b[64];
-        int t, n1, n2, n3;
+        int t, n1, n2, n3, n4;
         if (line[0] == '#' || line[0] == '\n') continue;
-        if (sscanf(line, "roll %d %d %d", &n1, &n2, &n3) == 3)
+        /* roll <film> <shot> <exposures> [<number>]: the roll in the camera */
+        int nr = sscanf(line, "roll %d %d %d %d", &n1, &n2, &n3, &n4);
+        if (nr >= 3)
         {
             roll.loaded = 1; roll.film = n1; roll.shot = n2; roll.exposures = n3;
+            if (nr == 4) roll.number = n4;
             continue;
         }
         if (!strncmp(line, "noroll", 6)) { roll.loaded = 0; continue; }
@@ -279,6 +288,6 @@ int main(int argc, char **argv)
     fos_ui_run(open);
     if (frame_dirty) dump();
     fprintf(stderr, "%d frames, %d ms\n", frame_no, now_ms);
-    if (overdraw_n) fprintf(stderr, "overdraw: %d scribbles, %d not painted again\n", overdraw_n, overdraw_missed);
+    if (overdraw_n) fprintf(stderr, "overdraw: %d scribbles, %d not painted again, %d frames showed one\n", overdraw_n, overdraw_missed, overdraw_shown);
     return 0;
 }
