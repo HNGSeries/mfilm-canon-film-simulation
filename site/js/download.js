@@ -97,7 +97,8 @@ async function submit() {
     const r = await fetch(DONATE, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ amount: String(v), camera: p }),
+      // the page Stripe sends them back to: this one, wherever the site is (github.io now, a domain later)
+      body: new URLSearchParams({ amount: String(v), camera: p, back: location.origin + location.pathname.replace(/index\.html$/, '') }),
     });
     const o = await r.json().catch(() => ({}));
     if (!r.ok || !o.url) throw new Error(o.error || 'Stripe');
