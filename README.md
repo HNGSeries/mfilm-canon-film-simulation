@@ -14,7 +14,7 @@ The camera side is free and open, for everyone.
 [![Buy the developer a coffee](https://img.shields.io/badge/Buy%20the%20developer%20a%20coffee-ffdd00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://buy.stripe.com/7sY14p8d93QE5Ny5M58so02)
 
 [![License GPL-2.0](https://img.shields.io/badge/license-GPL--2.0-3b352f)](LICENSE)
-[![Cameras](https://img.shields.io/badge/cameras-9%20work%20%C2%B7%205%20with%20a%20problem%20%C2%B7%201%20in%20testing-3b352f)](#cameras)
+[![Cameras](https://img.shields.io/badge/cameras-8%20work%20%C2%B7%206%20with%20a%20problem%20%C2%B7%201%20in%20testing-3b352f)](#cameras)
 [![Films](https://img.shields.io/badge/films-72-3b352f)](FILMS.md)
 
 **English** · [ภาษาไทย](README.th.md) · [Films](#72-films) · [Cameras](#cameras) · [Darkrooms](#develop-on-your-computer-darkrooms) · [Take it further](PORTING.md)
@@ -156,7 +156,7 @@ still wrong. If you have one marked *needs a tester*, you can help: [TESTING.md]
 | Camera | Canon firmware | Status | Notes | Card files |
 |---|---|---|---|---|
 | Canon EOS M | 2.0.2 | ✅ **Works** |  | `M-Film-camera-EOSM.202.zip` (to test: `-module.zip`) |
-| Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | ✅ **Works** | Works since 0.1.5, the film OS as a module ([#48](../../issues/48)). | `M-Film-camera-100D.101.zip` |
+| Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | ⚠️ Tried, known problem | Works on 0.1.5, the film OS as a module ([#48](../../issues/48)). On 0.1.6 the shelf flickers and takes no buttons ([#73](../../issues/73)): use 0.1.5 until the fix is out. | `M-Film-camera-100D.101.zip` |
 | Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | ✅ **Works** | Works with the film OS as a module, darkroom included ([#54](../../issues/54)). From 0.1.3 to 0.1.5 the plain zip came without the darkroom (with it built in, the 650D doesn't start: [#34](../../issues/34)): in 0.1.5, take the `-module.zip`. | `M-Film-camera-650D.104.zip` |
 | Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | ⚠️ Tried, known problem | 0.1.5's module build works on a tester's 700D, darkroom included ([#19](../../issues/19)), but M-Film's and Canon's menus still glitch over each other; 0.1.6 holds Canon's screen as the film OS opens, and as it closes back to the HUD: reports wanted. From 0.1.3 to 0.1.5 the plain zip came without the darkroom: in 0.1.5, take the `-module.zip`. | `M-Film-camera-700D.115.zip` |
 | Canon EOS 6D | 1.1.6 | ✅ **Works** | Works since 0.1.2 ([#17](../../issues/17), [#22](../../issues/22)). | `M-Film-camera-6D.116.zip` (to test: `-module.zip`) |
