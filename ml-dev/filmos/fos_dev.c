@@ -415,6 +415,7 @@ struct fos_dev
     int want_big;                       /* FOS_SIZE_M or _L asked for */
     char zoom[128];                     /* the zoom file, or "" */
     int big, bshift;                    /* raw pixels per print pixel each way (0: none); samples >> bshift are summed */
+    int bstraight;                      /* the print's columns are the sensor's, in order (big_row) */
     int bsize;                          /* FOS_SIZE_* it comes to */
     int bw, bh;                         /* its size, upright */
     uint16_t **brow;                    /* each row's sums, 3 per pixel */
@@ -978,6 +979,7 @@ static int big_setup(struct fos_dev *d, int size)
     }
     d->big = f; d->bshift = sh; d->bsize = size;
     d->bw = bw; d->bh = bh;
+    d->bstraight = !portrait && !cflip;
     snprintf(msg, sizeof(msg), "dev: a %d x %d print too (the sensor %d x %d to a pixel, %d KB in %d pieces)", bw, bh, f, f,
              bw * bh * 6 / 1024, nb);
     fos_port_log(msg);
@@ -1283,7 +1285,23 @@ static __attribute__((noinline)) void big_row(struct fos_dev *d, const uint16_t 
     if (o == 0xFFFF) return;
     const uint16_t *cm = d->bcmap;
     const int sh = d->bshift, rs = (sy ^ d->rphase) & 1;
-    if (!d->rows_axis_x)
+    if (d->bstraight)
+    {
+        /* the picture as the sensor lies (most frames): its columns go along
+         * the row in step, so the place is counted, not looked up */
+        const int f = d->big, lo = d->crop_l, hi = lo + d->bw * f;
+        const int x0 = pa > lo ? pa : lo, x1 = pb < hi ? pb : hi;
+        if (x0 >= x1) return;
+        const int k = (x0 - lo) / f;
+        int r = x0 - lo - k * f, par = x0 & 1;
+        uint16_t *p = d->brow[o] + rs + 3 * k;
+        for (const uint16_t *v = at + x0, *ve = at + x1; v < ve; v++, par ^= 1)
+        {
+            p[par] = (uint16_t) (p[par] + (*v >> sh));
+            if (++r == f) { r = 0; p += 3; }
+        }
+    }
+    else if (!d->rows_axis_x)
     {
         uint16_t *row = d->brow[o] + rs;
         for (int x = pa; x < pb; x++)

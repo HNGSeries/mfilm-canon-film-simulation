@@ -513,9 +513,9 @@ static uint8_t *dry;                    /* DRY_N x DRY_W x DRY_H */
 static int ndry;
 
 /* what the next frame draws again */
-enum { DV_TRAY = 1, DV_ROW = 2, DV_PANEL = 4, DV_BAR = 8, DV_HINTS = 16 };
+enum { DV_TRAY = 1, DV_ROW = 2, DV_PANEL = 4, DV_BAR = 8, DV_HINTS = 16, DV_BATT = 32 };
 static int dv_dirty;
-static int bar_drawn, last_doing = -1, panel_t;
+static int bar_drawn, last_doing = -1, panel_t, batt_t;
 static char eta_drawn[64];
 static char last_error[72];             /* why the last frame that failed did */
 
@@ -738,10 +738,13 @@ static void frame_finished(int ok)
 }
 
 /* the battery in the room's own light: the cell, and the percentage where
- * the camera knows it */
+ * the camera knows it. A roll takes a good while to develop: looked at
+ * again every half minute. */
 static void room_battery()
 {
     int exact = 0, pct = fos_port_battery(&exact);
+    ui_bg_restore(FOS_W - 120, 8, 120, 24);
+    ui_damage(8, 32);
     if (pct < 0) return;
     int x = FOS_W - 24 - 25, y = 15;
     fcol c = pct <= 10 ? SL_ACCENT : SL(pct <= 30 ? 190 : 130);
@@ -763,7 +766,6 @@ static void develop_bake()
     /* the room: dark, the safelight from above */
     fos_vgrad(cv, 0, 0, FOS_W, FOS_H, RAMP_RED, LV12(30), LV12(7));
     fos_text(cv, &fos_font_xs, 24, 26, "DARKROOM", SL_TEXT2, OPAQUE, 64);
-    room_battery();
     /* the tray and the developer in it */
     fos_rrect(cv, TRAY_X, TRAY_Y, TRAY_W, TRAY_H, 16, SL(26), OPAQUE);
     fos_rrect_line(cv, TRAY_X, TRAY_Y, TRAY_W, TRAY_H, 16, 2, SL(48), OPAQUE);
@@ -803,7 +805,7 @@ void develop_enter(int arg)
     dv_dirty = ~0;
     bar_drawn = -1;
     last_doing = -1;
-    panel_t = 0;
+    panel_t = batt_t = 0;
     eta_drawn[0] = 0;
     char dir[64];
     fos_lab_cache_dir(dir, sizeof(dir));
@@ -876,6 +878,8 @@ int develop_update(int dt)
     tray_t += dt;
     ghost_t += dt;
     panel_t += dt;
+    batt_t += dt;
+    if (batt_t > 30000) { batt_t = 0; dv_dirty |= DV_BATT; }
     /* the work: only once the screen has settled, and not while asking */
     if (!finished && !asking_stop && ui_settled() && stop_sheet.x < 0.002f)
     {
@@ -1146,6 +1150,7 @@ void develop_draw()
     if (what & DV_PANEL) draw_panel();
     if (what & DV_BAR) draw_bar();
     if (what & DV_HINTS) develop_hints();
+    if (what & DV_BATT) room_battery();
     if (stop_sheet.x > 0.002f)
         ui_sheet(stop_sheet.x, "Stop developing?", "The prints made so far are kept; the rest wait in the darkroom.", "Stop", "Keep going");
 }
