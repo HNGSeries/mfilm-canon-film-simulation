@@ -76,9 +76,10 @@ static int has_prints(const struct fos_lab_roll *r) { return r->sheet || r->deve
 /* about how long a frame takes at each print size: a guess, until one has
  * been developed at that size. The bigger print is finished pixel by pixel,
  * as the small one is, and has many more of them: counted in ARM
- * instructions (sim/tools/armcount.py), a medium print is about 2.4 times
- * the work of a small one and a large one 3.6 times. */
-static int ms_per_frame[FOS_SIZES] = { 15000, 36000, 54000 };
+ * instructions on an 18 MP RAW (sim/tools/armcount.py: 0.90, 2.3 and 4.0
+ * thousand million), a medium print is about 2.6 times the work of a small
+ * one and a large one 4.4 times. */
+static int ms_per_frame[FOS_SIZES] = { 15000, 39000, 66000 };
 
 static int cur_size()
 {

@@ -117,7 +117,8 @@ asks, and remembers) or in *Settings → Print size*:
 
 - A vertical frame is the same, turned upright. Other sensors give in proportion: Large is 2736 × 1824 on a 6D,
   2880 × 1920 on a 5D Mark III.
-- A bigger print takes longer: by the work it is, about 2.5 times a small one for Medium and 4 times for Large.
+- A bigger print takes longer: by the work it is, about 2.6 times a small one for Medium and 4.4 times for Large
+  (a small one takes about 15 seconds a frame on an EOS M).
   The Darkroom page says how long before you start, from the frames the camera has developed at that size.
 - The JPEG in `DCIM` is the size you chose. Medium and Large prints also keep a file to zoom into on the card
   (2 MB and 4.5 MB a frame).
