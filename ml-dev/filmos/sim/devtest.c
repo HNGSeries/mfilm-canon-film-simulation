@@ -5,6 +5,8 @@
  *
  * -r checks the RAW decoder against the samples mkcr2 wrote (--raw);
  * out.ppm is the print as the screen would show it.
+ * FOS_SIZE=1|2 the bigger print as the JPEG (FOS_JPEG), FOS_ZOOM its zoom
+ * file, FOS_STAMP=1 the date on it, FOS_MEM_KB a camera short of memory.
  */
 
 #include <stdio.h>
@@ -20,10 +22,21 @@ int fos_port_ms()
     clock_gettime(CLOCK_MONOTONIC, &t);
     return (int) (t.tv_sec * 1000 + t.tv_nsec / 1000000);
 }
-void *fos_port_alloc(int size) { return malloc(size); }
+/* FOS_MEM_KB: a camera with that much memory to give at a time, to see the
+ * darkroom make the print size it has room for */
+#include <malloc.h>
+static long mem_used;
+void *fos_port_alloc(int size)
+{
+    const char *lim = getenv("FOS_MEM_KB");
+    if (lim && mem_used + size > atol(lim) * 1024) return 0;
+    void *p = malloc(size);
+    if (p) mem_used += (long) malloc_usable_size(p);
+    return p;
+}
 int fos_port_dev_cap() { return 0; }
 void fos_port_log(const char *msg) { fprintf(stderr, "%s\n", msg); }
-void fos_port_free(void *p) { free(p); }
+void fos_port_free(void *p) { if (p) mem_used -= (long) malloc_usable_size(p); free(p); }
 
 /* the decoder's samples, to compare with mkcr2's */
 static uint16_t *raw;

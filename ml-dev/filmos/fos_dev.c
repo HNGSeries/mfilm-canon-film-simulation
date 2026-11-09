@@ -322,7 +322,7 @@ FOS_INLINE void lut_apply(const uint8_t (*lut)[3], int pr, int pg, int pb, uint8
 enum { ST_OPEN, ST_DECODE, ST_KEY, ST_EXPOSE, ST_GLOW, ST_FINISH, ST_JPEG, ST_QUANT, ST_DITHER, ST_BIG, ST_WRITE, ST_DONE, ST_FAIL,
        ST_COUNT };
 
-#define BIG_BANDS   48                  /* a big print's sums are kept in pieces of about 2 MB */
+#define BIG_BANDS   64                  /* a big print's sums are kept in pieces of a megabyte */
 #define BIG_ROWS    16                  /* its rows finished at a time: a row of JPEG blocks */
 
 struct huff
@@ -419,6 +419,7 @@ struct fos_dev
     int bw, bh;                         /* its size, upright */
     uint16_t **brow;                    /* each row's sums, 3 per pixel */
     uint16_t *bband[BIG_BANDS];
+    uint8_t *barena;                    /* the block the tables below are in */
     uint16_t *bcmap, *brmap;            /* raw column / row -> its line of the print, 0xFFFF: none */
     uint16_t *bne_r, *bno_r, *bne_c, *bno_c;    /* as ne_r ..: raw rows / columns per line, even and odd */
     uint32_t *b32;                      /* a row at work: its sums, */
@@ -871,17 +872,9 @@ static int setup_maps(struct fos_dev *d)
 static void big_free(struct fos_dev *d)
 {
     for (int i = 0; i < BIG_BANDS; i++) { fos_port_free(d->bband[i]); d->bband[i] = 0; }
-    fos_port_free(d->brow); d->brow = 0;
-    fos_port_free(d->bcmap); d->bcmap = 0;
-    fos_port_free(d->brmap); d->brmap = 0;
-    fos_port_free(d->bne_r); d->bne_r = 0;
-    fos_port_free(d->b32); d->b32 = 0;
-    fos_port_free(d->bcam); d->bcam = 0;
-    fos_port_free(d->bvig_x); d->bvig_x = 0;
-    fos_port_free(d->bgx); d->bgx = 0;
-    fos_port_free(d->brgb); d->brgb = 0;
-    fos_port_free(d->bidx); d->bidx = 0;
-    fos_port_free(d->berr); d->berr = 0;
+    fos_port_free(d->barena);
+    d->barena = 0;
+    d->brow = 0;
     d->big = 0;
 }
 
@@ -899,23 +892,37 @@ static int big_setup(struct fos_dev *d, int size)
     /* green takes up to (f * f + 1) / 2 samples of 14 bits: shifted to fit 16 */
     int sh = 0;
     while ((((f * f + 1) / 2) * ((1 << d->bits) - 1)) >> sh > 65535) sh++;
-    int per = (2 << 20) / (bw * 6);                         /* rows in a piece */
+    /* The sums in pieces of a megabyte at most: Magic Lantern gives those
+     * straight from the camera's picture memory, where for a bigger block
+     * it first takes all of that memory to see what is there. */
+    int per = ((1 << 20) - 64) / (bw * 6);                  /* rows in a piece */
     if (per < 1) per = 1;
     int nb = (bh + per - 1) / per;
     if (nb > BIG_BANDS) return 0;
     int line = bw > bh ? bw : bh;
-    d->brow = fos_port_alloc(bh * (int) sizeof(uint16_t *));
-    d->bcmap = fos_port_alloc(d->raw_w * 2);
-    d->brmap = fos_port_alloc(d->raw_h * 2);
-    d->bne_r = fos_port_alloc(line * 2 * 4);
-    d->b32 = fos_port_alloc(bw * 3 * 4);
-    d->bcam = fos_port_alloc(bw * 3 * 2 * 2);
-    d->bvig_x = fos_port_alloc((bw + bh) * 2);
-    d->bgx = fos_port_alloc(bw * 2);
-    d->brgb = fos_port_alloc(BIG_ROWS * bw * 3);
-    d->bidx = fos_port_alloc(BIG_ROWS * bw);
-    d->berr = fos_port_alloc((bw + 2) * 3 * 2 * 2);
-    int ok = d->brow && d->bcmap && d->brmap && d->bne_r && d->b32 && d->bcam && d->bvig_x && d->bgx && d->brgb && d->bidx && d->berr;
+    /* everything else it needs in one block (word-sized things first), so
+     * the camera's small heaps, which Canon lives on too, aren't asked */
+    const int n_row = bh * (int) sizeof(uint16_t *), n_32 = bw * 3 * 4, n_err = (bw + 2) * 3 * 2 * 2;
+    const int n_cmap = (d->raw_w * 2 + 3) & ~3, n_rmap = (d->raw_h * 2 + 3) & ~3, n_cnt = line * 2 * 4;
+    const int n_cam = bw * 3 * 2 * 2, n_vig = ((bw + bh) * 2 + 3) & ~3;
+    const int n_rgb = (BIG_ROWS * bw * 3 + 3) & ~3, n_idx = (BIG_ROWS * bw + 3) & ~3, n_g = bw * 2;
+    const int total = n_row + n_32 + n_err + n_cmap + n_rmap + n_cnt + n_cam + n_vig + n_rgb + n_idx + n_g;
+    uint8_t *a = d->barena = fos_port_alloc(total);
+    int ok = a != 0;
+    if (ok)
+    {
+        d->brow = (uint16_t **) a; a += n_row;
+        d->b32 = (uint32_t *) a; a += n_32;
+        d->berr = (int16_t *) a; a += n_err;
+        d->bcmap = (uint16_t *) a; a += n_cmap;
+        d->brmap = (uint16_t *) a; a += n_rmap;
+        d->bne_r = (uint16_t *) a; a += n_cnt;
+        d->bcam = (uint16_t *) a; a += n_cam;
+        d->bvig_x = (int16_t *) a; a += n_vig;
+        d->brgb = a; a += n_rgb;
+        d->bidx = a; a += n_idx;
+        d->bgx = a;
+    }
     for (int i = 0; ok && i < nb; i++)
     {
         int rows = i == nb - 1 ? bh - i * per : per;
@@ -924,10 +931,19 @@ static int big_setup(struct fos_dev *d, int size)
         memset(d->bband[i], 0, rows * bw * 6);
         for (int r = 0; r < rows; r++) d->brow[i * per + r] = d->bband[i] + r * bw * 3;
     }
+    /* and room left for what the screen's print still has to take once the
+     * RAW is read (its RGB, the palette's tables): a megabyte and a half,
+     * tried now, so the frame doesn't fail later for the sake of its size */
+    if (ok)
+    {
+        void *spare = fos_port_alloc(FOS_PRINT_W * FOS_PRINT_H * 3 + (512 << 10));
+        ok = spare != 0;
+        fos_port_free(spare);
+    }
     if (!ok)
     {
-        snprintf(msg, sizeof(msg), "dev: no memory for a %d x %d print (%d KB in %d pieces), trying smaller", bw, bh,
-                 bw * bh * 6 / 1024, nb);
+        snprintf(msg, sizeof(msg), "dev: no memory for a %d x %d print (%d KB in %d pieces, and %d KB), trying smaller", bw, bh,
+                 bw * bh * 6 / 1024, nb, total / 1024);
         fos_port_log(msg);
         return 0;
     }
