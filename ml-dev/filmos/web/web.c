@@ -31,7 +31,7 @@ IMPORT("log")     void web_log(const char *msg);
 IMPORT("clock")   void web_clock(char *buf, int size, int with_date);
 IMPORT("event")   void web_event(int what, int a, int b);  /* the page's own reactions */
 
-enum { EV_LOADED, EV_SHOT, EV_FINISHED, EV_REWOUND, EV_DEVELOPING, EV_WIND };
+enum { EV_LOADED, EV_SHOT, EV_FINISHED, EV_REWOUND, EV_DEVELOPING, EV_WIND, EV_LV, EV_SCREEN };
 
 void sim_fonts();
 void sim_films();
@@ -142,15 +142,41 @@ void fos_port_free(void *p) { free(p); }
 
 void fos_port_roll(struct fos_roll *r) { *r = roll; }
 
+/* ---------------------------------------------------------------- which camera
+
+ * The page plays every camera M-Film runs on (site/js/bodies.js). What the
+ * film OS itself sees of the camera: its name, whether its screen swivels
+ * (Settings > Screen orientation), whether Magic Lantern can set LiveView's
+ * exposure simulation on it; and around it, whether it is a DSLR: no
+ * LiveView until its LV button, the top plate on the back screen meanwhile */
+static char model[48] = "Canon EOS M";
+static int dslr, swivel, expsim = 1, lv = 1;
+
+EXPORT("web_model") char *web_model_buf() { return model; }
+EXPORT("web_config") void web_config(int is_dslr, int can_swivel, int can_expsim)
+{
+    dslr = is_dslr;
+    swivel = can_swivel;
+    expsim = can_expsim;
+    lv = !dslr;
+    settings[FS_SCR_FLIP] = swivel ? 0 : -1;
+}
+
+/* sim/port_files.c's is renamed away in the build (build.sh): this one says which camera */
+const char *fos_port_model() { return model; }
+
 int fos_port_get(int s)
 {
+    if (s == FS_SCR_FLIP && !swivel) return -1;
+    if (s == FS_EXPSIM && !expsim) return -1;
     return s >= 0 && s < FS_COUNT ? settings[s] : 0;
 }
 void fos_port_set(int s, int v)
 {
-    if (s == FS_SCR_FLIP || s == FS_EXPSIM) return;
+    if ((s == FS_SCR_FLIP && !swivel) || (s == FS_EXPSIM && !expsim)) return;
     if (s >= 0 && s < FS_COUNT) settings[s] = v;
     if (s == FS_SCR_STD || s == FS_SCR_SAT || s == FS_SCR_WARM || s == FS_SCR_BRIGHT) fos_port_palette();
+    if (s == FS_SCR_FLIP) web_event(EV_SCREEN, v, 0);      /* the page turns its screen */
 }
 
 static void log_append(const char *line)
@@ -285,9 +311,13 @@ static void hud_palette()
 }
 
 static int meter_wobble;
+
+/* LiveView with the HUD over it; on a DSLR with LiveView off, the top plate
+ * on the back screen (black without a roll: Canon's own screen is not drawn) */
 static void hud_draw(int now)
 {
-    memset(screen, hud_pal.clear, sizeof(screen));
+    int plate = dslr && !lv;
+    memset(screen, plate ? hud_pal.black : hud_pal.clear, sizeof(screen));
     if (settings[FS_HUD] && roll.loaded)
     {
         struct fos_hud h;
@@ -310,7 +340,8 @@ static void hud_draw(int now)
         h.focus_screen = settings[FS_FOCUS];
         h.film = fos_films[fos_clamp(roll.film, 0, fos_nfilms - 1)].name;
         h.iso = fos_films[fos_clamp(roll.film, 0, fos_nfilms - 1)].box_iso;
-        fos_hud_draw(screen, FOS_W, &h, &hud_pal);
+        if (plate) fos_hud_plate(screen, FOS_W, &h, &hud_pal);
+        else fos_hud_draw(screen, FOS_W, &h, &hud_pal);
     }
     web_present(0, FOS_H);
 }
@@ -358,6 +389,15 @@ static void lv_key(int k)
         web_event(EV_WIND, 0, 0);
     }
 }
+
+/* the DSLR's LV button: LiveView on or off (the EOS M is always in LiveView) */
+EXPORT("web_lv") void web_lv(int on)
+{
+    if (!dslr || ui_running) return;
+    lv = on;
+    web_event(EV_LV, lv, 0);
+}
+EXPORT("web_lv_on") int web_lv_on() { return lv; }
 
 EXPORT("web_main") void web_main()
 {

@@ -152,6 +152,10 @@ for (const a of document.querySelectorAll('[data-download]')) {
 }
 document.addEventListener('mfilm:lang', () => { fillCameras(); setAmount(amount.value); });
 
+// install.html's Download button, and links to #get: the dialog, open
+if (location.hash === '#get') { open(); history.replaceState(null, '', location.pathname + location.search + '#download'); }
+addEventListener('hashchange', () => { if (location.hash === '#get') open(); });
+
 // back from Stripe
 const q = new URLSearchParams(location.search);
 if (q.get('thanks') === '1') {

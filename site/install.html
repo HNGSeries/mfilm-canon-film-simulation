@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install M-Film · step by step</title>
+<meta name="description" content="Put M-Film on your Canon, step by step: no experience needed. About 15 minutes.">
+<link rel="icon" href="img/mfilm.png">
+<link rel="stylesheet" href="css/site.css">
+<script type="module" src="js/install.js"></script>
+</head>
+<body class="guide-page">
+
+<header class="top">
+  <a class="brand" href="./"><img src="img/mfilm.png" alt="" width="28" height="28"> M·FILM</a>
+  <nav>
+    <a href="./" data-i18n="ig.nav.try">Try it</a>
+    <a href="./#faq" data-i18n="nav.faq">FAQ</a>
+    <button class="lang" type="button" aria-label="ภาษาไทย / English">TH</button>
+    <a class="btn small" id="ig-dl-top" href="./#get" data-i18n="nav.download">Download</a>
+  </nav>
+</header>
+
+<main class="ig">
+  <section class="ig-head">
+    <h1 data-i18n="ig.t">Put M-Film on your camera</h1>
+    <p class="lede" data-i18n="ig.d">Step by step, no experience needed. About 15 minutes. Nothing in the camera changes for good: take the card out and it is Canon's camera again.</p>
+    <label class="picker">
+      <span class="picker-label" data-i18n="ig.which">Your camera</span>
+      <span class="select"><select id="ig-camera" aria-label="Your camera"></select></span>
+    </label>
+    <p class="ig-status" id="ig-status"></p>
+  </section>
+
+  <section class="ig-need">
+    <h2 data-i18n="ig.need.t">What you need</h2>
+    <ul class="need">
+      <li><b>📷</b><span data-i18n="ig.need.1">Your camera, with a <b>fully charged battery</b></span></li>
+      <li><b>💾</b><span data-i18n="ig.need.2">An SD card (a CF card on the 5D Mark II and 50D), <b>32 GB or smaller</b> is best</span></li>
+      <li><b>💻</b><span data-i18n="ig.need.3">A computer with a card reader (Windows or Mac)</span></li>
+      <li><b>⏱</b><span data-i18n="ig.need.4">About 15 minutes, not in the middle of a shoot</span></li>
+    </ul>
+  </section>
+
+  <ol class="ig-steps">
+    <li id="s1">
+      <h3 data-i18n="ig.1.t">Check the camera's Canon firmware</h3>
+      <p data-i18n="ig.1.d">M-Film is made for one exact version of Canon's software. Turn the camera on and look:</p>
+      <div class="path"><span>MENU</span><i>→</i><span data-i18n="ig.1.p1">the last 🔧 settings tab</span><i>→</i><span>Firmware ver.</span></div>
+      <div class="need-fw"><span data-i18n="ig.1.must">It must say</span> <b id="ig-fw">2.0.2</b></div>
+      <p class="tip" data-i18n="ig.1.tip">Different? Update the camera to exactly that version first, from Canon's support site for your camera. A newer or older one won't work.</p>
+    </li>
+
+    <li id="s2">
+      <h3 data-i18n="ig.2.t">Set the camera to shoot RAW</h3>
+      <p data-i18n="ig.2.d">The films are made from the RAW file, so set this now, in Canon's menu, while it is still the normal camera:</p>
+      <div class="path"><span>MENU</span><i>→</i><span>Image quality</span><i>→</i><span>RAW</span></div>
+      <div class="path"><span>MENU</span><i>→</i><span>Image review</span><i>→</i><span>Off</span></div>
+      <p class="tip" data-i18n="ig.2.tip">RAW+JPEG works too. A photo shot as JPEG only can't be developed.</p>
+    </li>
+
+    <li id="s3">
+      <h3 data-i18n="ig.3.t">Download the file for your camera</h3>
+      <p data-i18n="ig.3.d">One zip file, about 18 MB. Pay what you want for it, $0 included.</p>
+      <a class="btn" id="ig-dl" href="./#get"><span data-i18n="ig.3.btn">Download</span> <code id="ig-zip">M-Film-camera-EOSM.202.zip</code></a>
+    </li>
+
+    <li id="s4">
+      <h3 data-i18n="ig.4.t">Format the card in the camera</h3>
+      <p data-i18n="ig.4.d">Copy any photos you want to keep off the card first: formatting erases everything. Then, in the camera:</p>
+      <div class="path"><span>MENU</span><i>→</i><span>Format card</span><i>→</i><span>OK</span></div>
+      <p class="tip" data-i18n="ig.4.tip">Format it in the camera, not on the computer.</p>
+    </li>
+
+    <li id="s5">
+      <h3 data-i18n="ig.5.t">Copy the files onto the card</h3>
+      <p data-i18n="ig.5.d">Put the card in the computer. Unzip the file you downloaded (Windows: right-click → Extract All; Mac: double-click it). That makes a folder: open it, select everything inside, and copy it onto the card.</p>
+      <div class="trees">
+        <div class="tree ok">
+          <b data-i18n="ig.5.ok">✓ Right: on the card itself</b>
+          <code>📁 ML<br>📄 autoexec.bin<br>📄 ML-SETUP.FIR<br>📄 M-FILM-README.txt</code>
+        </div>
+        <div class="tree bad">
+          <b data-i18n="ig.5.bad">✗ Wrong: inside a folder</b>
+          <code>📁 M-Film-camera-…<br>&nbsp;&nbsp;&nbsp;📁 ML<br>&nbsp;&nbsp;&nbsp;📄 autoexec.bin<br>&nbsp;&nbsp;&nbsp;📄 ML-SETUP.FIR</code>
+        </div>
+      </div>
+      <p class="tip" data-i18n="ig.5.tip">Then eject the card (Windows: the USB icon → Eject; Mac: drag it to the bin) before you take it out.</p>
+      <p class="tip mac" data-i18n="ig.5.mac">On a Mac: Mac's hidden "._" files can stop the camera. In Terminal, run dot_clean -m /Volumes/EOS_DIGITAL (your card's name), then eject.</p>
+    </li>
+
+    <li id="s6">
+      <h3 data-i18n="ig.6.t">Run the installer, once</h3>
+      <p data-i18n="ig.6.d">Camera off, card in, camera on. Then:</p>
+      <div class="path"><span>MENU</span><i>→</i><span>Firmware ver.</span><i>→</i><span>SET</span><i>→</i><span>OK</span></div>
+      <p data-i18n="ig.6.d2">Magic Lantern's installer appears and says when it's done (a few seconds). Switch the camera off.</p>
+      <p class="tip" data-i18n="ig.6.tip">This doesn't replace Canon's firmware: it only tells the camera to start Magic Lantern from the card. You only do it once.</p>
+    </li>
+
+    <li id="s7">
+      <h3 data-i18n="ig.7.t">Switch on: the film shelf appears</h3>
+      <p data-i18n="ig.7.d">Turn the camera on. After a moment you'll see M-Film's shelf of films. Pick one and press SET: the roll is loaded. Now shoot.</p>
+      <p class="tip" data-i18n="ig.7.tip">The delete (trash) button opens M-Film's home; PLAY shows the developed prints. Canon's own menu is in M-Film: Home → System → Canon menu.</p>
+      <a class="btn ghost" href="./" data-i18n="ig.7.try">Practise on the camera in your browser first →</a>
+    </li>
+  </ol>
+
+  <section class="ig-help faq">
+    <h2 data-i18n="ig.h.t">If something goes wrong</h2>
+    <details><summary data-i18n="ig.h.1.q">"Memory card containing firmware is required to update"</summary>
+      <p data-i18n="ig.h.1.a">The camera didn't find the installer it accepts. Either the camera's firmware isn't exactly the version above (step 1), or the files are inside a folder instead of on the card itself (step 5). On a Mac, also run dot_clean (step 5).</p></details>
+    <details><summary data-i18n="ig.h.2.q">"ML directory not found" / "Please copy all ML files"</summary>
+      <p data-i18n="ig.h.2.a">The ML folder isn't next to autoexec.bin at the top of the card. Copy what is inside the unzipped folder, the ML folder included. Format in the camera first; with a card bigger than 32 GB, try a 32 GB one.</p></details>
+    <details><summary data-i18n="ig.h.3.q">The camera won't start, or the screen stays black</summary>
+      <p data-i18n="ig.h.3.a">Take the battery out, then the card. Put the battery back: the camera starts normally, as Canon's camera. Nothing is broken. Tell us which camera and firmware, so we can fix it.</p></details>
+    <details><summary data-i18n="ig.h.4.q">Magic Lantern's own menu shows instead of the film shelf</summary>
+      <p data-i18n="ig.h.4.a">On some cameras M-Film loads as a module after the camera starts, and it didn't load. The Modules tab says why on its line: tell us what it says.</p></details>
+    <details><summary data-i18n="ig.h.5.q">How do I take it off?</summary>
+      <p data-i18n="ig.h.5.a">Format the card in the camera. To stop the camera looking for Magic Lantern at all, run Firmware ver. → update again with the card in, and choose to remove the boot flag.</p></details>
+    <p class="muted" data-i18n="ig.h.more">Still stuck? <a class="link" href="https://github.com/HNGSeries/mfilm-canon-film-simulation/issues/new/choose">Ask on GitHub</a>, with your camera and its firmware.</p>
+  </section>
+</main>
+
+<footer>
+  <p class="foot-small"><span>M-Film · GPL-2.0</span> · <span data-i18n="foot.ml">Built on <a href="https://www.magiclantern.fm/">Magic Lantern</a>. Not affiliated with Canon.</span></p>
+</footer>
+</body>
+</html>

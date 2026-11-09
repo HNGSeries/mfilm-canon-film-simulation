@@ -114,7 +114,6 @@ p { margin: 0 0 1em; color: var(--muted); max-width: 62ch; }
 
 .screen {
   position: absolute;
-  left: 5.4545%; top: 18.919%; width: 61.818%; height: 61.216%;
   overflow: hidden; background: #000; border-radius: 2px;
 }
 .screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: auto; }
@@ -144,16 +143,21 @@ p { margin: 0 0 1em; color: var(--muted); max-width: 62ch; }
 .ctl.down, .ctl:active { transform: scale(.94); filter: brightness(.85); }
 .ctl:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 
-.ctl.info  { --x: 75.45; --y: 25.68; --d: 4.9; }
-.ctl.play  { --x: 75.45; --y: 81.08; --d: 4.9; color: #9fd29a; font-size: clamp(7px, 1.3vw, 14px); }
-.ctl.menu  { --x: 90.91; --y: 81.08; --d: 4.9; font-size: clamp(5px, .9vw, 10px); }
-.ctl.trash { --x: 90.91; --y: 33.78; --d: 4.3; font-size: clamp(7px, 1.2vw, 13px); }
-.ctl.rec   { --x: 90.0;  --y: 20.27; --d: 4.3; cursor: default; }
+.ctl.play  { color: #9fd29a; font-size: clamp(7px, 1.3vw, 14px); }
+.ctl.menu, .ctl.info { font-size: clamp(5px, .85vw, 10px); }
+.ctl.home  { font-size: clamp(7px, 1.2vw, 13px); }
+.ctl.q     { font: 700 clamp(7px, 1.25vw, 15px) Georgia, 'Times New Roman', serif; }
+.ctl.pill  { aspect-ratio: 2.1; border-radius: 999px; }
+.ctl.deco  { cursor: default; font-size: clamp(5px, .7vw, 9px); color: #a8a29a; }
+.ctl.deco:active { transform: none; filter: none; }
+.ctl.rec   { cursor: default; }
+.ctl.lv { font-size: 0; }
+.ctl.lv::after { content: ""; position: absolute; inset: 34%; border-radius: 50%; background: var(--red); opacity: .55; }
+.cam.lv-on .ctl.lv::after { opacity: 1; box-shadow: 0 0 6px var(--red); }
 .ctl.rec::after { content: ""; position: absolute; inset: 32%; border-radius: 50%; background: var(--red); }
 
 /* top plate: the shutter button's chrome cap is drawn by the button */
 .ctl.shutter {
-  --x: 81.82; --y: 5.0; --d: 8;
   aspect-ratio: 2.4; border-radius: 10px 10px 4px 4px; background: transparent; box-shadow: none;
 }
 .ctl.shutter span {
@@ -170,12 +174,12 @@ p { margin: 0 0 1em; color: var(--muted); max-width: 62ch; }
 }
 .cam.shot-once .ctl.shutter::before { display: none; }
 @keyframes nudge { 0%, 100% { opacity: .9; } 50% { opacity: .35; } }
-.ctl.power { --x: 69.18; --y: 7.4; --d: 5.2; aspect-ratio: 2.6; border-radius: 6px; background: linear-gradient(#8a8580, #4f4c48); }
+.ctl.power { aspect-ratio: 2.6; border-radius: 6px; background: linear-gradient(#8a8580, #4f4c48); }
 .cam.off .ctl.power { background: linear-gradient(#55524e, #34322f); }
 
 /* the Quick Control Dial: turn it (drag, wheel), press its edges, SET */
 .dial {
-  position: absolute; left: 83.18%; top: 54.05%; width: 21.82%; aspect-ratio: 1;
+  position: absolute; aspect-ratio: 1;
   translate: -50% -50%; border-radius: 50%; touch-action: none;
 }
 .dial-ring {
@@ -438,3 +442,106 @@ footer { display: block; }
 @media (pointer: coarse) {
   .ctl:not(.shutter)::before { content: ""; position: absolute; inset: -35%; }
 }
+
+/* ---------------------------------------------------------------- the other cameras (js/bodies.js) */
+
+/* Rebels: cross keys round SET, no dial to turn */
+.dial.cross::before {
+  content: ""; position: absolute; inset: 4%; border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #3a3836, #232120 70%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .14), 0 1px 3px rgba(0, 0, 0, .6);
+}
+.dial.cross .ctl.dpad::after { width: 0; height: 0; aspect-ratio: auto; border-radius: 0; background: none; opacity: .8;
+  border: 5px solid transparent; }
+.dial.cross .ctl.dpad.up::after { border-bottom: 7px solid #b9b3aa; translate: -50% -80%; }
+.dial.cross .ctl.dpad.down::after { border-top: 7px solid #b9b3aa; translate: -50% -20%; }
+.dial.cross .ctl.dpad.left::after { border-right: 7px solid #b9b3aa; translate: -80% -50%; }
+.dial.cross .ctl.dpad.right::after { border-left: 7px solid #b9b3aa; translate: -20% -50%; }
+.dial.cross .ctl.dpad:hover::after { background: none; }
+.dial.cross .ctl.set { --d: 44; }
+
+/* the multi-controller of the 5D Mark II and III and the 50D */
+.dial.stick::before {
+  content: ""; position: absolute; inset: 18%; border-radius: 50%;
+  background: repeating-radial-gradient(circle, #4a4744 0 2px, #2a2826 2px 4px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .7), inset 0 1px 1px rgba(255, 255, 255, .2);
+}
+.dial.stick .ctl.dpad { --d: 34; }
+.dial.stick .ctl.dpad::after { width: 14%; opacity: .5; }
+.dial.stick .ctl.set { --d: 40; background: transparent; box-shadow: none; }
+
+/* the main dial on top, by the shutter button: either half turns it a click */
+.topdial {
+  position: absolute; aspect-ratio: 3.4; translate: -50% -50%; display: flex; border-radius: 8px; overflow: hidden;
+  background: repeating-linear-gradient(90deg, #4c4946 0 3px, #2a2826 3px 7px);
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, .15), 0 2px 3px rgba(0, 0, 0, .6);
+}
+.topdial .ctl { position: static; translate: none; flex: 1; width: auto; height: 100%; aspect-ratio: auto;
+  border-radius: 0; background: transparent; box-shadow: none; }
+.topdial .ctl:hover { background: rgba(236, 168, 52, .18); }
+
+/* a DSLR's screen: black, the top plate or the film OS on it, LiveView only with LV on */
+.cam.dslr:not(.lv-on) .screen canvas.lv { visibility: hidden; }
+.screen.flip-2 { transform: rotate(180deg); }
+.screen.flip-3 { transform: scaleX(-1); }
+.lvbtn { font: 700 12px Barlow, sans-serif; width: auto; padding: 0 12px; border-radius: 999px; }
+.cam.lv-on ~ .cam-under .lvbtn { border-color: var(--red); color: #ffb3a5; }
+
+/* the screen's glass: a faint sheen over whatever is on it */
+.screen::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, rgba(255, 255, 255, .07) 0%, rgba(255, 255, 255, .02) 32%, transparent 33%, transparent 100%);
+}
+
+/* ---------------------------------------------------------------- install.html */
+
+.get-btns { display: flex; flex-wrap: wrap; gap: 12px; }
+.ig { max-width: 880px; margin: 0 auto; padding: 36px 16px 64px; }
+.ig-head h1 { font-size: clamp(36px, 5vw, 56px); }
+.ig-head .lede { color: var(--muted); }
+.ig-status { font-size: 15px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg2); }
+.ig-status:empty { display: none; }
+.ig-status.working { border-color: #2f5a2c; color: #b7e3b3; }
+.ig-status.issues { border-color: #6b4c14; color: #f3cf8c; }
+.ig-status.testing { border-color: #2c4470; color: #b9d0ff; }
+.ig-need { margin: 28px 0 8px; }
+.ig-need h2, .ig-help h2 { font-size: 28px; }
+.need { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 600px) { .need { grid-template-columns: minmax(0, 1fr); } }
+.need li { display: flex; gap: 12px; align-items: flex-start; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 15px; color: var(--muted); }
+.need li b { font-size: 20px; line-height: 1.2; }
+.need li span b { font-size: inherit; color: var(--ink); }
+.ig-steps { list-style: none; counter-reset: ig; padding: 0; margin: 32px 0; }
+.ig-steps > li {
+  counter-increment: ig; position: relative; padding: 0 0 34px 64px; margin: 0;
+  border-left: 2px solid var(--line); margin-left: 22px; padding-left: 42px;
+}
+.ig-steps > li:last-child { border-left-color: transparent; }
+.ig-steps > li::before {
+  content: counter(ig); position: absolute; left: -23px; top: -4px; width: 44px; height: 44px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--amber); color: var(--amber-ink); font: 700 20px Barlow, sans-serif;
+}
+.ig-steps h3 { font-size: 22px; margin: 4px 0 8px; }
+.ig-steps p { margin: 0 0 12px; }
+.path { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0 12px; }
+.path span {
+  font: 700 14px Barlow, "Noto Sans Thai", sans-serif; padding: 7px 12px; border-radius: 8px;
+  background: #1f1d1b; border: 1px solid #3a3734; color: var(--ink); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .4);
+}
+.path i { font-style: normal; color: var(--amber); }
+.need-fw { display: inline-flex; align-items: baseline; gap: 10px; margin: 2px 0 12px; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--amber); }
+.need-fw b { font: 700 30px "Barlow Condensed", sans-serif; color: var(--amber); }
+.tip { font-size: 14px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 12px; }
+.trees { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 8px 0 14px; }
+@media (max-width: 600px) { .trees { grid-template-columns: minmax(0, 1fr); } }
+.tree { border-radius: 12px; padding: 14px; border: 1px solid; }
+.tree b { display: block; margin-bottom: 8px; font-size: 15px; }
+.tree code { font-size: 14px; line-height: 1.8; color: var(--ink); }
+.tree.ok { border-color: #2f5a2c; background: #121a11; } .tree.ok b { color: #9fdc9a; }
+.tree.bad { border-color: #6b2a20; background: #1c1110; } .tree.bad b { color: #ff9c8a; }
+#ig-dl code { font-size: 13px; opacity: .8; margin-left: 6px; }
+.ig-help { margin-top: 12px; }
+/* long camera names never push the page wider than the phone */
+.picker { max-width: 100%; }
+.picker .select { min-width: 0; max-width: 100%; }
+.select select { max-width: 100%; text-overflow: ellipsis; }

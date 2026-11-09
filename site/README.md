@@ -26,7 +26,14 @@ then open http://localhost:8000. Building needs clang, lld, `wasi-libc`,
 
 ## What to replace
 
-- **The camera body**: `img/eosm-back.svg` is a drawing. A photo of the back
+- **The cameras**: every camera M-Film runs on is in `js/bodies.js`: its body
+  (the EOS M is `img/eosm-back.svg`; the DSLRs are drawn from their family's
+  shape: Rebel, 60D/70D/6D, 5D/50D), its screen, and each control where it
+  sits. Give a body an `image` (a photo of its back) and it replaces the
+  drawing; the controls stay where its numbers put them. `web_config` tells
+  the film OS which camera it is: its name, a DSLR (top plate until the LV
+  button), a swivel screen, exposure simulation.
+- **The EOS M's body**: `img/eosm-back.svg` is a drawing. A photo of the back
   (1100 × 740, or the same proportions, the screen's glass at x 60–740,
   y 140–593) can take its place in `index.html`. The buttons sit over it in
   `css/site.css` (`.ctl.info`, `.dial`, …), each at its centre in % of the
@@ -47,4 +54,5 @@ then open http://localhost:8000. Building needs clang, lld, `wasi-libc`,
 - `js/download.js` is the download: camera, pay what you want (US$0–99). Over $0 it asks the Darkrooms
   licence server (`/v1/donate`) for a Stripe Checkout page of that amount; Stripe comes back with `?thanks=1`.
   Its camera list follows `ml-dev/cameras.txt`.
+- `install.html` / `js/install.js`: installing, step by step, for the camera picked there.
 - `js/main.js` wires the buttons, the dial, the keyboard and the guide; `js/i18n.js` has the English and Thai.

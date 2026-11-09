@@ -19,8 +19,11 @@ cp ../sim/out/FOSFONT.BIN ../sim/out/FOSFILMS.BIN "$OUT/"
 # the page's cameras and films, from cameras.txt and FILMS.md as the README's are
 python3 sitedata.py "$OUT"
 
-SRC="web.c ../sim/port_files.c ../sim/fonts.c ../sim/films.c ../fos_gfx.c ../fos_film.c ../fos_ui.c ../fos_shelf.c \
+SRC="web.c out/port_files.o ../sim/fonts.c ../sim/films.c ../fos_gfx.c ../fos_film.c ../fos_ui.c ../fos_shelf.c \
      ../fos_pages.c ../fos_hud.c ../fos_print.c ../fos_dark.c ../fos_dev.c ../fos_lab.c ../fos_looks.c ../fos_jpeg.c"
+# the simulator's card (stdio) as it is, but its fos_port_model (always the EOS M) out of the way:
+# web.c says which camera the page is playing
+$CC $CFLAGS -Dfos_port_model=sim_port_model -c -o out/port_files.o ../sim/port_files.c
 $CC $CFLAGS -mexec-model=reactor -Wl,--export=malloc -Wl,--export=free -Wl,-z,stack-size=1048576 \
     -o out/mfilm.raw.wasm $SRC -lm
 # fos_port_sleep waits on the page: Asyncify lets web.sleep return later
