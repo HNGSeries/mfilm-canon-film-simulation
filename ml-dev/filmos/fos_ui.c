@@ -187,6 +187,30 @@ void ui_bg_plain()
     if (buf_plain) memcpy(buf_plain, ui_bg, FOS_W * FOS_H);
 }
 
+/* the battery, ending at rx: its charge as a bar in a little cell, with
+ * the percentage where the camera knows it; amber when low, red when
+ * nearly flat. Returns the width it took, with the gap to what comes next
+ * (0 where the camera doesn't say). */
+int ui_battery(int rx, int y)
+{
+    int exact = 0, pct = fos_port_battery(&exact);
+    if (pct < 0) return 0;
+    fcol c = pct <= 10 ? C_RED : pct <= 30 ? C_ACCENT : C_TEXT2;
+    int x = rx - 25;
+    fos_rrect_line(cv, x, y, 22, 12, 3, 1, FC(RAMP_GRAY, 120), OPAQUE);
+    fos_fill(cv, x + 22, y + 4, 2, 4, FC(RAMP_GRAY, 120));
+    int w = pct <= 0 ? 0 : 2 + pct * 16 / 100;
+    if (w) fos_rrect(cv, x + 2, y + 2, w, 8, 1, c, OPAQUE);
+    int used = 25;
+    if (exact)
+    {
+        char b[16];
+        snprintf(b, sizeof(b), "%d%%", pct);
+        used += 6 + fos_text_r(cv, &fos_font_xs, x - 6, y + 11, b, pct <= 30 ? c : C_TEXT3, OPAQUE, 16);
+    }
+    return used + 16;
+}
+
 void ui_status_bar(const char *title)
 {
     /* wordmark: a small aperture and the name */
@@ -205,10 +229,11 @@ void ui_status_bar(const char *title)
         fos_text(cv, &fos_font_xs, x + 25, y, title, C_TEXT3, OPAQUE, 40);
     }
 
-    /* right: the roll in the camera and the time */
+    /* right: the roll in the camera, the time and the battery */
     char clock[16], buf[48];
     fos_port_clock(clock, sizeof(clock));
     int rx = FOS_W - 24;
+    rx -= ui_battery(rx, y - 12);
     rx -= fos_text_r(cv, &fos_font_mdb, rx, y + 1, clock, C_TEXT, OPAQUE, 0) + 18;
     if (ui_roll.loaded)
     {

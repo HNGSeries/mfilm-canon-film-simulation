@@ -53,6 +53,9 @@
 #include <tasks.h>
 #include <mem.h>
 #include <powersave.h>
+#ifdef CONFIG_BATTERY_INFO
+#include <battery.h>
+#endif
 #ifdef MODULE
 /* built as ML/modules/filmos.mo (build_fork.sh --module): the core keeps
  * these three names for its shim (filmhook.c), the module's own go by others */
@@ -75,7 +78,7 @@ static CONFIG_INT("filmroll.exp",       exp_sel,          0);
 static CONFIG_INT("filmroll.hud",       hud_enabled,      1);
 static CONFIG_INT("filmroll.focus",     focus_screen,     1);
 static CONFIG_INT("filmroll.leds",      leds_on_half,     1);
-static CONFIG_INT("filmroll.wind",      wind_mode,        1);   /* 0 off, 1 reminder, 2 block shutter */
+static CONFIG_INT("filmroll.wind",      wind_mode,        1);   /* 0 off, 1 reminder (2, from before 0.2: locked the shutter; a reminder now) */
 static CONFIG_INT("filmroll.playlock",  play_lock,        1);
 static CONFIG_INT("filmroll.startup",   startup_picker,   2);   /* 0 off, 1 when no film, 2 always */
 static CONFIG_INT("filmroll.bootanim",  boot_anim,        1);
@@ -90,6 +93,11 @@ static CONFIG_INT("filmroll.scr_warm",  scr_warm,         0);
 static CONFIG_INT("filmroll.scr_bright", scr_bright,      0);
 static CONFIG_INT("filmroll.scr_flip",  scr_flip,         0);   /* 0 Canon's hinge, 1 normal, 2 upside down, 3 mirrored */
 static CONFIG_INT("filmroll.expsim",    expsim_set,      -1);   /* LiveView's exposure simulation: 1 on, 0 off, -1 as Canon has it */
+static CONFIG_INT("filmroll.hud_style", hud_style,        0);   /* FOS_HUD_*: classic, minimal, rangefinder, clean */
+static CONFIG_INT("filmroll.hud_batt",  hud_batt,         1);   /* the battery on the HUD */
+static CONFIG_INT("filmroll.size",      print_size,       1);   /* FOS_SIZE_*: the darkroom's prints (S, M, L) */
+static CONFIG_INT("filmroll.stamp",     date_stamp,       0);   /* the date in the corner of each print */
+static CONFIG_INT("filmroll.recent",    recent_films,     0);   /* the films loaded last (FS_RECENT) */
 
 /* roll state, kept across power cycles */
 static CONFIG_INT("filmroll.loaded",    roll_loaded,      0);
@@ -1281,6 +1289,11 @@ static int *setting_var(int s)
         case FS_SCR_BRIGHT: return &scr_bright;
         case FS_SCR_FLIP:   return &scr_flip;
         case FS_EXPSIM:     return &expsim_set;
+        case FS_HUD_STYLE:  return &hud_style;
+        case FS_HUD_BATT:   return &hud_batt;
+        case FS_SIZE:       return &print_size;
+        case FS_STAMP:      return &date_stamp;
+        case FS_RECENT:     return &recent_films;
     }
     return 0;
 }
@@ -1291,6 +1304,9 @@ int fos_port_get(int s)
     if (s == FS_FSTOP) return current_fstop();
     if (s == FS_SCR_FLIP && !CAN_FLIP) return -1;
     if (s == FS_EXPSIM) return expsim_get();
+    if (s == FS_WIND) return wind_mode ? 1 : 0;
+    if (s == FS_HUD_STYLE) return COERCE(hud_style, 0, FOS_HUD_STYLES - 1);
+    if (s == FS_SIZE) return COERCE(print_size, 0, FOS_SIZES - 1);
     return v ? *v : 0;
 }
 
@@ -1381,6 +1397,25 @@ const char *fos_port_model()
 const char *fos_port_version()
 {
     return MFILM_VERSION;
+}
+
+/* The battery. The LP-E6 cameras' battery reports its charge (Magic Lantern
+ * reads it once a second: battery.c); on the others Canon gives the level of
+ * its own icon and nothing finer (0 nearly flat, 1 low, more: fine), which
+ * Magic Lantern's own LiveView bar draws as 5, 30 and 100 %. */
+int fos_port_battery(int *exact)
+{
+    int bars = battery_level_bars;
+    if (exact) *exact = 0;
+#ifdef CONFIG_BATTERY_INFO
+    int pct = GetBatteryLevel();
+    if (pct > 0 && pct <= 100)          /* 0 until the battery has answered */
+    {
+        if (exact) *exact = 1;
+        return pct;
+    }
+#endif
+    return bars == 0 ? 5 : bars == 1 ? 30 : 100;
 }
 
 
@@ -1499,7 +1534,7 @@ static void hud_wipe_around()
     if (!band) { clrscr(); return; }        /* drawn straight onto the screen anyway */
     for (int y = 0; y < FOS_H; y++)
     {
-        int x[4], n = fos_hud_spans(y, x), at = 0;
+        int x[4], n = fos_hud_spans(COERCE(hud_style, 0, FOS_HUD_STYLES - 1), y, x), at = 0;
         uint8_t *row = vram + y * BMPPITCH;
         for (int i = 0; i < n; i += 2)
         {
@@ -1565,7 +1600,7 @@ static int hud_put(const struct fos_hud *h, int plate, int all, int only_stale)
         else fos_hud_draw_rows(band, FOS_W, y0, n, h, &hud_pal);
         for (int y = y0; y < y0 + n; y++)
         {
-            int x[4] = { 0, FOS_W }, nx = plate ? 2 : fos_hud_spans(y, x);
+            int x[4] = { 0, FOS_W }, nx = plate ? 2 : fos_hud_spans(h->style, y, x);
             const uint8_t *src = band + (y - y0) * FOS_W;
             uint32_t sum = span_sum(src, x, nx);
             uint8_t bit = 1 << (y & 7);
@@ -1635,6 +1670,9 @@ static void hud_draw(int lit, int blink, int plate, int all, int only_stale)
     h.focus_screen = focus_screen;
     h.film = fos_films[COERCE(roll_film, 0, fos_nfilms - 1)].name;
     h.iso = fos_films[COERCE(roll_film, 0, fos_nfilms - 1)].box_iso;
+    h.style = COERCE(hud_style, 0, FOS_HUD_STYLES - 1);
+    h.flash = get_ms_clock() - leds_until < 0;
+    h.batt = hud_batt ? fos_port_battery(&h.batt_exact) : -1;
     int put = hud_put(&h, plate, all, only_stale);
 #if !FOS_LV_ONLY
     if (put < 0 && plate) plate_sums();
@@ -1647,7 +1685,7 @@ static void hud_clear()
 {
     uint8_t *vram = bmp_vram();
     if (vram)
-        fos_hud_clear(vram, BMPPITCH, &hud_pal);
+        fos_hud_clear(vram, BMPPITCH, COERCE(hud_style, 0, FOS_HUD_STYLES - 1), &hud_pal);
     hud_all_stale();
 }
 
@@ -1774,6 +1812,7 @@ static void hud_step()
 
     int sig = lit | blink << 1 | need_wind << 2 | (frames_shot & 0xFF) << 3
             | lens_info.raw_shutter << 11 | (ev8 & 0xFF) << 19 | (current_fstop() & 0x1F) << 27;
+    if (now - leds_until < 0) sig ^= 0x400;     /* the clean viewfinder's count goes when this does */
 
     /* put together on change (the rows that changed go to the screen), the
      * stale rows put back, and every second all of it, to win over Canon's
@@ -1917,8 +1956,6 @@ static unsigned int lv_key(unsigned int key)
             hud_dirty = 1;
             return 0;
         }
-        if (wind_mode == 2 && (key == MODULE_KEY_PRESS_HALFSHUTTER || key == MODULE_KEY_PRESS_FULLSHUTTER))
-            return 0;
     }
 
     return 1;

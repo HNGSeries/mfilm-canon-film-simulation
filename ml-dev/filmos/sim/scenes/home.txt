@@ -1,19 +1,30 @@
-# home -> viewfinder settings -> toggle -> back -> roll page -> rewind cancel
+# home -> settings: viewfinder styles, print size, date stamp -> advanced -> back -> the roll, finish cancel
 roll 1 14 36
 open home
 900 down
 1200 down
 1450 down
 1700 set
-2600 down
-2900 set
-3400 down
-3700 down
-3900 right
-4600 menu
-5400 up
-5700 up
-6000 set
-7600 set
-8400 menu
-9200 end
+2600 right
+3000 right
+3400 right
+3900 down
+4200 down
+4500 right
+5000 down
+5300 set
+5900 down
+6200 down
+6500 down
+6800 set
+7600 down
+7900 set
+8600 menu
+9300 menu
+10100 up
+10400 up
+10700 up
+11000 set
+12300 set
+13000 menu
+13800 end

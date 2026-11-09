@@ -222,7 +222,7 @@ void dark_key(int k)
 {
     if (!dm)
     {
-        if (k == FK_MENU) ui_go(SCR_HOME, 2, GO_POP);
+        if (k == FK_MENU) ui_go(SCR_HOME, HOME_DARK, GO_POP);
         return;
     }
     const struct fos_lab_roll *r = nrolls ? &rolls[dk_sel] : 0;
@@ -267,7 +267,7 @@ void dark_key(int k)
             ui_go(SCR_PRINTS, r && has_prints(r) ? r->number : 0, GO_FADE);
             break;
         case FK_MENU:
-            ui_go(SCR_HOME, 2, GO_POP);
+            ui_go(SCR_HOME, HOME_DARK, GO_POP);
             break;
         case FK_HOME:
             ui_leave();
@@ -1260,7 +1260,7 @@ static void pv_back()
     if (pv_alone) ui_leave();
     else if (ui_from() == SCR_DARK || ui_from() == SCR_DEVELOP)
         ui_go(SCR_DARK, pv_roll >= 0 ? rolls[pv_roll].number : 0, GO_FADE);
-    else ui_go(SCR_HOME, 2, GO_FADE);
+    else ui_go(SCR_HOME, HOME_DARK, GO_FADE);
 }
 
 void prints_key(int k)
@@ -1268,7 +1268,7 @@ void prints_key(int k)
     if (pv_state == PV_NONE)
     {
         if (k == FK_SET) ui_go(SCR_DARK, 0, GO_FADE);
-        else if (k == FK_MENU || k == FK_PLAY) { if (pv_alone) ui_leave(); else ui_go(SCR_HOME, 2, GO_FADE); }
+        else if (k == FK_MENU || k == FK_PLAY) { if (pv_alone) ui_leave(); else ui_go(SCR_HOME, HOME_DARK, GO_FADE); }
         return;
     }
     if (pv_state != PV_SHOW) return;

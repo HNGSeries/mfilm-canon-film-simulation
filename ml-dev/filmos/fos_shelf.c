@@ -8,7 +8,9 @@
  * with the film leaving the middle and in with the one arriving.
  *
  * The films stand on shelves by kind (colour, slide, B&W, cine): up and
- * down change shelf, and the canisters of the next one drop in.
+ * down change shelf, and the canisters of the next one drop in. Above them
+ * is the shelf of the films loaded last: the shelf opens on it, at the last
+ * one, so the same film again is one press.
  *
  * PLAY shows the film's sample: one photo developed with every film when
  * the card was made (ML/SAMPLES), full screen on its own palette.
@@ -41,9 +43,12 @@ static int16_t info_row0[128], info_row1[128];     /* inked span of each row */
 
 static struct spring pos;           /* carousel, in places on the shelf */
 static int target;                  /* the selected film's place on the shelf */
-static int group;                   /* the shelf: FOS_GROUP_* */
+#define G_RECENT    FOS_NGROUPS     /* the shelf of the films loaded last */
+#define NSHELVES    (FOS_NGROUPS + 1)
+static const int8_t shelf_order[NSHELVES] = { G_RECENT, FOS_GROUP_COLOUR, FOS_GROUP_SLIDE, FOS_GROUP_BW, FOS_GROUP_CINE };
+static int group;                   /* the shelf: FOS_GROUP_*, or G_RECENT */
 static int list[MAX_LIST], nlist;   /* its films */
-static int group_at[FOS_NGROUPS];   /* the place last chosen on each shelf */
+static int group_at[NSHELVES];      /* the place last chosen on each shelf */
 static struct spring drop;          /* a new shelf's canisters dropping in, 1 -> 0 */
 static int drop_dir;
 static int exp_sel;
@@ -129,6 +134,19 @@ static int shelf_list(int g, int film)
     int at = 0;
     group = g;
     nlist = 0;
+    if (g == G_RECENT)
+    {
+        unsigned r = (unsigned) fos_port_get(FS_RECENT);
+        for (int k = 0; k < FOS_NRECENT; k++, r >>= 8)
+        {
+            int i = (int) (r & 0xFF) - 1, seen = 0;
+            for (int j = 0; j < nlist; j++) seen |= list[j] == i;
+            if (i < 0 || i >= fos_nfilms || seen) continue;
+            if (i == film) at = nlist;
+            list[nlist++] = i;
+        }
+        return at;
+    }
     for (int i = 0; i < fos_nfilms && nlist < MAX_LIST; i++)
         if (fos_films[i].group == g)
         {
@@ -269,8 +287,10 @@ void shelf_enter(int arg)
     exp_roll.x = 1; exp_roll.v = 0;
     int film = ui_roll.loaded && ui_roll.shot < ui_roll.exposures ? ui_roll.film : fos_port_get(FS_FILM);
     film = fos_clamp(film, 0, fos_nfilms - 1);
-    target = shelf_list(fos_films[film].group, film);
-    for (int g = 0; g < FOS_NGROUPS; g++) group_at[g] = 0;
+    /* the films loaded last, if any have been; else the film's own shelf */
+    target = shelf_list(G_RECENT, film);
+    if (!nlist) target = shelf_list(fos_films[film].group, film);
+    for (int g = 0; g < NSHELVES; g++) group_at[g] = 0;
     group_at[group] = target;
     drop.x = 0; drop.v = 0;
     pos.x = target; pos.v = 0;
@@ -314,6 +334,12 @@ static void start_loading()
     bake();
     fos_port_set(FS_FILM, list[target]);
     fos_port_set(FS_EXP, exp_sel);
+    /* to the front of the films loaded last */
+    unsigned old = (unsigned) fos_port_get(FS_RECENT), now = (unsigned) list[target] + 1;
+    for (int k = 0, n = 1; k < FOS_NRECENT && n < FOS_NRECENT; k++, old >>= 8)
+        if ((old & 0xFF) && (old & 0xFF) != (unsigned) list[target] + 1)
+            now |= (old & 0xFF) << (8 * n++);
+    fos_port_set(FS_RECENT, (int) now);
     fos_port_action(FA_LOAD, list[target], exp_sel);
     fos_port_roll(&ui_roll);
 }
@@ -502,11 +528,13 @@ void shelf_key(int k)
         case FK_UP: case FK_DOWN:
         {
             /* the next shelf (skipping empty ones), at the film last chosen there */
-            int dir = k == FK_DOWN ? 1 : -1, from = group, g = group;
+            int dir = k == FK_DOWN ? 1 : -1, from = group, g = group, at = 0;
             group_at[group] = target;
+            while (shelf_order[at] != group) at++;
             do
             {
-                g = (g + dir + FOS_NGROUPS) % FOS_NGROUPS;
+                at = (at + dir + NSHELVES) % NSHELVES;
+                g = shelf_order[at];
                 shelf_list(g, -1);
             }
             while (!nlist && g != from);
@@ -530,7 +558,7 @@ void shelf_key(int k)
             else start_loading();
             break;
         case FK_MENU:
-            if (ui_from() == SCR_HOME) ui_go(SCR_HOME, 0, GO_POP);
+            if (ui_from() == SCR_HOME) ui_go(SCR_HOME, HOME_FILM, GO_POP);
             else ui_leave();
             break;
         case FK_PLAY:
@@ -672,6 +700,11 @@ static void chips_layout()
     }
 }
 
+static const char *shelf_name(int g)
+{
+    return g == G_RECENT ? "RECENT" : fos_group_names[g];
+}
+
 static void draw_static(int alpha)
 {
     struct hint h[] = { { "<>", "Film" }, { "^v", "Shelf" }, { "INFO", "Exposures" },
@@ -679,13 +712,14 @@ static void draw_static(int alpha)
                         { "PLAY", "Sample" } };
     if (alpha >= OPAQUE) ui_hints(h, has_samples ? 6 : 5);
     /* the shelves, this one lit */
-    int tw = 0;
-    for (int g = 0; g < FOS_NGROUPS; g++) tw += fos_text_w(&fos_font_xs, fos_group_names[g], 64) + (g ? 30 : 0);
+    int tw = -30, recent = fos_port_get(FS_RECENT) != 0;
+    for (int k = recent ? 0 : 1; k < NSHELVES; k++) tw += fos_text_w(&fos_font_xs, shelf_name(shelf_order[k]), 64) + 30;
     int tx = 360 - tw / 2;
-    for (int g = 0; g < FOS_NGROUPS; g++)
+    for (int k = recent ? 0 : 1; k < NSHELVES; k++)
     {
-        int w = fos_text_w(&fos_font_xs, fos_group_names[g], 64);
-        fos_text(cv, &fos_font_xs, tx, TABS_Y, fos_group_names[g], g == group ? C_ACCENT : C_TEXT3, alpha, 64);
+        int g = shelf_order[k];
+        int w = fos_text_w(&fos_font_xs, shelf_name(g), 64);
+        fos_text(cv, &fos_font_xs, tx, TABS_Y, shelf_name(g), g == group ? C_ACCENT : C_TEXT3, alpha, 64);
         if (g == group) fos_rrect(cv, tx + w / 2 - 8, TABS_Y + 6, 16, 3, 1, C_ACCENT, alpha);
         tx += w + 30;
     }

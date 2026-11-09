@@ -58,6 +58,7 @@ static int settings[FS_COUNT] = {
     [FS_APKEYS] = 1, [FS_LENS_WIDE] = 6, [FS_FSTOP] = 9,
     [FS_STARTUP] = 2, [FS_PLAYLOCK] = 1, [FS_BOOTANIM] = 1, [FS_DEBUG] = 0, [FS_MODE] = 0,
     [FS_FILM] = 0, [FS_EXP] = 2, [FS_SCR_FLIP] = -1, [FS_EXPSIM] = 1,
+    [FS_HUD_STYLE] = 0, [FS_HUD_BATT] = 1, [FS_SIZE] = FOS_SIZE_M, [FS_STAMP] = 0, [FS_RECENT] = 0,
 };
 static struct fos_roll roll;
 static int file_no = 100;                   /* the card's last IMG_nnnn */
@@ -160,6 +161,8 @@ EXPORT("web_config") void web_config(int is_dslr, int can_swivel, int can_expsim
     expsim = can_expsim;
     lv = !dslr;
     settings[FS_SCR_FLIP] = swivel ? 0 : -1;
+    /* the cameras whose battery reports its charge: the LP-E6 ones */
+    batt_exact = strstr(model, "60D") || strstr(model, "6D") || strstr(model, "70D") || strstr(model, "5D") ? 1 : 0;
 }
 
 /* sim/port_files.c's is renamed away in the build (build.sh): this one says which camera */
@@ -226,6 +229,9 @@ void fos_port_action(int a, int x, int y)
 }
 
 void fos_port_clock(char *buf, int size) { web_clock(buf, size, 0); }
+/* the page's camera is always well charged; only the LP-E6 cameras say how well */
+static int batt_exact;
+int  fos_port_battery(int *exact) { if (exact) *exact = batt_exact; return batt_exact ? 86 : 100; }
 int  fos_port_lens_manual() { return 1; }
 const char *fos_port_lens_name() { return "EF-M 22mm f/2 STM"; }
 #ifndef MFILM_VERSION
@@ -238,11 +244,10 @@ const char *fos_port_version() { return MFILM_VERSION; }
 #define FINISHED (roll.loaded && roll.shot >= roll.exposures)
 
 /* the file number the next frame gets, 0 if the shutter can't fire now
- * (no roll, the roll finished, the wind lever locking it) */
+ * (no roll, the roll finished) */
 EXPORT("web_shot_begin") int web_shot_begin()
 {
     if (ui_running || !roll.loaded || FINISHED) return 0;
-    if (need_wind && settings[FS_WIND] == 2) return 0;
     return file_no + 1;
 }
 
@@ -340,6 +345,9 @@ static void hud_draw(int now)
         h.focus_screen = settings[FS_FOCUS];
         h.film = fos_films[fos_clamp(roll.film, 0, fos_nfilms - 1)].name;
         h.iso = fos_films[fos_clamp(roll.film, 0, fos_nfilms - 1)].box_iso;
+        h.style = fos_clamp(settings[FS_HUD_STYLE], 0, FOS_HUD_STYLES - 1);
+        h.flash = now < leds_until;
+        h.batt = settings[FS_HUD_BATT] ? fos_port_battery(&h.batt_exact) : -1;
         if (plate) fos_hud_plate(screen, FOS_W, &h, &hud_pal);
         else fos_hud_draw(screen, FOS_W, &h, &hud_pal);
     }

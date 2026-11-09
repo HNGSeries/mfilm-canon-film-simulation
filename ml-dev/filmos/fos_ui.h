@@ -67,6 +67,7 @@ void ui_bg_restore(int x, int y, int w, int h);
 void ui_to_bg(int on);              /* widgets draw into ui_bg instead of the screen */
 void ui_bg_plain();                 /* the usual dark backdrop into ui_bg */
 void ui_status_bar(const char *title);
+int  ui_battery(int rx, int y);     /* the battery ending at rx; returns the width it took */
 
 struct hint { const char *key; const char *label; };
 void ui_hints(const struct hint *h, int n);
@@ -106,6 +107,8 @@ void shelf_key(int key);
 int  shelf_update(int dt);
 void shelf_draw();
 
+/* home's rows by what they are (home_enter's arg): the thing to do next, on top, then the others */
+enum { HOME_MAIN, HOME_FILM, HOME_DARK, HOME_SETTINGS };
 void home_enter(int arg);
 void home_key(int key);
 int  home_update(int dt);
