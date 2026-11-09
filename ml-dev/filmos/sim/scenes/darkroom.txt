@@ -1,4 +1,4 @@
-# home -> darkroom: mark roll 010, develop it; the darkroom scene runs
+# home -> darkroom: mark roll 010, ask to develop it, a size up and back, go; the darkroom works; dim the screen
 roll 1 14 36
 open home
 600 down
@@ -7,4 +7,9 @@ open home
 2300 down
 2600 set
 3200 info
+4200 info
+5000 left
+5800 set
+9000 info
+11000 info
 36000 end

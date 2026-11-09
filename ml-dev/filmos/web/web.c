@@ -161,8 +161,6 @@ EXPORT("web_config") void web_config(int is_dslr, int can_swivel, int can_expsim
     expsim = can_expsim;
     lv = !dslr;
     settings[FS_SCR_FLIP] = swivel ? 0 : -1;
-    /* the cameras whose battery reports its charge: the LP-E6 ones */
-    batt_exact = strstr(model, "60D") || strstr(model, "6D") || strstr(model, "70D") || strstr(model, "5D") ? 1 : 0;
 }
 
 /* sim/port_files.c's is renamed away in the build (build.sh): this one says which camera */
@@ -229,9 +227,13 @@ void fos_port_action(int a, int x, int y)
 }
 
 void fos_port_clock(char *buf, int size) { web_clock(buf, size, 0); }
-/* the page's camera is always well charged; only the LP-E6 cameras say how well */
-static int batt_exact;
-int  fos_port_battery(int *exact) { if (exact) *exact = batt_exact; return batt_exact ? 86 : 100; }
+/* the page's camera is always well charged; only the cameras with an LP-E6 battery say how well */
+int  fos_port_battery(int *exact)
+{
+    int lpe6 = strstr(model, "60D") || strstr(model, "6D") || strstr(model, "70D") || strstr(model, "5D");
+    if (exact) *exact = lpe6;
+    return lpe6 ? 86 : 100;
+}
 int  fos_port_lens_manual() { return 1; }
 const char *fos_port_lens_name() { return "EF-M 22mm f/2 STM"; }
 #ifndef MFILM_VERSION

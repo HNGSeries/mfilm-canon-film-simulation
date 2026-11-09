@@ -65,3 +65,49 @@ void fos_print_free(struct fos_print *p)
     fos_port_free(p->px);
     p->px = 0;
 }
+
+/* ---------------------------------------------------------------- zoom files */
+
+int fos_zoom_open(const char *path, struct fos_zoom *z)
+{
+    uint8_t h[FOS_ZOOM_HEAD];
+    memset(z, 0, sizeof(*z));
+    z->f = fos_port_open(path, 0);
+    if (!z->f) return 0;
+    if (fos_port_read(z->f, h, FOS_ZOOM_HEAD) == FOS_ZOOM_HEAD && !memcmp(h, "FOZ1", 4))
+    {
+        z->w = u16le(h + 4);
+        z->h = u16le(h + 6);
+    }
+    if (z->w < 16 || z->h < 16) fos_zoom_close(z);
+    return z->f != 0;
+}
+
+int fos_zoom_read(struct fos_zoom *z, int x, int y, int step, uint8_t *out, int pitch, int ow, int oh, uint8_t *rows)
+{
+    if (!z->f || step < 1 || x < 0 || y < 0 || x + ow * step > z->w + step - 1 || y + oh * step > z->h + step - 1) return 0;
+    int nrows = oh * step;
+    if (y + nrows > z->h) nrows = z->h - y;
+    if (fos_port_seek(z->f, FOS_ZOOM_HEAD + y * z->w) < 0) return 0;
+    if (fos_port_read(z->f, rows, nrows * z->w) != nrows * z->w) return 0;
+    for (int j = 0; j < oh; j++)
+    {
+        int ry = j * step;
+        const uint8_t *s = rows + (ry < nrows ? ry : nrows - 1) * z->w + x;
+        uint8_t *o = out + j * pitch;
+        if (step == 1) memcpy(o, s, ow);
+        else
+            for (int i = 0; i < ow; i++)
+            {
+                int sx = i * step;
+                o[i] = s[x + sx < z->w ? sx : z->w - 1 - x];
+            }
+    }
+    return 1;
+}
+
+void fos_zoom_close(struct fos_zoom *z)
+{
+    if (z->f) fos_port_close(z->f);
+    z->f = 0;
+}

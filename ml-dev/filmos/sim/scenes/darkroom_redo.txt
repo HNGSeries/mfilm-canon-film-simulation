@@ -2,4 +2,5 @@
 noroll
 open darkroom
 1500 info
+2400 set
 40000 end

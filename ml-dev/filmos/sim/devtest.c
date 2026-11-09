@@ -123,6 +123,9 @@ int main(int argc, char **argv)
     struct fos_dev *d = fos_dev_start(argv[a], argv[a + 1], film, 1, "2026-10-22 17:45", "2.8");
     /* FOS_JPEG: the full-colour frame as a JPEG too, as the camera writes it to DCIM */
     if (getenv("FOS_JPEG")) fos_dev_jpeg(d, getenv("FOS_JPEG"));
+    /* FOS_SIZE=1|2: the bigger print (M, L) as the JPEG, FOS_ZOOM: its zoom file; FOS_STAMP=1: the date on it */
+    if (getenv("FOS_SIZE")) fos_dev_big(d, atoi(getenv("FOS_SIZE")), getenv("FOS_ZOOM"));
+    if (getenv("FOS_STAMP")) fos_dev_stamp(d, 1);
     while ((p = fos_dev_step(d, 40)) >= 0 && p < 1000) steps++;
     if (p < 0) { fprintf(stderr, "%s: %s\n", argv[a], fos_dev_error(d)); fos_dev_free(d); return 1; }
     printf("%s: %d ms, %d steps\n", argv[a], fos_port_ms() - t0, steps);

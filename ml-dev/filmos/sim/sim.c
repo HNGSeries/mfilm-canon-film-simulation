@@ -205,6 +205,7 @@ void fos_port_action(int a, int x, int y)
     }
     if (a == FA_REWIND) roll.loaded = 0;
     if (a == FA_BUSY) fprintf(stderr, "[%6d ms] %s\n", now_ms, x ? "busy: developing" : "busy: done");
+    if (a == FA_DIM) fprintf(stderr, "[%6d ms] screen %s\n", now_ms, x ? "dimmed" : "bright again");
 }
 
 void fos_port_clock(char *buf, int size) { snprintf(buf, size, "09:41"); }

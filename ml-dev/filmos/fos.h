@@ -139,6 +139,7 @@ enum
     FA_REAPPLY,         /* film settings again (after changing WB by hand) */
     FA_CANON_MENU,      /* leave and open Canon's menu */
     FA_BUSY,            /* a = 1: long work (developing) begins, keep the camera awake; 0: done */
+    FA_DIM,             /* a = 1: the screen's backlight to its lowest while the camera works by itself; 0: back */
 };
 
 /* the films loaded last (FS_RECENT), newest first */
