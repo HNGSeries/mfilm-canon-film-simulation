@@ -441,11 +441,18 @@ static void hud_range(const struct fos_hud *h, const struct fos_hud_palette *p)
 static void hud_clean(const struct fos_hud *h, const struct fos_hud_palette *p)
 {
     int x0 = W - CLEAN_W, by = H - MIN_H;
+    /* drawn straight onto the screen (the EOS M: all of it at once), its
+     * corner is wiped once when the count goes, not every time: Canon may
+     * have something of its own there */
+    static int up;
+    const int whole = band_h == H;
     if (!h->flash && !h->need_wind && !h->finished)
     {
-        fill(x0, by, CLEAN_W, MIN_H, p->clear);
+        if (up || !whole) fill(x0, by, CLEAN_W, MIN_H, p->clear);
+        if (whole) up = 0;
         return;
     }
+    if (whole) up = 1;
     fill(x0, by, CLEAN_W, MIN_H, p->black);
     fill(x0, by, CLEAN_W, 1, p->gray[18]);
     fill(x0, by, 1, MIN_H, p->gray[18]);
