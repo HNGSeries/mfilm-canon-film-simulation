@@ -1,21 +1,28 @@
-# the three settings pages with their previews
+# the settings pages with their previews: the viewfinders, the print size, the date stamp, the film mode;
+# then Manual lens and Advanced
 roll 1 14 36
 open home
-500 down
-700 down
-900 down
-1100 set
-1800 set
-2300 down
-2500 set
-3200 menu
-3900 down
-4300 set
-5000 down
-5300 right
-5600 right
-6000 right
-6700 menu
-7400 down
-7800 set
-8600 end
+500 info
+1500 right
+2100 right
+2700 right
+3300 left
+3500 left
+3700 left
+4300 down
+4500 down
+5100 right
+5700 left
+6300 down
+6500 set
+7300 down
+8100 down
+8300 set
+9000 down
+9300 right
+9600 right
+10000 right
+10800 menu
+11600 down
+11900 set
+12800 end

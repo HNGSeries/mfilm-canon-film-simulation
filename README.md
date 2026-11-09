@@ -47,15 +47,15 @@ the roll, then develop it and see what you got.
 <td><img src="ml-dev/filmos/preview/developing.png" alt="Developing in the camera"></td>
 </tr>
 <tr>
-<td><b>Shoot.</b> An SLR viewfinder over LiveView: aperture scale, light meter needle, red seven-segment frame count.</td>
-<td><b>Develop in the camera.</b> The darkroom develops the finished roll frame by frame, into JPEG folders on the card.</td>
+<td><b>Shoot.</b> An SLR viewfinder over LiveView: aperture scale, light meter needle, red seven-segment frame count. Or one of three quieter ones.</td>
+<td><b>Develop in the camera.</b> The darkroom develops the finished roll frame by frame, into JPEG folders on the card, at the size you choose.</td>
 </tr>
 <tr>
 <td><img src="ml-dev/filmos/preview/prints-sheet.png" alt="Contact sheet"></td>
 <td><img src="ml-dev/filmos/preview/home.png" alt="Home"></td>
 </tr>
 <tr>
-<td><b>See the prints.</b> A contact sheet of the roll, and each print full screen.</td>
+<td><b>See the prints.</b> A contact sheet of the roll, each print full screen, and closer with the wheel.</td>
 <td><b>Home</b> instead of the camera's menu: the roll you have loaded and everything else.</td>
 </tr>
 </table>
@@ -64,37 +64,82 @@ Every RAW is kept, so nothing is lost: you can develop the same roll again with 
 
 **Focusing a manual lens.** Loading a roll sets the camera to the film's ISO, and LiveView shows the exposure
 the frame will get: with a slow film, or an adapted lens stopped down, it can be too dark to focus. Turn off
-*Settings → Viewfinder → Exposure simulation* and LiveView stays bright enough to focus, whatever the exposure.
+*Settings → Exposure simulation* and LiveView stays bright enough to focus, whatever the exposure.
 (Not on the 600D and 1100D: Magic Lantern can't set it there.)
+
+### New in 0.2
+
+<table>
+<tr>
+<td width="50%"><img src="ml-dev/filmos/preview/develop-size.png" alt="Choosing the print size before developing"></td>
+<td width="50%"><img src="ml-dev/filmos/preview/prints-zoom.png" alt="Zoomed into a print"></td>
+</tr>
+<tr>
+<td><b>Bigger prints.</b> Small, Medium or Large, asked before the darkroom starts: up to 2592 × 1728 from an 18 MP camera.</td>
+<td><b>Zoom.</b> In the prints, turn the wheel to go into a frame and the arrows to move about.</td>
+</tr>
+<tr>
+<td><img src="ml-dev/filmos/preview/hud-rangefinder.png" alt="The rangefinder viewfinder"></td>
+<td><img src="ml-dev/filmos/preview/home.png" alt="Home"></td>
+</tr>
+<tr>
+<td><b>Four viewfinders.</b> Classic (the SLR's), Minimal, Rangefinder and Clean: <i>Settings → Viewfinder</i>.</td>
+<td><b>A shorter Home.</b> What to do next on top, then Darkroom and Settings. The battery is on every page.</td>
+</tr>
+</table>
+
+- **Print sizes and zoom**: [how big the prints are](#how-big-the-prints-are).
+- **A quieter darkroom.** The developing screen keeps the safelight, the tray and the paper, and draws again
+  only when a print is done: the camera's one processor develops instead of animating. INFO dims the screen
+  while it works.
+- **Date stamp** (*Settings → Date stamp*): the day in the corner of each print, in orange, like a compact's data back.
+- **The battery** beside the clock on every page and in the viewfinder: in percent on the 60D, 6D, 70D,
+  5D Mark II and 5D Mark III, whose battery reports it; as an icon with three levels on the others, where
+  Canon knows no more.
+- **The films you loaded last** have a shelf of their own, where the film shelf opens: the same film again is one press.
+- **Settings** is one page (viewfinder, exposure simulation, print size, date stamp, film mode); the rest is
+  under *Manual lens* and *Advanced*. The wind lever no longer locks the shutter: it reminds, or is off.
+- **One build.** The film OS now loads as a module after the camera starts on every camera, so Magic Lantern
+  takes no more memory at power on than it does alone ([why](ml-dev/MEMORY.md)). On the cameras that had it
+  built in until 0.1.6 (EOS M, 6D, 5D Mark III, 60D, 500D, 50D, 5D Mark II) this is new: see [Cameras](#cameras).
 
 ### How big the prints are
 
-The camera's darkroom makes small prints, sized for the camera's screen, so it can develop a frame in the
-camera's little memory. For full-size photos, develop the same roll on your computer with
-**[Darkrooms](#develop-on-your-computer-darkrooms)**. Your RAWs stay on the card, so you can
-develop the rolls you've already shot again, at full size.
+The camera's darkroom develops in three sizes. You choose when you start it (*INFO* on the Darkroom page
+asks, and remembers) or in *Settings → Print size*:
 
-| | Horizontal frame | Vertical frame |
-|---|---|---|
-| **In the camera** | 720 × 480 (0.35 MP) | 320 × 480 (0.15 MP) |
-| **Darkrooms on a computer** | the full RAW, e.g. 5472 × 3648 (20 MP) on a 6D | the same, turned upright |
+| | Horizontal frame, from 18 MP | What it is | Zoom in the camera |
+|---|---|---|---|
+| **Small** | 720 × 480 (0.35 MP) | the camera's screen: the quickest | none |
+| **Medium** | 1728 × 1152 (2 MP) | a third of the sensor each way | × 2.4 |
+| **Large** | 2592 × 1728 (4.5 MP) | half the sensor each way | × 1.8 and × 3.6 |
+| **Darkrooms on a computer** | the full RAW, 5184 × 3456 (18 MP) | every pixel | |
 
-Full size in Darkrooms by camera, about: EOS M, 650D, 700D, 100D 5184 × 3456 · 6D 5472 × 3648 · 5D Mark III 5760 × 3840 · 5D Mark II 5616 × 3744.
+- A vertical frame is the same, turned upright. Other sensors give in proportion: Large is 2736 × 1824 on a 6D,
+  2880 × 1920 on a 5D Mark III.
+- A bigger print takes longer: by the work it is, about 2.5 times a small one for Medium and 4 times for Large.
+  The Darkroom page says how long before you start, from the frames the camera has developed at that size.
+- The JPEG in `DCIM` is the size you chose. Medium and Large prints also keep a file to zoom into on the card
+  (2 MB and 4.5 MB a frame).
+- A camera without the memory for the size you asked makes the next one down, and says so.
+- To make a roll's prints bigger later: *Delete → Prints only* on the Darkroom page, then develop it again.
+  Your RAWs stay on the card, so **[Darkrooms](#develop-on-your-computer-darkrooms)** can also develop
+  any roll you've shot at full size.
 
 ### Basic or Realistic
 
 <table>
 <tr>
-<td width="50%"><img src="ml-dev/filmos/preview/system.png" alt="Film mode in Settings"></td>
+<td width="50%"><img src="ml-dev/filmos/preview/film-mode.png" alt="Film mode in Settings"></td>
 <td width="50%"><img src="ml-dev/filmos/preview/end-of-roll.png" alt="A finished roll in Basic mode"></td>
 </tr>
 <tr>
-<td><b>Choose how real.</b> <i>Settings → System → Film mode</i>.</td>
+<td><b>Choose how real.</b> <i>Settings → Film mode</i>.</td>
 <td><b>Basic</b> (the default): the last frame finishes the roll, and it goes straight to the darkroom. No rewinding.</td>
 </tr>
 </table>
 
-- **Basic:** shoot, then develop. Stop early with *Finish roll* on the Roll page.
+- **Basic:** shoot, then develop. Stop early with *Finish roll* on the roll's page (the first row of Home).
 - **Realistic:** like a real film camera. Rewind the roll before it can be developed.
 - Either way the roll is the same on the card, so Darkrooms reads both.
 
@@ -155,26 +200,26 @@ still wrong. If you have one marked *needs a tester*, you can help: [TESTING.md]
 <!-- cameras:start -->
 | Camera | Canon firmware | Status | Notes | Card files |
 |---|---|---|---|---|
-| Canon EOS M | 2.0.2 | ✅ **Works** |  | `M-Film-camera-EOSM.202.zip` (to test: `-module.zip`) |
+| Canon EOS M | 2.0.2 | ✅ **Works** | From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-EOSM.202.zip` |
 | Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | ⚠️ Tried, known problem | Works on 0.1.5, the film OS as a module ([#48](../../issues/48)). 0.1.6 as first released (8 Nov) flickered and took no buttons ([#73](../../issues/73)); the zips were rebuilt with a fix on 9 Nov: download again, and say in [#73](../../issues/73) if it works. | `M-Film-camera-100D.101.zip` |
 | Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | ✅ **Works** | Works with the film OS as a module, darkroom included ([#54](../../issues/54)). From 0.1.3 to 0.1.5 the plain zip came without the darkroom (with it built in, the 650D doesn't start: [#34](../../issues/34)): in 0.1.5, take the `-module.zip`. | `M-Film-camera-650D.104.zip` |
 | Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | ⚠️ Tried, known problem | 0.1.5's module build works on a tester's 700D, darkroom included ([#19](../../issues/19)), but M-Film's and Canon's menus still glitch over each other; 0.1.6 holds Canon's screen as the film OS opens, and as it closes back to the HUD: reports wanted. From 0.1.3 to 0.1.5 the plain zip came without the darkroom: in 0.1.5, take the `-module.zip`. | `M-Film-camera-700D.115.zip` |
-| Canon EOS 6D | 1.1.6 | ✅ **Works** | Works since 0.1.2 ([#17](../../issues/17), [#22](../../issues/22)). | `M-Film-camera-6D.116.zip` (to test: `-module.zip`) |
+| Canon EOS 6D | 1.1.6 | ✅ **Works** | Works since 0.1.2 ([#17](../../issues/17), [#22](../../issues/22)). From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-6D.116.zip` |
 | Canon EOS 70D | 1.1.2 | ⚠️ Tried, known problem | 0.1.5 works on a tester's 70D, with the film OS as a module ([#40](../../issues/40)); on another, Magic Lantern installs but the camera then starts Canon's own firmware ([#58](../../issues/58)): more reports wanted. | `M-Film-camera-70D.112.zip` |
-| Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | ⚠️ Tried, known problem | Starts and shoots; the in-camera darkroom couldn't find the RAWs ([#31](../../issues/31)): fixed in 0.1.3. | `M-Film-camera-5D3.113.zip` (to test: `-module.zip`) |
-| Canon EOS 5D Mark III (firmware 1.2.3) | 1.2.3 | ⚠️ Tried, known problem | Starts and shoots; the in-camera darkroom couldn't find the RAWs ([#16](../../issues/16), [#37](../../issues/37)): fixed in 0.1.3. | `M-Film-camera-5D3.123.zip` (to test: `-module.zip`) |
+| Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | ⚠️ Tried, known problem | Starts and shoots; the in-camera darkroom couldn't find the RAWs ([#31](../../issues/31)): fixed in 0.1.3. From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-5D3.113.zip` |
+| Canon EOS 5D Mark III (firmware 1.2.3) | 1.2.3 | ⚠️ Tried, known problem | Starts and shoots; the in-camera darkroom couldn't find the RAWs ([#16](../../issues/16), [#37](../../issues/37)): fixed in 0.1.3. From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-5D3.123.zip` |
 | Canon EOS 550D / Rebel T2i / Kiss X4 | 1.0.9 | ✅ **Works** | Works since 0.1.5, the film OS as a module, darkroom included ([#48](../../issues/48), [#50](../../issues/50)). | `M-Film-camera-550D.109.zip` |
 | Canon EOS 600D / Rebel T3i / Kiss X5 | 1.0.2 | ✅ **Works** | Starts and shoots since 0.1.5, the film OS as a module ([#46](../../issues/46)). The in-camera darkroom isn't confirmed on it yet; shoot with Image quality RAW. | `M-Film-camera-600D.102.zip` |
-| Canon EOS 60D | 1.1.1 | ✅ **Works** | Works since 0.1.3 ([#25](../../issues/25)). 0.1.5: Screen orientation for a broken hinge switch ([#49](../../issues/49)). | `M-Film-camera-60D.111.zip` (to test: `-module.zip`) |
+| Canon EOS 60D | 1.1.1 | ✅ **Works** | Works since 0.1.3 ([#25](../../issues/25)). 0.1.5: Screen orientation for a broken hinge switch ([#49](../../issues/49)). From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-60D.111.zip` |
 | Canon EOS 1100D / Rebel T3 / Kiss X50 | 1.0.5 | 🧪 Builds, needs a tester | The film OS as a module fits its boot memory (493,056 of 524,032 bytes). Needs a first tester. | `M-Film-camera-1100D.105.zip` |
-| Canon EOS 500D / Rebel T1i / Kiss X3 | 1.1.1 | ✅ **Works** | Works ([#44](../../issues/44)). 0.1.5 repaints the plate when Canon draws over it, but a slight flicker remains; 0.1.6 puts the plate together off-screen and puts back only what Canon drew over: does it still flicker? ([#64](../../issues/64)) | `M-Film-camera-500D.111.zip` (to test: `-module.zip`) |
-| Canon EOS 50D | 1.0.9 | ✅ **Works** | Works ([#43](../../issues/43)). 0.1.5 repaints the plate when Canon draws over it, but a slight flicker may remain, as on the 500D; 0.1.6 puts the plate together off-screen and puts back only what Canon drew over: reports wanted in [#64](../../issues/64). | `M-Film-camera-50D.109.zip` (to test: `-module.zip`) |
-| Canon EOS 5D Mark II | 2.1.2 | ⚠️ Tried, known problem | Most hang at power on: the build is too big at start-up ([#18](../../issues/18)). 0.1.3 has a smaller one (some Magic Lantern features left out, the darkroom kept) and fixes the pink prints: waiting for testers. | `M-Film-camera-5D2.212.zip` (to test: `-module.zip`) |
+| Canon EOS 500D / Rebel T1i / Kiss X3 | 1.1.1 | ✅ **Works** | Works ([#44](../../issues/44)). 0.1.5 repaints the plate when Canon draws over it, but a slight flicker remains; 0.1.6 puts the plate together off-screen and puts back only what Canon drew over: does it still flicker? ([#64](../../issues/64)) From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-500D.111.zip` |
+| Canon EOS 50D | 1.0.9 | ✅ **Works** | Works ([#43](../../issues/43)). 0.1.5 repaints the plate when Canon draws over it, but a slight flicker may remain, as on the 500D; 0.1.6 puts the plate together off-screen and puts back only what Canon drew over: reports wanted in [#64](../../issues/64). From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-50D.109.zip` |
+| Canon EOS 5D Mark II | 2.1.2 | ⚠️ Tried, known problem | Most hang at power on: the build is too big at start-up ([#18](../../issues/18)). 0.1.3 has a smaller one (some Magic Lantern features left out, the darkroom kept) and fixes the pink prints: waiting for testers. From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-5D2.212.zip` |
 
 **Not yet:** 7D (Magic Lantern's current source doesn't build it) · 200D, 750D, 77D, 80D, 7D Mark II, 5D Mark IV, 5DS R, 6D Mark II, 850D, M50, R, RP, R5, R6, SX70 HS, SX740 HS (Magic Lantern itself is still experimental on these).
 <!-- cameras:end -->
 
-✅ tried on the camera and works · 🧪 builds; waiting for someone to try it · 🔧 bigger than the memory Magic Lantern gets at boot there ([why](ml-dev/MEMORY.md)). The card files are in each
+✅ tried on the camera and works · ⚠️ tried, with a problem · 🧪 builds; waiting for someone to try it. From 0.2 the film OS is a module on every camera ([why](ml-dev/MEMORY.md)): one zip a camera. The card files are in each
 [release](../../releases/latest). The list lives in [`ml-dev/cameras.txt`](ml-dev/cameras.txt); porting
 notes in [PORTING.md](PORTING.md).
 

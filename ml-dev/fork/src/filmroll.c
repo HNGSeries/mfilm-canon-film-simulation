@@ -99,7 +99,6 @@ static CONFIG_INT("filmroll.hud_batt",  hud_batt,         1);   /* the battery o
 static CONFIG_INT("filmroll.size",      print_size,       1);   /* FOS_SIZE_*: the darkroom's prints (S, M, L) */
 static CONFIG_INT("filmroll.stamp",     date_stamp,       0);   /* the date in the corner of each print */
 static CONFIG_INT("filmroll.recent",    recent_films,     0);   /* the films loaded last (FS_RECENT) */
-static CONFIG_INT("filmroll.dimmed",    dim_saved,        0);   /* the screen's brightness from before FA_DIM turned it down, 0: not dimmed */
 
 /* roll state, kept across power cycles */
 static CONFIG_INT("filmroll.loaded",    roll_loaded,      0);
@@ -1332,23 +1331,45 @@ void fos_port_set(int s, int value)
 
 /* The screen's backlight to its lowest while the darkroom works by itself
  * (INFO on the developing screen), as Magic Lantern's own power saving dims
- * it in LiveView: it is Canon's LCD brightness setting, so what it was is
- * kept in the settings, and put back when the film OS closes or, had the
- * camera lost power meanwhile, when it next starts. */
+ * it in LiveView. It is Canon's LCD brightness setting, which the camera
+ * keeps: so what it was goes into a file on the card before it is turned
+ * down, and comes back when the film OS closes or, had the camera lost
+ * power meanwhile (a battery run flat by a long roll), when it next starts. */
+#define DIM_FILE "ML/SETTINGS/FILMDIM.BIN"
+static int dim_saved = 0;               /* the brightness from before, 0: not dimmed */
+
 static void screen_dim(int on)
 {
     if (on && !dim_saved && backlight_level > 1)
     {
-        dim_saved = backlight_level;
+        uint8_t level = (uint8_t) backlight_level;
+        FILE *f = FIO_CreateFile(DIM_FILE);
+        if (!f) return;                 /* nowhere to keep it: not dimmed */
+        FIO_WriteFile(f, &level, 1);
+        FIO_CloseFile(f);
+        dim_saved = level;
         set_backlight_level(1);
         dbg("screen: dimmed from %d", dim_saved);
     }
     else if (!on && dim_saved)
     {
         set_backlight_level(COERCE(dim_saved, 1, 7));
+        FIO_RemoveFile(DIM_FILE);
         dbg("screen: brightness back to %d", dim_saved);
         dim_saved = 0;
     }
+}
+
+/* at start: the camera went off dimmed */
+static void screen_dim_recover()
+{
+    int size = 0;
+    uint8_t *level = (uint8_t *) read_entire_file(DIM_FILE, &size);
+    if (!level) return;
+    if (size >= 1 && level[0] >= 2 && level[0] <= 7) dim_saved = level[0];
+    fio_free(level);
+    if (dim_saved) screen_dim(0);
+    else FIO_RemoveFile(DIM_FILE);
 }
 
 void fos_port_action(int action, int a, int b)
@@ -2147,7 +2168,7 @@ static void filmroll_task()
     load_fonts();
     load_films();
     dbg("read: %s", card_buffer() ? "card buffer ready" : "no card buffer: the darkroom can't read the card");
-    screen_dim(0);                      /* left dimmed when the camera last went off */
+    screen_dim_recover();
     startup_task();
     film_capture_check();
 

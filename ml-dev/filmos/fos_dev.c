@@ -2305,6 +2305,35 @@ static __attribute__((noinline)) void big_dither(struct fos_dev *d, const uint8_
     }
 }
 
+/* finish_grain for the big print's rows, which are most of its work: one
+ * draw of the generator a pixel in place of four (the channels' own shares
+ * are that draw multiplied apart), the strength and the tone's weight in one
+ * product. The same grain to the eye; not the same numbers. */
+static __attribute__((noinline)) unsigned big_grain(uint8_t *o, int n, unsigned seed, int grain, int mono)
+{
+    for (uint8_t *e = o + 3 * n; o < e; o += 3)
+    {
+        int l = (o[0] * 54 + o[1] * 183 + o[2] * 19) >> 8;
+        int gw = (grain * ((l * (255 - l)) >> 6)) >> 8;
+        seed = seed * 1664525u + 1013904223u;
+        int shared = (int) (seed >> 16) - 32768;
+        int k0 = shared, k1 = shared, k2 = shared;
+        if (!mono)
+        {
+            k0 = (shared * 3 + ((int) ((seed * 2654435761u) >> 16) - 32768) * 2) >> 2;
+            k1 = (shared * 3 + ((int) ((seed * 2246822519u) >> 16) - 32768) * 2) >> 2;
+            k2 = (shared * 3 + ((int) ((seed * 3266489917u) >> 16) - 32768) * 2) >> 2;
+        }
+        int v = o[0] + ((k0 * gw) >> 23);
+        o[0] = (uint8_t) (v < 0 ? 0 : v > 255 ? 255 : v);
+        v = o[1] + ((k1 * gw) >> 23);
+        o[1] = (uint8_t) (v < 0 ? 0 : v > 255 ? 255 : v);
+        v = o[2] + ((k2 * gw) >> 23);
+        o[2] = (uint8_t) (v < 0 ? 0 : v > 255 ? 255 : v);
+    }
+    return seed;
+}
+
 /* row y of the big print into rgb: as stage_expose and stage_finish do a
  * row of the screen's, from its own sums, with the exposure and the glow
  * the screen's print found */
@@ -2334,7 +2363,7 @@ static __attribute__((noinline)) void big_finish(struct fos_dev *d, int y, uint8
     finish_pos(d->blin, d->bcam, bw, 4096 - d->bvig_y[y], d->bvig_x, d->glow ? grow : 0, d->bgx, d->bfx, hal);
     finish_lut(d->bcam, rgb, bw);
     int grain = (int) (L->grain * 255 * 0.55f * 256);
-    if (grain) d->seed = finish_grain(rgb, bw, d->seed, grain, L->mono);
+    if (grain) d->seed = big_grain(rgb, bw, d->seed, grain, L->mono);
     stamp_row(d->smask[1], d->sm_w[1], d->sm_h[1], rgb, bw, d->bh, y);
 }
 

@@ -8,6 +8,41 @@ This is the survey behind the `memory` status in [`cameras.txt`](cameras.txt) (2
 **Boot size** below is what `build_fork.sh` prints: `_bss_end - RESTARTSTART`, the same figure Magic
 Lantern checks (`ml_used_mem`, `src/boot.h`).
 
+## Since 0.2: the film OS is a module on every camera
+
+0.2 added to the film OS (print sizes, zoom, four viewfinders): built in, autoexec.bin would be about 26 KB
+bigger than 0.1.6's, past the EOS M's 727,072 bytes and past what the 5D Mark II is known to start with. So
+from 0.2 every camera's zip is the module build described [below](#the-film-os-as-a-module-build_forksh---module),
+and `build_fork.sh` makes it without being asked (`--built-in` is the old way, for trying things). What
+autoexec.bin takes at boot is then Magic Lantern and the three hooks, whatever the film OS grows to:
+
+| Camera | At boot, 0.2 (bytes) | Limit | |
+|---|---|---|---|
+| EOS M | 537,376 | 727,072 | built in until 0.1.6: the module is new here |
+| 100D | 563,712 | 605,952 | a module since 0.1.5 |
+| 650D | 523,264 (lean) | 689,664 | a module since 0.1.5 |
+| 700D | 523,520 (lean) | unknown: this starts | a module since 0.1.5 |
+| 6D | 562,944 | 868,096 | built in until 0.1.6 |
+| 70D | 512,512 | 605,952 | a module since 0.1.5 |
+| 5D Mark III 1.1.3 / 1.2.3 | 559,360 / 555,264 | unknown | built in until 0.1.6 |
+| 550D | 573,440 | 589,568 | a module since 0.1.5 (16 KB to spare) |
+| 600D | 538,624 | 589,824 | a module since 0.1.5 |
+| 60D | 561,664 | unknown | built in until 0.1.6 |
+| 1100D | 493,824 | 524,032 | a module since 0.1.5; no tester yet |
+| 500D | 556,032 | unknown | built in until 0.1.6 |
+| 50D | 538,112 | unknown | built in until 0.1.6 |
+| 5D Mark II (lean) | 520,960 | 705,792 starts | built in until 0.1.6 |
+
+The module itself is `ML/modules/filmos.mo`, about 250 KB in Canon's memory once loaded (213 KB of code and
+constants, 36 KB of data; it was about 220 KB in 0.1.6). That memory, and the loader's own while it links the
+module, come out of what Canon has free after boot, which only a camera can tell (see "What only a camera
+can tell" below): a camera where the 0.1.5 or 0.1.6 module loaded has about 30 KB less to spare with 0.2's.
+
+The darkroom's bigger prints (Medium, Large) take their memory while a frame is developed, from the camera's
+picture memory (Magic Lantern's `shoot_malloc`), not from this: 12 MB for a Medium print from 18 MP, 26 MB for
+a Large one, in pieces of a megabyte, with a megabyte and a half kept back for the rest of the frame. Where
+it isn't there, the darkroom makes the next size down (`dev: no memory for a ... print` in the log).
+
 ## Two kinds of camera
 
 **Sized to fit** (`boot-d45.c`): Magic Lantern moves the start of Canon's malloc pool to just after
@@ -131,4 +166,5 @@ Each needs a number from the camera first: what Canon has free. **Stock** Magic 
 1,503K at the lowest. A raise that leaves about 1.5 MB free is what `src/mem.c` prefers.
 
 A different way out for every camera is to load the film OS as a module from the card after boot, so
-`autoexec.bin` stays near stock size. That is a bigger change, and it is only worth making if the raises don't work.
+`autoexec.bin` stays near stock size. That is what was done: first for the cameras above (0.1.5), then for
+every camera (0.2).

@@ -4,13 +4,17 @@
 #
 #   build_fork.sh                 EOS M          -> ml-dev/out/fork/
 #   build_fork.sh 650D.104        another camera -> ml-dev/out/fork-650D.104/
+#
+# The film OS is a module on every camera (ML/modules/filmos.mo, loaded after
+# boot): autoexec.bin keeps only Magic Lantern and three hooks, so it takes
+# about as much of the camera's memory at power on as Magic Lantern alone
+# (MEMORY.md). For trying things, not for release:
+#   build_fork.sh 6D.116 --built-in
+#                                 the film OS inside autoexec.bin, as every camera had it until 0.1.2 and
+#                                 some until 0.1.6: ~210 KB more at boot, more than most cameras can give
+#                                 -> ml-dev/out/fork-6D.116-builtin/
 #   build_fork.sh 6D.116 --no-darkroom
-#                                 without the in-camera darkroom (~60 KB less at boot, for cameras
-#                                 that can't spare it) -> ml-dev/out/fork-6D.116-nodark/
-#   build_fork.sh 1100D.105 --module
-#                                 the film OS as a module (ML/modules/filmos.mo, loaded after boot):
-#                                 autoexec.bin keeps only Magic Lantern and three hooks, ~190 KB less
-#                                 at boot -> ml-dev/out/fork-1100D.105-module/ (both flags can go together)
+#                                 without the in-camera darkroom -> ml-dev/out/fork-6D.116-nodark/
 #
 # The cameras are the folders under platform/ in magiclantern_simplified; the
 # ones M-Film knows are listed in CAMERAS (ml-dev/cameras.txt).
@@ -20,15 +24,17 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 SRC="${ML_SRC:-$HOME/ml/magiclantern_simplified}"
 PLAT="${1:-EOSM.202}"
 NODARK=""
-MODULE=""
+MODULE="--module"
 for a in "${@:2}"; do
     case "$a" in
         --no-darkroom) NODARK="--no-darkroom" ;;
-        --module)      MODULE="--module" ;;
+        --built-in)    MODULE="" ;;
+        --module)      ;;               # what it does anyway (it was an option until 0.1.6)
         *) echo "unknown option $a"; exit 1 ;;
     esac
 done
-TAG="${NODARK:+-nodark}${MODULE:+-module}"
+TAG="${NODARK:+-nodark}"
+[ -n "$MODULE" ] || TAG="$TAG-builtin"
 if [ "$PLAT" = "EOSM.202" ] && [ -z "$TAG" ]; then OUT="$HERE/out/fork"; else OUT="$HERE/out/fork-$PLAT$TAG"; fi
 LOG="${LOG:-$HOME/ml/build_fork_$PLAT$TAG.log}"
 

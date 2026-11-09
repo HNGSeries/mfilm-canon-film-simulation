@@ -4,6 +4,8 @@
 #   ./mkcard.sh
 #   PHOTOS=dir ./mkcard.sh     the frames are the photos in dir (*.pfm: linear sRGB, 0.18 = mid grey,
 #                              taller than wide = shot on its side), in turn, instead of test scenes
+#   FULL="10 11" ./mkcard.sh   those rolls' frames at the EOS M's full 18 MP, not half size each way: for
+#                              the darkroom's bigger prints and the zoom at the sizes a camera makes
 #   CARD=out/cardp ./mkcard.sh --problems
 #                              instead, the rolls the darkroom has to find or explain (cardtest.sh):
 #                              shot as JPEG, Adobe RGB with a file deleted, across the IMG_9999 wrap;
@@ -26,7 +28,8 @@ photos=()
 #   jpeg     shot with a JPEG image quality: IMG_nnnn.JPG on the card, no CR2
 #   adobe    in Adobe RGB: the log says IMG_nnnn.CR2, Canon wrote _MG_nnnn.CR2
 roll() {
-    local n=$1 film=$2 exp=$3 frames=$4 loaded=$5 mode=${6:-} log
+    local n=$1 film=$2 exp=$3 frames=$4 loaded=$5 mode=${6:-} log size=--half
+    case " ${FULL:-} " in *" $n "*) size="" ;; esac
     log="$DIR/ROLL_$(printf %03d "$n").TXT"
     printf '# ML film mode roll log (filmroll module)\nroll = %03d\nfilm = %s\nexposures = %d\nloaded = %s:00\n\n' \
         "$n" "$film" "$exp" "$loaded" > "$log"
@@ -46,8 +49,8 @@ roll() {
         case "$mode" in
             nofiles) ;;
             jpeg)    printf 'not a CR2\n' > "$DIR/${name%.CR2}.JPG" ;;
-            adobe)   out/mkcr2 "$DIR/_${name:1}" --half --scene $scene $extra --ev "$ev" --seed $((n * 100 + i)) 2>/dev/null ;;
-            *)       out/mkcr2 "$DIR/$name" --half --scene $scene $extra --ev "$ev" --seed $((n * 100 + i)) 2>/dev/null ;;
+            adobe)   out/mkcr2 "$DIR/_${name:1}" $size --scene $scene $extra --ev "$ev" --seed $((n * 100 + i)) 2>/dev/null ;;
+            *)       out/mkcr2 "$DIR/$name" $size --scene $scene $extra --ev "$ev" --seed $((n * 100 + i)) 2>/dev/null ;;
         esac
         local t; t=$(printf '%02d:%02d:%02d' $((9 + i / 4)) $(((i * 7) % 60)) $(((i * 13) % 60)))
         printf '%d  %s  %s %s  f/%s\n' "$i" "$name" "${loaded%% *}" "$t" "$( ((i % 3)) && echo 2.8 || echo 5.6)" >> "$log"

@@ -1,8 +1,7 @@
-# home -> roll page: the counter turns from S to 14; rewind it
+# home -> the roll (the first row): the counter turns from S to 14; finish it? not now
 roll 1 14 36
 open home
-700 down
 1000 set
 2600 set
-3300 set
-5600 end
+3600 menu
+4600 end

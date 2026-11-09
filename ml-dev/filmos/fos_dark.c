@@ -74,9 +74,11 @@ static int is_waiting(const struct fos_lab_roll *r)
 static int has_prints(const struct fos_lab_roll *r) { return r->sheet || r->developed > 0; }
 
 /* about how long a frame takes at each print size: a guess, until one has
- * been developed at that size (the bigger print is finished pixel by
- * pixel, as the small one is, and has many more of them) */
-static int ms_per_frame[FOS_SIZES] = { 15000, 26000, 42000 };
+ * been developed at that size. The bigger print is finished pixel by pixel,
+ * as the small one is, and has many more of them: counted in ARM
+ * instructions (sim/tools/armcount.py), a medium print is about 2.4 times
+ * the work of a small one and a large one 3.6 times. */
+static int ms_per_frame[FOS_SIZES] = { 15000, 36000, 54000 };
 
 static int cur_size()
 {

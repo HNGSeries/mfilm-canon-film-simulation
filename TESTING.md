@@ -19,34 +19,33 @@ From the [latest release](../../releases/latest) (or the newest run under *Actio
 <!-- cameras:start -->
 | Camera | Canon firmware it needs | File |
 |---|---|---|
-| Canon EOS M | 2.0.2 | `M-Film-camera-EOSM.202.zip` · `M-Film-camera-EOSM.202-module.zip` |
+| Canon EOS M | 2.0.2 | `M-Film-camera-EOSM.202.zip` |
 | Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | `M-Film-camera-100D.101.zip` |
 | Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | `M-Film-camera-650D.104.zip` |
 | Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | `M-Film-camera-700D.115.zip` |
-| Canon EOS 6D | 1.1.6 | `M-Film-camera-6D.116.zip` · `M-Film-camera-6D.116-module.zip` |
+| Canon EOS 6D | 1.1.6 | `M-Film-camera-6D.116.zip` |
 | Canon EOS 70D | 1.1.2 | `M-Film-camera-70D.112.zip` |
-| Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | `M-Film-camera-5D3.113.zip` · `M-Film-camera-5D3.113-module.zip` |
-| Canon EOS 5D Mark III (firmware 1.2.3) | 1.2.3 | `M-Film-camera-5D3.123.zip` · `M-Film-camera-5D3.123-module.zip` |
+| Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | `M-Film-camera-5D3.113.zip` |
+| Canon EOS 5D Mark III (firmware 1.2.3) | 1.2.3 | `M-Film-camera-5D3.123.zip` |
 | Canon EOS 550D / Rebel T2i / Kiss X4 | 1.0.9 | `M-Film-camera-550D.109.zip` |
 | Canon EOS 600D / Rebel T3i / Kiss X5 | 1.0.2 | `M-Film-camera-600D.102.zip` |
-| Canon EOS 60D | 1.1.1 | `M-Film-camera-60D.111.zip` · `M-Film-camera-60D.111-module.zip` |
+| Canon EOS 60D | 1.1.1 | `M-Film-camera-60D.111.zip` |
 | Canon EOS 1100D / Rebel T3 / Kiss X50 | 1.0.5 | `M-Film-camera-1100D.105.zip` |
-| Canon EOS 500D / Rebel T1i / Kiss X3 | 1.1.1 | `M-Film-camera-500D.111.zip` · `M-Film-camera-500D.111-module.zip` |
-| Canon EOS 50D | 1.0.9 | `M-Film-camera-50D.109.zip` · `M-Film-camera-50D.109-module.zip` |
-| Canon EOS 5D Mark II | 2.1.2 | `M-Film-camera-5D2.212.zip` · `M-Film-camera-5D2.212-module.zip` |
+| Canon EOS 500D / Rebel T1i / Kiss X3 | 1.1.1 | `M-Film-camera-500D.111.zip` |
+| Canon EOS 50D | 1.0.9 | `M-Film-camera-50D.109.zip` |
+| Canon EOS 5D Mark II | 2.1.2 | `M-Film-camera-5D2.212.zip` |
 <!-- cameras:end -->
 
 The firmware must match exactly (MENU → last settings tab → *Firmware ver.*).
 
-**Two files for most cameras (since 0.1.4).** `M-Film-camera-<camera>.zip` has the film OS built into
-Magic Lantern, as before. `M-Film-camera-<camera>-module.zip` has it as a module that loads after the
-camera has started, which takes about 180 KB less of the memory a camera can spare at power on
-([MEMORY.md](ml-dev/MEMORY.md)). Please test it too, especially if the first one hangs at power on
-(5D Mark II). Where the table has one zip, it is the module one: on the 100D, 70D, 550D, 600D and 1100D
-the film OS only fits this way, and on the 650D and 700D it is the way it starts with the in-camera
-darkroom (in 0.1.5 that is their `-module.zip`: the plain one there has no darkroom). If the film shelf
-doesn't appear and you see Magic Lantern's own menu instead, the module didn't load: its line in the
-*Modules* tab says why. Tell us what it says.
+**One file a camera (since 0.2).** The film OS is a module that loads after the camera has started
+(`ML/modules/filmos.mo`), on every camera: Magic Lantern then takes about as much of the camera's memory
+at power on as it does alone ([MEMORY.md](ml-dev/MEMORY.md)). The 100D, 70D, 550D, 600D, 1100D, 650D and
+700D have run it this way since 0.1.5. On the EOS M, 6D, 5D Mark III, 60D, 500D, 50D and 5D Mark II the
+film OS was built into Magic Lantern until 0.1.6 (their module build was the `-module.zip`), so on those
+0.2 is the first release that loads it: **say whether it starts**, even if all you can say is "it works".
+If the film shelf doesn't appear and you see Magic Lantern's own menu instead, the module didn't load:
+its line in the *Modules* tab says why. Tell us what it says.
 
 ## 2. Install
 
@@ -63,15 +62,24 @@ Go through these and note what happens (a photo of the screen helps a lot):
 
 - [ ] The camera starts, and the **film shelf** appears (on a DSLR, from the normal shooting screen
       with LiveView off; give it up to 15 seconds).
-- [ ] **Colours** look right (shelf canisters: Portra yellow, Ektar red; System → Screen colour has a chart).
+- [ ] **Colours** look right (shelf canisters: Portra yellow, Ektar red; Settings → Advanced → Screen colour has a chart).
 - [ ] **Buttons**: the dial and arrows move along the shelf, SET loads a film, MENU goes back,
       half-shutter returns to the camera. Which buttons do nothing?
 - [ ] **Trash** opens Home; **PLAY** opens the prints instead of Canon's playback.
 - [ ] Load a roll and shoot a few frames **through the viewfinder**, and a few in **LiveView**.
       Does the frame count go up? Is the HUD drawn in LiveView?
-- [ ] With a manual (adapted) lens, turn off *Viewfinder → Exposure simulation*. Is LiveView bright enough
+- [ ] *Settings → Viewfinder*: try **Minimal**, **Rangefinder** and **Clean**. Is each drawn whole, and does
+      the one before it leave nothing behind? Is the **battery** beside the clock right (a percentage on the
+      60D, 6D, 70D, 5D Mark II and III; an icon on the others)?
+- [ ] With a manual (adapted) lens, turn off *Settings → Exposure simulation*. Is LiveView bright enough
       to focus? Does the HUD's meter needle still move when you half-press?
-- [ ] Rewind the roll and **develop it in the camera** (Darkroom). Do prints come out? How long per frame?
+- [ ] Finish the roll and **develop it in the camera** (Darkroom → INFO): once **Small**, once **Medium** or
+      **Large** (delete the prints in between: ◀ → *Prints only*). Do prints come out at the size you chose,
+      or does the camera say *Not enough memory* and make a smaller one? How long per frame at each size?
+      `ML/FILMROLL.LOG` has a `dev: frame N: read ... ms, ... big print ... ms` line for each: please attach it.
+- [ ] In the prints, open a frame developed Medium or Large and turn the **wheel**: does it zoom, and do the
+      arrows move about? While developing, **INFO** dims the screen: does any button bring it back, and is
+      the screen as bright as before once it is done?
 - [ ] In the Darkroom, **◀** on a developed roll: *Delete roll* → *Prints only* → *Delete*. On a computer:
       are its JPEG folder in `DCIM` and `ML/DARKROOM/Rnnn` gone, with no empty folder left?
 - [ ] Open the card in **Darkrooms** on a computer: are the rolls and films there?
@@ -112,7 +120,7 @@ ML/
 ### If Canon's screen flickers over M-Film's
 
 Some DSLRs keep drawing their own screen over M-Film's (the top plate, the HUD or a film OS page).
-M-Film puts its own back as soon as it sees that. With **System → Debug log** on, `ML/FILMROLL.LOG`
+M-Film puts its own back as soon as it sees that. With **Settings → Advanced → Debug log** on, `ML/FILMROLL.LOG`
 says what it saw. A line with "seen N times so far" is written the 1st, 51st, 101st... time: N counts
 the times, not the lines.
 - `hud: the plate: Canon drew over rows 22-60 (39 of them), put back; seen 51 times so far, logged every 50th`
@@ -140,8 +148,8 @@ reached while M-Film runs. On a computer, open `ML/SETTINGS/magic.cfg` on the ca
 ### If it doesn't start
 
 Battery out, card out. Then please tell us, because it most likely means the program is too big for
-that camera's memory (on the EOS M the limit is about 727 KB at boot; the built-in builds take 700–750 KB,
-the module ones 490–575 KB, and most cameras' limits aren't known yet). Say
+that camera's memory (on the EOS M the limit is about 727 KB at boot; with the film OS as a module
+Magic Lantern takes 490–575 KB, and most cameras' limits aren't known yet). Say
 which camera and firmware, and whether the card light stayed on.
 
 ## 4. Remove it

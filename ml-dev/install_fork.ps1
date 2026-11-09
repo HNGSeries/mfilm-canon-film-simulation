@@ -53,6 +53,12 @@ if ($onCard -ne (Get-FileHash (Join-Path $fork "autoexec.bin")).Hash) {
 # the fork's core and the modules/symbols built against it
 Copy-Item (Join-Path $fork "autoexec.bin") $card -Force
 Copy-Item (Join-Path $fork "ML\modules\*") (Join-Path $card "ML\MODULES") -Force
+# the film OS is one of those modules (filmos.mo): its switch, so Magic Lantern loads it
+$en = Join-Path $fork "ML\SETTINGS\filmos.en"
+if (Test-Path $en) {
+    New-Item -ItemType Directory -Force (Join-Path $card "ML\SETTINGS") | Out-Null
+    Copy-Item $en (Join-Path $card "ML\SETTINGS") -Force
+}
 # the film OS fonts (not inside autoexec.bin, which has to stay small)
 New-Item -ItemType Directory -Force (Join-Path $card "ML\DATA") | Out-Null
 Copy-Item (Join-Path $fork "ML\data\FOSFONT.BIN") (Join-Path $card "ML\DATA") -Force

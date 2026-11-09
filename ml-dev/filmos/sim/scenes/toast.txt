@@ -1,10 +1,21 @@
-# System > Re-apply shows a toast
+# Settings > Advanced > Re-apply film settings shows a toast
 roll 1 14 36
 open home
-600 up
-900 set
+600 info
+1400 down
+1550 down
 1700 down
-1900 down
-2100 down
-2500 set
-4800 end
+1850 down
+2000 down
+2150 down
+2400 set
+3200 down
+3350 down
+3500 down
+3650 down
+3800 down
+3950 down
+4100 down
+4250 down
+4600 set
+6800 end

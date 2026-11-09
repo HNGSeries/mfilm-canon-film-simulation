@@ -30,6 +30,7 @@ int main(int argc, char **argv)
     h.batt = getenv("HUD_BATT") ? atoi(getenv("HUD_BATT")) : 82;
     h.batt_exact = 1;
     h.flash = 1;
+    if (h.style) h.need_wind = 0;           /* the other viewfinders as they are between frames */
     fos_gfx_init();
     sim_fonts();
     if (argc > 1 && argv[1][0] == 'p') { h.want = h.fstop + 2; fos_hud_plate(ov, 960, &h, &p); }

@@ -1,7 +1,7 @@
 name: M-Film camera
 
 # Builds the camera files (Magic Lantern + Film OS) for every camera in ml-dev/cameras.txt
-# that is "working", "issues", "testing" or "nodark". (Darkrooms, the desktop program, is built in its
+# that is "working", "issues" or "testing". (Darkrooms, the desktop program, is built in its
 # own repository.)
 #   git tag v0.1.0 && git push origin v0.1.0     builds and publishes the zips under Releases
 #                                                (the tag must match the VERSION file)
@@ -50,13 +50,6 @@ jobs:
         platform: [EOSM.202, 100D.101, 650D.104, 700D.115, 6D.116, 70D.112, 5D3.113, 5D3.123, 550D.109, 600D.102, 60D.111, 1100D.105, 500D.111, 50D.109, 5D2.212]  # from ml-dev/cameras.txt
     runs-on: ubuntu-24.04
     name: camera ${{ matrix.platform }}
-    env:
-      # built and released without the in-camera darkroom: the full build doesn't fit at boot (cameras.txt
-      # "nodark"). None at the moment: the 650D and 700D were until 0.1.5, and now start as modules with it.
-      # The release text below says every zip has the darkroom: if a camera comes back here, change it.
-      NODARK: ""
-      # built with the film OS as a module (ML/modules/filmos.mo), loaded after boot (cameras.txt ":module")
-      MODULE: "100D.101 650D.104 700D.115 70D.112 550D.109 600D.102 1100D.105"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -71,19 +64,12 @@ jobs:
           git -C "$HOME/ml/magiclantern_simplified" checkout -q ed3e7c0dfacfdeaf3349dee73edf9e3621217462
           arm-none-eabi-gcc --version | head -1
       - name: Build
-        run: |
-          p=${{ matrix.platform }}
-          f=""
-          case " $NODARK " in *" $p "*) f="$f --no-darkroom" ;; esac
-          case " $MODULE " in *" $p "*) f="$f --module" ;; esac
-          bash ml-dev/build_fork.sh $p $f
+        # the film OS as a module (ML/modules/filmos.mo, loaded after boot): on every camera since 0.2
+        run: bash ml-dev/build_fork.sh ${{ matrix.platform }}
       - name: Zip
         run: |
           p=${{ matrix.platform }}
-          s=""
-          case " $NODARK " in *" $p "*) s="$s-nodark" ;; esac
-          case " $MODULE " in *" $p "*) s="$s-module" ;; esac
-          if [ "$p" = EOSM.202 ] && [ -z "$s" ]; then d=ml-dev/out/fork; else d=ml-dev/out/fork-$p$s; fi
+          if [ "$p" = EOSM.202 ]; then d=ml-dev/out/fork; else d=ml-dev/out/fork-$p; fi
           cp ml-dev/CAMERA-README.txt "$d/M-FILM-README.txt"
           # the licence and the notices travel with the binaries (GPL-2.0 section 1; the MIT notice of
           # Film-Luts, whose LUTs the colour tables and samples in ML/ are made from)
@@ -95,45 +81,6 @@ jobs:
         with:
           name: M-Film-camera-${{ matrix.platform }}
           path: M-Film-camera-${{ matrix.platform }}.zip
-          if-no-files-found: error
-
-  # the film OS as a module (build_fork.sh --module) for every camera whose zip above has it built in:
-  # released next to it as M-Film-camera-<camera>-module.zip, for testers to try (ml-dev/MEMORY.md)
-  camera-module:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [EOSM.202, 6D.116, 5D3.113, 5D3.123, 60D.111, 500D.111, 50D.109, 5D2.212]  # from ml-dev/cameras.txt: built, and not ":module"
-    runs-on: ubuntu-24.04
-    name: camera ${{ matrix.platform }} (film OS as a module)
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"   # ML's module build still imports distutils (gone in 3.12)
-      - name: Toolchain and Magic Lantern (the commit the fork is made against)
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi zip qemu-user
-          python -m pip install -q numpy scipy pillow segno docutils
-          git clone -q --filter=blob:none https://github.com/reticulatedpines/magiclantern_simplified.git "$HOME/ml/magiclantern_simplified"
-          git -C "$HOME/ml/magiclantern_simplified" checkout -q ed3e7c0dfacfdeaf3349dee73edf9e3621217462
-          arm-none-eabi-gcc --version | head -1
-      - name: Build
-        run: bash ml-dev/build_fork.sh ${{ matrix.platform }} --module
-      - name: Zip
-        run: |
-          p=${{ matrix.platform }}
-          d=ml-dev/out/fork-$p-module
-          cp ml-dev/CAMERA-README.txt "$d/M-FILM-README.txt"
-          cp LICENSE "$d/LICENSE.txt"
-          cp THIRD_PARTY.md "$d/THIRD_PARTY.txt"
-          (cd "$d" && zip -qr "$GITHUB_WORKSPACE/M-Film-camera-$p-module.zip" .)
-          ls -la M-Film-camera-$p-module.zip
-      - uses: actions/upload-artifact@v4
-        with:
-          name: M-Film-camera-${{ matrix.platform }}-module
-          path: M-Film-camera-${{ matrix.platform }}-module.zip
           if-no-files-found: error
 
   # builds for testers, not for releases. Their artifacts are named test-..., which the release leaves out.
@@ -178,7 +125,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    needs: [darkroom, camera, camera-module]
+    needs: [darkroom, camera]
     if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.tag != '' }}
     runs-on: ubuntu-latest
     steps:
@@ -205,6 +152,5 @@ jobs:
             **On the camera** (`M-Film-camera-<camera>.zip`): the Film OS with Magic Lantern. Unzip it onto the card
             and run *Firmware ver.* → update once (see M-FILM-README.txt in the zip). How far testers have got on
             each camera, and what's still wrong, is in the README's camera table: see TESTING.md before you put it
-            on a camera nobody has tried yet. Every zip has the in-camera darkroom. Where the film OS is a module
-            (ML/modules/filmos.mo, loaded after boot), that is the camera's one zip; the other cameras also have
-            `M-Film-camera-<camera>-module.zip`, for testers to try.
+            on a camera nobody has tried yet. Every zip has the in-camera darkroom. The film OS is a module on
+            every camera (ML/modules/filmos.mo, loaded after boot): one zip a camera.
