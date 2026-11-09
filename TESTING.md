@@ -118,8 +118,13 @@ the times, not the lines.
 - `hud: the plate: Canon drew over rows 22-60 (39 of them), put back; seen 51 times so far, logged every 50th`
   (`film os:` on a film OS page).
 - `Canon took its screen back, held again`: Canon let go of the hold M-Film keeps on its screen.
+- `Canon took its screen back 5 times in 3 s: this camera doesn't keep the hold, not taking it again
+  until a restart`: on this camera the hold never sticks (the 100D, #73), so from here M-Film works as
+  0.1.5 did: it only puts back what Canon draws over.
 - `screen: Canon put its other buffer on the screen`: Canon showed its own copy of the screen in
   front of M-Film's, rather than drawing over it.
+- `film os: open; Canon GUI mode 2 (asked 2) after 60 ms, hold taken`: how the film OS opened. A mode
+  other than the one asked means Canon kept its own screen, and its buttons.
 - `drawn over for 2 s on end ..., not checking for 5 s`: Canon draws there all the time, and M-Film
   stops putting its screen back for a while.
 

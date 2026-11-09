@@ -621,28 +621,62 @@ static void palette_canon()
     }
 }
 
+/* Canon letting go of the hold on its screen (WINSYS_BMP_DIRTY_BIT_NEG):
+ * taken again, so it doesn't draw over ours (#64). Unless it keeps
+ * happening: on the 100D (#73) 0.1.6 took it again and again, Canon kept
+ * flipping its buffers in answer, and the film OS did nothing but redraw,
+ * with Canon still getting the buttons. After a few times in a row the hold
+ * is left alone until the camera is restarted, and the camera works as it
+ * did on 0.1.5, where the hold was taken once. 1 if it was taken again. */
+static int hold_given_up = 0;
+
+static int hold_again(const char *who)
+{
+    static int times = 0, lost = 0, since = 0;
+    if (hold_given_up) return 0;
+    int now = get_ms_clock();
+    if (!since || now - since > 3000) { since = now ? now : 1; lost = 0; }
+    if (++lost > 4)
+    {
+        hold_given_up = 1;
+        dbg("%s: Canon took its screen back %d times in 3 s: this camera doesn't keep the hold, "
+            "not taking it again until a restart (#73)", who, lost);
+        return 0;
+    }
+    canon_gui_disable_front_buffer();
+    if (times++ % 50 == 0) dbg("%s: Canon took its screen back, held again (seen %d time%s so far)", who, times, times == 1 ? "" : "s");
+    return 1;
+}
+
 /* Take the display from Canon's GUI the same way the ML menu does:
  * switch Canon to the ML menu GUI mode (LiveView stops drawing its
- * overlays and stops handling keys), stop Canon from flipping its own
- * bitmap buffer, then turn the bitmap layer back on for us. Its buffer is
- * held from before the switch, and again while it lands: outside LiveView
- * that mode is Canon's own menu, which showed for a moment as the film OS
- * opened (#19), and opening it can let go of the hold. */
+ * overlays and stops handling keys), wait for it to land, stop Canon from
+ * flipping its own bitmap buffer, then turn the bitmap layer back on for
+ * us. In that order: ML's menu does the same (piggyback_canon_menu), and
+ * 0.1.6, which held the buffer from before the switch so Canon's own menu
+ * wouldn't show for a moment outside LiveView (#19), left the 100D with the
+ * hold never sticking and the buttons going to Canon (#73). The wait ends
+ * as soon as Canon reports the mode, rather than after a fixed 200 ms, so
+ * Canon's menu shows for less of a moment than on 0.1.5. */
 static void film_ui_open()
 {
     NotifyBoxHide();
     if (lv) bmp_off();
-    canon_gui_disable_front_buffer();
     SetGUIRequestMode(GUIMODE_ML_MENU);
-    for (int i = 0; i < 10; i++)
+    int t0 = get_ms_clock(), landed = 0;
+    for (int i = 0; i < 30; i++)
     {
-        msleep(20);
-        canon_gui_disable_front_buffer();       /* nothing to do while it is still held */
+        msleep(10);
+        if (CURRENT_GUI_MODE == GUIMODE_ML_MENU) { landed = 1; break; }
     }
+    msleep(landed ? 50 : 0);                    /* and a moment for its screen to settle */
+    canon_gui_disable_front_buffer();
     CancelDateTimer();
     clrscr();
     bmp_on();
     ui_last_mode_poke = get_ms_clock();
+    dbg("film os: open; Canon GUI mode %d (asked %d) after %d ms, hold %s", CURRENT_GUI_MODE, GUIMODE_ML_MENU,
+        ui_last_mode_poke - t0, hold_given_up ? "given up" : "taken");
 }
 
 static void film_ui_close()
@@ -772,14 +806,9 @@ void fos_port_sleep(int ms)
         ui_last_palette = now;
     }
     /* Canon can let go of the hold on its screen by itself (a dialog of its
-     * own changing under us): take it again, and look for what it drew now */
-    int let_go = !canon_gui_front_buffer_disabled();
-    if (let_go)
-    {
-        static int times = 0;
-        canon_gui_disable_front_buffer();
-        if (times++ % 50 == 0) dbg("film os: Canon took its screen back, held again (seen %d time%s so far)", times, times == 1 ? "" : "s");
-    }
+     * own changing under us): take it again, and look for what it drew now;
+     * not on a camera that never keeps it (#73, hold_again) */
+    int let_go = !canon_gui_front_buffer_disabled() && hold_again("film os");
     ui_overdrawn_check(let_go);
 }
 
@@ -911,7 +940,17 @@ static void ui_overdrawn_check(int at_once)
     if (!vram || !DISPLAY_IS_ON) return;
     int y0, y1;
     if (vram_moved(vram))
-        fos_ui_overdrawn(0, FOS_H);
+    {
+        /* all of ours into the buffer now in front; not again within 300 ms,
+         * so a camera flipping its buffers every frame (the 100D on 0.1.6,
+         * #73) leaves the film OS time for its buttons */
+        static int moved_at = 0;
+        if (now - moved_at > 300)
+        {
+            moved_at = now ? now : 1;
+            fos_ui_overdrawn(0, FOS_H);
+        }
+    }
     else if (overdrawn(&check, vram, 0, &y0, &y1))
         fos_ui_overdrawn(y0, y1 + 1);
 }
@@ -1608,16 +1647,15 @@ static void hud_step()
             hud_dirty = 1;
             dbg("hud: Canon's screen held");
         }
-        else if (!canon_gui_front_buffer_disabled())
+        else if (!canon_gui_front_buffer_disabled() && hold_again("hud"))
         {
             /* Canon let go of the hold by itself, and would draw over ours
-             * from now on (#64): take it again, and put all of ours back */
-            static int times = 0;
-            canon_gui_disable_front_buffer();
+             * from now on (#64): taken again, and all of ours put back. On a
+             * camera that never keeps it (#73) the overdraw check alone puts
+             * back what Canon draws, as on 0.1.5. */
             if (!plate) hud_wipe_around();
             hud_all_stale();
             hud_stale = 1;
-            if (times++ % 50 == 0) dbg("hud: Canon took its screen back, held again (seen %d time%s so far)", times, times == 1 ? "" : "s");
         }
     }
     else if (canon_held)

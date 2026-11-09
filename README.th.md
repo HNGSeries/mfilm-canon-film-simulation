@@ -14,7 +14,7 @@
 [![เลี้ยงกาแฟผู้พัฒนา](https://img.shields.io/badge/%E0%B9%80%E0%B8%A5%E0%B8%B5%E0%B9%89%E0%B8%A2%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B9%81%E0%B8%9F%E0%B8%9C%E0%B8%B9%E0%B9%89%E0%B8%9E%E0%B8%B1%E0%B8%92%E0%B8%99%E0%B8%B2-ffdd00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://buy.stripe.com/7sY14p8d93QE5Ny5M58so02)
 
 [![License GPL-2.0](https://img.shields.io/badge/license-GPL--2.0-3b352f)](LICENSE)
-[![Cameras](https://img.shields.io/badge/cameras-9%20work%20%C2%B7%205%20with%20a%20problem%20%C2%B7%201%20in%20testing-3b352f)](#กล้องที่รองรับ)
+[![Cameras](https://img.shields.io/badge/cameras-8%20work%20%C2%B7%206%20with%20a%20problem%20%C2%B7%201%20in%20testing-3b352f)](#กล้องที่รองรับ)
 [![Films](https://img.shields.io/badge/films-72-3b352f)](FILMS.md)
 
 [English](README.md) · **ภาษาไทย** · [ฟิล์ม](#ฟิล์ม-72-แบบ) · [กล้องที่รองรับ](#กล้องที่รองรับ) · [Darkrooms](#ล้างบนคอม-darkrooms) · [คู่มือในกล้อง](docs/MANUAL.th.md) · [ทำต่อยอด](PORTING.md)
@@ -155,7 +155,7 @@ M-Film ทำบน EOS M และใช้ได้จริงบนรุ่
 | กล้อง | เฟิร์มแวร์ Canon | สถานะ | หมายเหตุ | ไฟล์ลงการ์ด |
 |---|---|---|---|---|
 | Canon EOS M | 2.0.2 | ✅ **ใช้ได้** |  | `M-Film-camera-EOSM.202.zip` (ทดสอบ: `-module.zip`) |
-| Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | ✅ **ใช้ได้** | ใช้ได้ตั้งแต่ 0.1.5 แบบโมดูล ([#48](../../issues/48)) | `M-Film-camera-100D.101.zip` |
+| Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | ⚠️ ลองแล้ว ยังมีปัญหา | ใช้ได้บน 0.1.5 แบบโมดูล ([#48](../../issues/48)) 0.1.6 ชุดแรก (8 พ.ย.) ชั้นฟิล์มกะพริบและกดปุ่มไม่ได้ ([#73](../../issues/73)) ไฟล์ zip ถูก build ใหม่พร้อมตัวแก้เมื่อ 9 พ.ย. ให้โหลดใหม่ แล้วบอกใน [#73](../../issues/73) ว่าใช้ได้ไหม | `M-Film-camera-100D.101.zip` |
 | Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | ✅ **ใช้ได้** | ใช้ได้ แบบ film OS เป็นโมดูล ห้องมืดในกล้องครบ ([#54](../../issues/54)) ตั้งแต่ 0.1.3 ถึง 0.1.5 zip ปกติไม่มีห้องมืด (ถ้าห้องมืดอยู่ในตัว 650D เปิดไม่ขึ้น [#34](../../issues/34)) ถ้าใช้ 0.1.5 ให้เอา `-module.zip` | `M-Film-camera-650D.104.zip` |
 | Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | ⚠️ ลองแล้ว ยังมีปัญหา | build แบบโมดูลของ 0.1.5 ใช้ได้บน 700D ของผู้ทดสอบ ห้องมืดในกล้องครบ ([#19](../../issues/19)) แต่เมนูของ M-Film กับของ Canon ยังวาดทับกันเป็นบางครั้ง 0.1.6 ยึดจอของ Canon ไว้ตอนเปิด film OS และตอนปิดกลับไปที่ HUD รอรายงาน ตั้งแต่ 0.1.3 ถึง 0.1.5 zip ปกติไม่มีห้องมืด ถ้าใช้ 0.1.5 ให้เอา `-module.zip` | `M-Film-camera-700D.115.zip` |
 | Canon EOS 6D | 1.1.6 | ✅ **ใช้ได้** | ใช้ได้ตั้งแต่ 0.1.2 ([#17](../../issues/17), [#22](../../issues/22)) | `M-Film-camera-6D.116.zip` (ทดสอบ: `-module.zip`) |
