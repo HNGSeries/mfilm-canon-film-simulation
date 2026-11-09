@@ -27,6 +27,8 @@ let CAMERAS = [
 ];
 const REPO = 'https://github.com/HNGSeries/mfilm-canon-film-simulation';
 const DONATE = 'https://darkrooms-licence.suphalapruksasathit.workers.dev/v1/donate';
+// the Stripe Payment Link that was there before (any amount, typed on Stripe's page): when /v1/donate can't answer
+const COFFEE = 'https://buy.stripe.com/7sY14p8d93QE5Ny5M58so02';
 // the newest M-Film release (tags v*): Darkrooms' (app-v*) are in the same repository, and either can be
 // GitHub's "latest". Until GitHub answers, or if it doesn't, "latest" it is.
 let camTag = null;
@@ -103,9 +105,12 @@ async function submit() {
   if (!v) return thanks(p);
   go.disabled = true;
   go.textContent = T('dl.wait');
+  const stop = new AbortController();
+  const late = setTimeout(() => stop.abort(), 12000);
   try {
     const r = await fetch(DONATE, {
       method: 'POST',
+      signal: stop.signal,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       // the page Stripe sends them back to: this one, wherever the site is (github.io now, a domain later)
       body: new URLSearchParams({ amount: String(v), camera: p, back: location.origin + location.pathname.replace(/index\.html$/, '') }),
@@ -115,9 +120,11 @@ async function submit() {
     location.href = o.url;
   } catch (e) {
     console.warn('donate:', e);
-    err.innerHTML = T('dl.err', zipUrl(p));
     go.disabled = false;
-    setAmount(v);
+    setAmount(v);                           // the button's text back; it clears the message, so the message after
+    err.innerHTML = T('dl.err', zipUrl(p), COFFEE);
+  } finally {
+    clearTimeout(late);
   }
 }
 
@@ -144,6 +151,10 @@ for (const a of document.querySelectorAll('[data-download]')) {
   a.addEventListener('click', (e) => { e.preventDefault(); open(); });
 }
 document.addEventListener('mfilm:lang', () => { fillCameras(); setAmount(amount.value); });
+
+// install.html's Download button, and links to #get: the dialog, open
+if (location.hash === '#get') { open(); history.replaceState(null, '', location.pathname + location.search + '#download'); }
+addEventListener('hashchange', () => { if (location.hash === '#get') open(); });
 
 // back from Stripe
 const q = new URLSearchParams(location.search);

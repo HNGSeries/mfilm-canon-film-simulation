@@ -23,6 +23,7 @@
   <nav>
     <a href="#films" data-i18n="nav.films">Films</a>
     <a href="#cameras" data-i18n="nav.cameras">Cameras</a>
+    <a href="install.html" data-i18n="nav.install">Install</a>
     <a href="#faq" data-i18n="nav.faq">FAQ</a>
     <a href="#darkrooms">Darkrooms</a>
     <button class="lang" type="button" aria-label="ภาษาไทย / English">TH</button>
@@ -41,34 +42,14 @@
     <label class="picker">
       <span class="picker-label" data-i18n="picker.label">Camera</span>
       <span class="select">
-        <select id="model" aria-label="Camera">
-          <option value="eosm" selected>Canon EOS M</option>
-          <optgroup label="Coming to the browser" data-i18n-label="picker.soon">
-            <option disabled>Canon EOS 6D</option>
-            <option disabled>Canon EOS 60D</option>
-            <option disabled>Canon EOS 50D</option>
-            <option disabled>Canon EOS 500D</option>
-            <option disabled>Canon EOS 550D</option>
-            <option disabled>Canon EOS 600D</option>
-            <option disabled>Canon EOS 100D</option>
-            <option disabled>Canon EOS 650D</option>
-            <option disabled>Canon EOS 700D</option>
-            <option disabled>Canon EOS 70D</option>
-            <option disabled>Canon EOS 5D Mark III</option>
-            <option disabled>Canon EOS 5D Mark II</option>
-          </optgroup>
-        </select>
+        <select id="model" aria-label="Camera"></select>
       </span>
     </label>
 
-    <!-- The EOS M from the back. The body is drawn (img/eosm-back.svg); each
-         control is a button placed over it in % of the body, so a photo can
-         take the drawing's place without moving them. -->
+    <!-- The camera from the back: its body drawn (img/eosm-back.svg, or js/bodies.js),
+         each control a button placed over it in % of the body. -->
     <div class="cam" id="cam" data-model="eosm">
-      <img class="body" src="img/eosm-back.svg" alt="Canon EOS M, from the back" draggable="false">
-
-      <button class="ctl shutter" data-ctl="shutter" aria-label="Shutter button (hold to half-press)"><span></span></button>
-      <button class="ctl power" data-ctl="power" aria-label="Power"></button>
+      <img class="body" alt="" draggable="false">
 
       <div class="screen" aria-label="The camera's screen">
         <canvas class="lv" width="720" height="480"></canvas>
@@ -76,26 +57,14 @@
         <div class="blackout"></div>
         <div class="loading"><span data-i18n="cam.loading">Loading the film OS…</span></div>
       </div>
-
-      <button class="ctl rec" data-key="" data-ctl="rec" aria-label="Movie button (unused)"></button>
-      <button class="ctl round info" data-key="INFO" aria-label="INFO">INFO</button>
-      <div class="dial" aria-label="Quick Control Dial: turn it, or press its edges" role="group">
-        <div class="dial-ring"></div>
-        <button class="ctl dpad up"    data-key="UP"    aria-label="Up"></button>
-        <button class="ctl dpad right" data-key="RIGHT" aria-label="Right"></button>
-        <button class="ctl dpad down"  data-key="DOWN"  aria-label="Down"></button>
-        <button class="ctl dpad left"  data-key="LEFT"  aria-label="Left"></button>
-        <button class="ctl set" data-key="SET" aria-label="SET">SET</button>
-      </div>
-      <button class="ctl round play" data-key="PLAY" aria-label="Playback">▶</button>
-      <button class="ctl round menu" data-key="MENU" aria-label="MENU">MENU</button>
-      <button class="ctl round trash" data-key="HOME" aria-label="Delete (opens M-Film home)">⌫</button>
+      <!-- the controls: js/bodies.js puts them where this camera has them -->
     </div>
 
     <div class="cam-under">
       <div class="status" aria-live="polite"><span class="dot"></span><span class="status-text" data-i18n="st.boot">Starting…</span></div>
       <div class="wheel-hint">
         <button class="mini" data-key="WHEEL_L" aria-label="Turn the dial left">⟲</button>
+        <button class="mini lvbtn" data-ctl="lv" hidden>LV</button>
         <span data-i18n="cam.dial">dial</span>
         <button class="mini" data-key="WHEEL_R" aria-label="Turn the dial right">⟳</button>
       </div>
@@ -187,7 +156,10 @@
     <li data-i18n="in.2">Unzip the files for your camera onto an SD card, put it in, and run Firmware ver. → update once. From then on M-Film starts with the camera.</li>
     <li data-i18n="in.3">In Canon's menu set Image quality to RAW and Image review to Off: the darkroom develops RAWs.</li>
   </ol>
-  <a class="btn" href="#download" data-download data-i18n="get.btn">Download: pay what you want</a>
+  <div class="get-btns">
+    <a class="btn" href="#download" data-download data-i18n="get.btn">Download: pay what you want</a>
+    <a class="btn ghost" href="install.html" data-i18n="get.guide">Step-by-step guide, with pictures →</a>
+  </div>
 </section>
 
 <section id="faq" class="band faq">

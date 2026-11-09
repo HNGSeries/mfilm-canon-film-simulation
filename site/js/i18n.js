@@ -14,7 +14,7 @@ const STR = {
     'dl.pay': (v) => `Pay $${v} and download`, 'dl.freeGo': 'Download free', 'dl.wait': 'Opening Stripe…',
     'dl.secure': 'Payment by Stripe. The download starts when you come back.',
     'dl.all': 'All files and release notes',
-    'dl.err': (url) => `Stripe can't be reached right now. <a href="${url}">Download free instead</a>, or try again in a minute.`,
+    'dl.err': (url, coffee) => `The payment page didn't open. <a href="${coffee}" target="_blank" rel="noopener">Pay on Stripe directly</a> (type the amount there), then <a href="${url}">download here</a>.`,
     'dl.issues': 'known problems', 'dl.testing': 'needs testers',
     'dl.note.issues': 'Works with a known problem on this camera: the README says which.',
     'dl.note.testing': 'Not tried on this camera yet: be the first, and tell us how it goes.',
@@ -44,6 +44,7 @@ const STR = {
     'st.noroll': 'No film in the camera: load a roll first',
     'st.roll': (n, of) => `LiveView · frame ${n} of ${of}`,
     'st.wind': 'Press SET to wind on',
+    'st.plate': (n, of) => `Viewfinder · frame ${n} of ${of} · LV for LiveView`,
     'st.finished': 'Roll finished: press SET to develop it',
     'st.developing': 'Developing in the camera…',
     'st.developed': 'Developed: PLAY shows the prints',
@@ -63,7 +64,7 @@ const STR = {
     'dl.pay': (v) => `จ่าย $${v} แล้วดาวน์โหลด`, 'dl.freeGo': 'ดาวน์โหลดฟรี', 'dl.wait': 'กำลังเปิด Stripe…',
     'dl.secure': 'ชำระเงินผ่าน Stripe จ่ายเสร็จกลับมาหน้านี้แล้วดาวน์โหลดจะเริ่มเอง',
     'dl.all': 'ไฟล์ทั้งหมดและบันทึกการอัปเดต',
-    'dl.err': (url) => `ติดต่อ Stripe ไม่ได้ตอนนี้ <a href="${url}">ดาวน์โหลดฟรีไปก่อน</a> หรือลองใหม่อีกสักครู่`,
+    'dl.err': (url, coffee) => `เปิดหน้าจ่ายเงินไม่ได้ <a href="${coffee}" target="_blank" rel="noopener">จ่ายผ่าน Stripe โดยตรง</a> (ใส่ยอดเองที่หน้านั้น) แล้ว <a href="${url}">ดาวน์โหลดที่นี่</a>`,
     'dl.issues': 'มีปัญหาที่รู้แล้ว', 'dl.testing': 'รอคนทดสอบ',
     'dl.note.issues': 'ใช้ได้แต่มีปัญหาที่รู้แล้วในรุ่นนี้ ดูรายละเอียดใน README',
     'dl.note.testing': 'ยังไม่มีใครลองกับรุ่นนี้ ลองเป็นคนแรกแล้วบอกเราด้วย',
@@ -93,6 +94,7 @@ const STR = {
     'st.noroll': 'ยังไม่มีฟิล์มในกล้อง ใส่ม้วนก่อน',
     'st.roll': (n, of) => `LiveView · รูปที่ ${n} จาก ${of}`,
     'st.wind': 'กด SET เพื่อขึ้นฟิล์ม',
+    'st.plate': (n, of) => `ช่องมองภาพ · รูปที่ ${n} จาก ${of} · กด LV เพื่อเปิด LiveView`,
     'st.finished': 'ฟิล์มหมดม้วนแล้ว กด SET เพื่อล้าง',
     'st.developing': 'กำลังล้างฟิล์มในกล้อง…',
     'st.developed': 'ล้างเสร็จแล้ว กด PLAY เพื่อดูรูป',
@@ -103,7 +105,7 @@ const STR = {
 
 // the sections under the camera (index.html, js/sections.js)
 Object.assign(STR.en, {
-  'nav.faq': 'FAQ',
+  'nav.faq': 'FAQ', 'nav.install': 'Install', 'get.guide': 'Step-by-step guide, with pictures →',
   'how.t': 'A film camera, inside your camera',
   'how.1.t': 'Load a roll', 'how.1.d': 'A shelf of 72 canisters. Pick a film and 36, 24 or 12 frames; the camera sets itself up for it.',
   'how.2.t': 'Shoot blind', 'how.2.d': 'No picture after each shot and no going back through them: an SLR\'s viewfinder, a meter needle and a frame counter.',
@@ -149,7 +151,7 @@ Object.assign(STR.en, {
   'foot.manual': 'Manual (Thai)', 'foot.privacy': 'Darkrooms privacy', 'foot.coffee': 'Buy the developer a coffee',
 });
 Object.assign(STR.th, {
-  'nav.faq': 'คำถาม',
+  'nav.faq': 'คำถาม', 'nav.install': 'วิธีติดตั้ง', 'get.guide': 'วิธีติดตั้งทีละขั้น พร้อมภาพ →',
   'how.t': 'กล้องฟิล์ม อยู่ในกล้องของคุณ',
   'how.1.t': 'ใส่ฟิล์ม', 'how.1.d': 'ชั้นวางกลักฟิล์ม 72 แบบ เลือกฟิล์มและจำนวนรูป 36, 24 หรือ 12 กล้องจะตั้งค่าตามฟิล์มให้เอง',
   'how.2.t': 'ถ่ายแบบไม่เห็นภาพ', 'how.2.d': 'ถ่ายแล้วไม่มีภาพขึ้นจอ ย้อนดูไม่ได้ มีแค่ช่องมองแบบ SLR เข็มวัดแสง และตัวนับรูป',
@@ -201,6 +203,9 @@ let lang = (() => {
 })();
 
 export const currentLang = () => lang;
+
+// more strings, from a page of its own (install.js)
+export function addStrings(o) { for (const l in o) Object.assign(STR[l], o[l]); }
 
 export function T(id, ...args) {
   const v = STR[lang][id] ?? STR.en[id] ?? id;

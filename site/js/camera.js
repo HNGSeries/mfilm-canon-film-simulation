@@ -10,7 +10,7 @@ export const KEY = {
   SET: 7, MENU: 8, INFO: 9, PLAY: 10, HOME: 11, RELEASE: 0x100,
 };
 export const OPEN = { SHELF: 0, HOME: 1, BOOT: 2, BOOT_LV: 3, PRINTS: 4, END: 5, DARKROOM: 6 };
-export const EVENT = ['loaded', 'shot', 'finished', 'rewound', 'developing', 'wind'];
+export const EVENT = ['loaded', 'shot', 'finished', 'rewound', 'developing', 'wind', 'lv', 'screen'];
 
 const BASE = new URL('../fos/', import.meta.url);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -31,7 +31,8 @@ export class Camera extends EventTarget {
     this.busy = false;
   }
 
-  async start() {
+  // body: which camera (js/bodies.js): its name, DSLR or not, swivel screen, exposure simulation
+  async start(body = {}) {
     const [mfilm, mkcr2, font, films] = await Promise.all([
       WebAssembly.compileStreaming(fetch(new URL('mfilm.wasm', BASE))),
       WebAssembly.compileStreaming(fetch(new URL('mkcr2.wasm', BASE))),
@@ -81,6 +82,12 @@ export class Camera extends EventTarget {
     this.ex._initialize();
     this.asyncPtr = this.ex.web_async();
     this.ex.web_init();
+    if (body.name) {
+      const b = new TextEncoder().encode(body.name.slice(0, 46));
+      const u8 = new Uint8Array(this.memory.buffer, this.ex.web_model(), 48);
+      u8.set(b); u8[b.length] = 0;
+      this.ex.web_config(body.dslr ? 1 : 0, body.swivel ? 1 : 0, body.expsim === false ? 0 : 1);
+    }
     this.loadPalette();
 
     this.render = this.render.bind(this);
@@ -144,6 +151,10 @@ export class Camera extends EventTarget {
   // ---------------------------------------------------------------- the shutter
 
   half(down) { this.ex && this.ex.web_half(down ? 1 : 0); }
+
+  // a DSLR's LiveView (the EOS M is always in it)
+  get lvOn() { return this.ex ? !!this.ex.web_lv_on() : true; }
+  setLv(on) { this.ex && this.ex.web_lv(on ? 1 : 0); }
 
   // returns 'shot', 'noroll', 'locked' (finished, wind lever, film OS up) or 'busy'
   async fire() {
