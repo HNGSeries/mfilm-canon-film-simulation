@@ -3,6 +3,8 @@
 #   make && ./previews.sh
 #   PHOTOS=dir ./previews.sh     the darkroom screens show your own photos (mkcard.sh says how)
 #   LIVEVIEW=pic.ppm             and the HUD is drawn over this picture (720 x 480) for LiveView
+# The roll the darkroom scene develops (010) is made at the EOS M's full 18 MP, so the print
+# sizes and the zoom are the ones a camera gives.
 set -euo pipefail
 cd "$(dirname "$0")"
 OUT=../preview
@@ -21,21 +23,27 @@ FOS_LUT_DIR=out/lut ./out/devtest -S ../../films/sample/SAMPLE.CR2 out/card/ML/S
 
 run shelf;  still shelf 660 shelf; still shelf 1110 shelf-gliding
 run sample; still sample 1600 sample
-run load;   still load 1300 boot; still load 5300 loaded; still load 5800 shutter
-run home;   still home 1250 home
-run roll;   still roll 2400 roll; still roll 3000 rewind
-run pages;  still pages 1330 viewfinder; still pages 6190 lens; last pages system
+run load;   still load 1300 boot; still load 5300 loaded; still load 5760 shutter
+run home;   still home 800 home
+run roll;   still roll 2400 roll; still roll 3400 rewind
+run pages;  still pages 1400 viewfinder; still pages 5000 print-size; still pages 7200 date-stamp; still pages 8000 film-mode
+            still pages 10700 lens; last pages advanced
 run screen; last screen screen          # its palette has the warmth it ends with
+FOS_RECENT=0x0a0603 run recent; still recent 1300 shelf-recent
 
 # the darkroom, on a card of test rolls (mkcard.sh): the list, developing, the prints
-./mkcard.sh >/dev/null
+FULL=10 ./mkcard.sh >/dev/null
 run endroll; last endroll end-of-roll
-run darkroom; still darkroom 2900 darkroom; still darkroom 12400 developing; still darkroom 22500 developing-line
-run prints; still prints 1300 prints-sheet; still prints 3500 prints-frame
+run darkroom; still darkroom 2900 darkroom; still darkroom 5500 develop-size; still darkroom 13800 developing; last darkroom developing-done
+run prints; still prints 1300 prints-sheet; still prints 3500 prints-frame; still prints 6200 prints-zoom
 
 # the HUD over a made-up LiveView picture
 gcc -O2 -std=gnu99 -o out/hudtest hudtest.c fonts.c ../fos_gfx.c ../fos_film.c ../fos_hud.c -lm
 ./out/hudtest 1 ${LIVEVIEW:-} && python3 -c "from PIL import Image; Image.open('out/hud.ppm').save('$OUT/hud.png')"
+# the other viewfinders (Settings > Viewfinder): minimal, rangefinder, clean
+for st in 1:minimal 2:rangefinder 3:clean; do
+    HUD_STYLE=${st%%:*} ./out/hudtest 1 ${LIVEVIEW:-} && python3 -c "from PIL import Image; Image.open('out/hud.ppm').save('$OUT/hud-${st##*:}.png')"
+done
 # and the top plate a DSLR shows instead, shooting through the viewfinder
 ./out/hudtest p && python3 -c "from PIL import Image; Image.open('out/hud.ppm').save('$OUT/plate.png')"
 

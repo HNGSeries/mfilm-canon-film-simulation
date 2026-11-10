@@ -67,7 +67,7 @@ static const uint8_t ac_vals[2][162] =
 struct jw
 {
     void *f;
-    uint8_t buf[2048];
+    uint8_t buf[8192];
     int n, ok;
     uint32_t bits;
     int nbits;
@@ -279,12 +279,23 @@ static int exif(uint8_t *out, const struct fos_jpeg_meta *m)
 
 /* ---------------------------------------------------------------- the file */
 
-int fos_jpeg_write(const char *path, const uint8_t *rgb, int stride, int width, int height,
-                   int quality, const struct fos_jpeg_meta *meta)
+/* a file being written: its rows come 16 at a time (fos_jpeg_rows), so a
+ * picture bigger than the memory at hand can be written as it is made */
+struct fos_jpeg
 {
-    struct jw *w = fos_port_alloc(sizeof(struct jw));
-    if (!w) return 0;
-    memset(w, 0, sizeof(*w));
+    struct jw w;
+    int width, height, y;       /* y: rows written so far */
+    int dc[3];
+};
+
+struct fos_jpeg *fos_jpeg_begin(const char *path, int width, int height, int quality, const struct fos_jpeg_meta *meta)
+{
+    struct fos_jpeg *j = fos_port_alloc(sizeof(struct fos_jpeg));
+    if (!j) return 0;
+    memset(j, 0, sizeof(*j));
+    struct jw *w = &j->w;
+    j->width = width;
+    j->height = height;
     w->ok = 1;
     int scale = quality < 50 ? 5000 / quality : 200 - quality * 2;
     for (int t = 0; t < 2; t++)
@@ -300,7 +311,7 @@ int fos_jpeg_write(const char *path, const uint8_t *rgb, int stride, int width, 
         huff_codes(ac_bits[t], ac_vals[t], w->ac_code[t], w->ac_len[t]);
     }
     w->f = fos_port_open(path, 1);
-    if (!w->f) { fos_port_free(w); return 0; }
+    if (!w->f) { fos_port_free(j); return 0; }
 
     put16(w, 0xFFD8);
     /* JFIF */
@@ -355,12 +366,18 @@ int fos_jpeg_write(const char *path, const uint8_t *rgb, int stride, int width, 
     put16(w, 0xFFDA); put16(w, 12); put8(w, 3);
     put8(w, 1); put8(w, 0x00); put8(w, 2); put8(w, 0x11); put8(w, 3); put8(w, 0x11);
     put8(w, 0); put8(w, 63); put8(w, 0);
+    return j;
+}
 
-    /* the picture, 16 x 16 at a time: four luma blocks, then Cb and Cr
-     * from the means of 2 x 2 pixels; the edges repeat the last pixel */
-    int dc[3] = { 0, 0, 0 };
+/* the picture's next rows (rgb: the first of them), 16 x 16 at a time: four
+ * luma blocks, then Cb and Cr from the means of 2 x 2 pixels; the edges
+ * repeat the last pixel. Every call but the last brings a multiple of 16. */
+void fos_jpeg_rows(struct fos_jpeg *j, const uint8_t *rgb, int stride, int rows)
+{
+    struct jw *w = &j->w;
+    const int width = j->width;
     int32_t blk[64], cb[64], cr[64];
-    for (int my = 0; my < height; my += 16)
+    for (int my = 0; my < rows; my += 16)
         for (int mx = 0; mx < width; mx += 16)
         {
             memset(cb, 0, sizeof(cb));
@@ -370,7 +387,7 @@ int fos_jpeg_write(const char *path, const uint8_t *rgb, int stride, int width, 
                 int bx = mx + (b & 1) * 8, by = my + (b >> 1) * 8;
                 for (int y = 0; y < 8; y++)
                 {
-                    const uint8_t *row = rgb + (by + y < height ? by + y : height - 1) * stride;
+                    const uint8_t *row = rgb + (by + y < rows ? by + y : rows - 1) * stride;
                     for (int x = 0; x < 8; x++)
                     {
                         const uint8_t *px = row + 3 * (bx + x < width ? bx + x : width - 1);
@@ -381,17 +398,33 @@ int fos_jpeg_write(const char *path, const uint8_t *rgb, int stride, int width, 
                         cr[k] += 32768 * r - 27439 * g - 5329 * bl;
                     }
                 }
-                block(w, blk, 0, &dc[0]);
+                block(w, blk, 0, &j->dc[0]);
             }
             for (int i = 0; i < 64; i++) { cb[i] = (cb[i] + 131072) >> 18; cr[i] = (cr[i] + 131072) >> 18; }
-            block(w, cb, 1, &dc[1]);
-            block(w, cr, 1, &dc[2]);
+            block(w, cb, 1, &j->dc[1]);
+            block(w, cr, 1, &j->dc[2]);
         }
+    j->y += rows;
+}
+
+int fos_jpeg_end(struct fos_jpeg *j)
+{
+    if (!j) return 0;
+    struct jw *w = &j->w;
     if (w->nbits) put_bits(w, 0x7F, 8 - w->nbits);     /* pad with ones */
     put16(w, 0xFFD9);
     flush(w);
     fos_port_close(w->f);
-    int ok = w->ok;
-    fos_port_free(w);
+    int ok = w->ok && j->y >= j->height;
+    fos_port_free(j);
     return ok;
+}
+
+int fos_jpeg_write(const char *path, const uint8_t *rgb, int stride, int width, int height,
+                   int quality, const struct fos_jpeg_meta *meta)
+{
+    struct fos_jpeg *j = fos_jpeg_begin(path, width, height, quality, meta);
+    if (!j) return 0;
+    fos_jpeg_rows(j, rgb, stride, height);
+    return fos_jpeg_end(j);
 }

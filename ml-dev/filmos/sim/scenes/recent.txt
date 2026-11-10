@@ -1,0 +1,8 @@
+# the shelf opens on the films loaded last; down to the colour shelf and back
+noroll
+open shelf
+1500 wr
+2600 down
+3800 up
+4800 set
+7600 end

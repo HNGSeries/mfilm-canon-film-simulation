@@ -36,7 +36,8 @@ reject "9999 wrap: nothing missing"         "roll 008 frame [0-9]+: (no RAW|shot
 for f in 1 2 3 4; do expect "9999 wrap: frame $f developed" "roll 008 frame $f developed"; done
 
 # Delete roll, on the card just developed: the files that go are exactly
-# the ones listed, and nothing else changes
+# the ones listed, and nothing else changes. (The rolls were developed at the
+# simulator's print size, medium: each print has its zoom file, Fnn.ZOM.)
 listing() { (cd "$1" && find . | grep -v '/LOOK[0-9]*\.LUT$' | sort); }
 dcard=out/cardp
 deletes() {     # deletes <what> <scene> <path that goes>...   (on $dcard)
@@ -61,6 +62,7 @@ deletes "Delete roll: prints only" delete_prints \
     "./DCIM/Oct1002 Ektar100" "./DCIM/Oct1002 Ektar100/ROLL007.TXT" "./DCIM/Oct1002 Ektar100/_MG_0505.JPG" \
     "./DCIM/Oct1002 Ektar100/_MG_0507.JPG" "./DCIM/Oct1002 Ektar100/_MG_0508.JPG" \
     ./ML/DARKROOM/R007 ./ML/DARKROOM/R007/F01.BMP ./ML/DARKROOM/R007/F03.BMP ./ML/DARKROOM/R007/F04.BMP \
+    ./ML/DARKROOM/R007/F01.ZOM ./ML/DARKROOM/R007/F03.ZOM ./ML/DARKROOM/R007/F04.ZOM \
     ./ML/DARKROOM/R007/SHEET.BMP
 expect "Delete roll: prints only, logged"   "lab: roll 007: deleted prints, 0 left"
 # the whole roll (008, across IMG_9999) where IMG_9999's RAW and its print
@@ -70,7 +72,8 @@ FOS_KEEP=IMG_9999 deletes "Delete roll: whole roll, files that can't go" delete_
     ./DCIM/100CANON/IMG_9998.CR2 ./DCIM/101CANON/IMG_0001.CR2 ./DCIM/101CANON/IMG_0002.CR2 \
     "./DCIM/Oct1003 Gold200/IMG_0001.JPG" "./DCIM/Oct1003 Gold200/IMG_0002.JPG" "./DCIM/Oct1003 Gold200/IMG_9998.JPG" \
     ./ML/DARKROOM/R008 ./ML/DARKROOM/R008/F01.BMP ./ML/DARKROOM/R008/F02.BMP ./ML/DARKROOM/R008/F03.BMP \
-    ./ML/DARKROOM/R008/F04.BMP ./ML/DARKROOM/R008/SHEET.BMP
+    ./ML/DARKROOM/R008/F04.BMP ./ML/DARKROOM/R008/SHEET.BMP \
+    ./ML/DARKROOM/R008/F01.ZOM ./ML/DARKROOM/R008/F02.ZOM ./ML/DARKROOM/R008/F03.ZOM ./ML/DARKROOM/R008/F04.ZOM
 expect "Delete roll: the RAW that can't go is said" "lab: can't remove out/cardp/DCIM/100CANON/IMG_9999.CR2"
 expect "Delete roll: ... and counted"       "lab: roll 008: deleted all, 3 left"
 # deleted again: the rest of it, the print folder and its tag, the RAW and
@@ -115,7 +118,8 @@ dcard=out/cardl FOS_NO_RMDIR=1 deletes "Delete roll, no folder removal: every fi
     ./DCIM/101CANON/IMG_0001.CR2 ./DCIM/101CANON/IMG_0002.CR2 ./DCIM/101CANON/ROLL_008.TXT \
     ./DCIM/OCT1003/IMG_0001.JPG ./DCIM/OCT1003/IMG_0002.JPG ./DCIM/OCT1003/IMG_9998.JPG ./DCIM/OCT1003/IMG_9999.JPG \
     ./DCIM/OCT1003/ROLL008.TXT ./ML/DARKROOM/R008/F01.BMP ./ML/DARKROOM/R008/F02.BMP ./ML/DARKROOM/R008/F03.BMP \
-    ./ML/DARKROOM/R008/F04.BMP ./ML/DARKROOM/R008/SHEET.BMP
+    ./ML/DARKROOM/R008/F04.BMP ./ML/DARKROOM/R008/SHEET.BMP \
+    ./ML/DARKROOM/R008/F01.ZOM ./ML/DARKROOM/R008/F02.ZOM ./ML/DARKROOM/R008/F03.ZOM ./ML/DARKROOM/R008/F04.ZOM
 expect "Delete roll, no folder removal: the folders counted" "lab: roll 008: deleted all, 2 left"
 
 # A roll developed again finds its folder whichever of the day's names it

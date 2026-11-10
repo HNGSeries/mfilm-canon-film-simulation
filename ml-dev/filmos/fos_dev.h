@@ -80,6 +80,19 @@ extern const uint8_t fos_fixed_rgb[FOS_FIXED_N][3];
 #define FOS_THUMB_SIZE  (FOS_THUMB_W * FOS_THUMB_H * 3)
 #define FOS_BMP_SIZE    (FOS_BMP_THUMB + FOS_THUMB_SIZE)
 
+/* A zoom file: a print at the size it was developed (fos_dev_big), for the
+ * screen to look into. "FOZ1", its width and height (16 bits each, low byte
+ * first), 8 bytes to spare; then its pixels, top row first, as indices in
+ * the palette of the print it belongs to (the BMP beside it). */
+#define FOS_ZOOM_HEAD   16
+struct fos_zoom { void *f; int w, h; };
+int  fos_zoom_open(const char *path, struct fos_zoom *z);       /* 0: no such file, or not one */
+/* ow x oh pixels into out (rows pitch apart), from (x, y) of the picture,
+ * every step-th pixel each way; rows: room for oh * step rows of the file,
+ * read in one go. 0 if it can't be read */
+int  fos_zoom_read(struct fos_zoom *z, int x, int y, int step, uint8_t *out, int pitch, int ow, int oh, uint8_t *rows);
+void fos_zoom_close(struct fos_zoom *z);
+
 /* in fos_print.c, which every build has (the shelf's samples are prints too) */
 /* a print's headers while it is read or written: one for the readers here and
  * the darkroom's writer, which never use it at the same time (all on the film
@@ -100,6 +113,16 @@ void fos_dev_cache(const char *dir);
 int fos_dev_table(int film);
 /* also write the frame in full colour as a JPEG at path (before the first step) */
 void fos_dev_jpeg(struct fos_dev *d, const char *path);
+/* a bigger print as well (before the first step): FOS_SIZE_M, a third of the
+ * sensor each way, or FOS_SIZE_L, half of it. The JPEG is then that size,
+ * and zoom (NULL: none) gets the same picture in the print's own palette,
+ * for the screen to zoom into (a zoom file, below). Where the camera hasn't
+ * the memory, the next size down is made, to the screen's print alone:
+ * fos_dev_made says which once the first step is through */
+void fos_dev_big(struct fos_dev *d, int size, const char *zoom);
+int  fos_dev_made(const struct fos_dev *d, int *w, int *h);     /* FOS_SIZE_*, and the JPEG's size */
+/* the date in the corner of the print, from when (before the first step) */
+void fos_dev_stamp(struct fos_dev *d, int on);
 /* forget the film table (leaving the darkroom) */
 void fos_dev_release();
 
@@ -113,7 +136,8 @@ int fos_dev_step(struct fos_dev *d, int budget_ms);
 const uint8_t *fos_dev_thumb(const struct fos_dev *d);
 const char *fos_dev_error(const struct fos_dev *d);
 /* what it is doing, for the darkroom's animation */
-enum { FOS_DEV_MIXING, FOS_DEV_DEVELOPING, FOS_DEV_FIXING, FOS_DEV_DRYING, FOS_DEV_DONE, FOS_DEV_FAILED };
+enum { FOS_DEV_MIXING, FOS_DEV_DEVELOPING, FOS_DEV_FIXING, FOS_DEV_DRYING, FOS_DEV_DONE, FOS_DEV_FAILED,
+       FOS_DEV_ENLARGING };         /* the bigger print */
 int fos_dev_doing(const struct fos_dev *d);
 int fos_dev_progress(const struct fos_dev *d);      /* 0..1000, as fos_dev_step returned */
 void fos_dev_picture(const struct fos_dev *d, int *x0, int *w);   /* the picture's columns on the print */
@@ -164,6 +188,7 @@ struct fos_lab_frame
 int  fos_lab_scan(struct fos_lab_roll *rolls, int max);                 /* newest first; how many */
 int  fos_lab_frames(int roll, struct fos_lab_frame *frames, int max);   /* frame order; how many */
 void fos_lab_print_path(char *buf, int size, int roll, int frame);      /* frame 0: the contact sheet */
+void fos_lab_zoom_path(char *buf, int size, int roll, int frame);       /* the frame's zoom file, beside its print */
 int  fos_lab_prepare(int roll);                                         /* its print folder; 0 = ok */
 void fos_lab_cache_dir(char *buf, int size);                            /* where film tables are kept */
 /* the roll's folder of JPEGs in DCIM, made if need be: "Sep0906 Portra400"

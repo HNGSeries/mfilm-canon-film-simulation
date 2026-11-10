@@ -37,7 +37,7 @@ static void nd_draw()
 
 static void nd_key(int k)
 {
-    if (k == FK_MENU || k == FK_SET || k == FK_PLAY) ui_go(SCR_HOME, 2, GO_POP);
+    if (k == FK_MENU || k == FK_SET || k == FK_PLAY) ui_go(SCR_HOME, HOME_DARK, GO_POP);
 }
 
 void dark_enter(int arg) { nd_bake(); }

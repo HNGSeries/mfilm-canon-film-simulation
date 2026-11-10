@@ -13,6 +13,7 @@ void fos_port_set(int s, int v) {}
 void fos_port_action(int a, int x, int y) {}
 void fos_port_roll(struct fos_roll *r) { r->loaded = 0; }
 void fos_port_clock(char *b, int n) { snprintf(b, n, "09:41"); }
+int fos_port_battery(int *exact) { if (exact) *exact = 1; return 82; }
 int fos_port_ms() { return 0; }
 void fos_port_sleep(int ms) {}
 int fos_port_key() { return 0; }

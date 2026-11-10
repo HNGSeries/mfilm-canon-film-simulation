@@ -319,7 +319,11 @@ FOS_INLINE void lut_apply(const uint8_t (*lut)[3], int pr, int pg, int pb, uint8
 #define DIFF_BITS   11
 #define UNPACK      2688                /* samples decoded at a time: an EOS M slice's row */
 
-enum { ST_OPEN, ST_DECODE, ST_KEY, ST_EXPOSE, ST_GLOW, ST_FINISH, ST_JPEG, ST_QUANT, ST_DITHER, ST_WRITE, ST_DONE, ST_FAIL };
+enum { ST_OPEN, ST_DECODE, ST_KEY, ST_EXPOSE, ST_GLOW, ST_FINISH, ST_JPEG, ST_QUANT, ST_DITHER, ST_BIG, ST_WRITE, ST_DONE, ST_FAIL,
+       ST_COUNT };
+
+#define BIG_BANDS   64                  /* a big print's sums are kept in pieces of a megabyte */
+#define BIG_ROWS    16                  /* its rows finished at a time: a row of JPEG blocks */
 
 struct huff
 {
@@ -403,6 +407,39 @@ struct fos_dev
     uint8_t by_green[FOS_PRINT_COLOURS];   /* the palette in order of green */
     int16_t *err_rows;
     uint8_t *idx;
+
+    /* the bigger print (fos_dev_big): the sensor binned big x big, summed
+     * beside the screen's print as the RAW is read, finished a few rows at
+     * a time into the JPEG and the zoom file once the screen's print has
+     * given the exposure, the glow and the palette */
+    int want_big;                       /* FOS_SIZE_M or _L asked for */
+    char zoom[128];                     /* the zoom file, or "" */
+    int big, bshift;                    /* raw pixels per print pixel each way (0: none); samples >> bshift are summed */
+    int bstraight;                      /* the print's columns are the sensor's, in order (big_row) */
+    int bsize;                          /* FOS_SIZE_* it comes to */
+    int bw, bh;                         /* its size, upright */
+    uint16_t **brow;                    /* each row's sums, 3 per pixel */
+    uint16_t *bband[BIG_BANDS];
+    uint8_t *barena;                    /* the block the tables below are in */
+    uint16_t *bcmap, *brmap;            /* raw column / row -> its line of the print, 0xFFFF: none */
+    uint16_t *bne_r, *bno_r, *bne_c, *bno_c;    /* as ne_r ..: raw rows / columns per line, even and odd */
+    uint32_t *b32;                      /* a row at work: its sums, */
+    uint16_t *bcam, *blin;              /* camera colour and positions, linear light */
+    int16_t *bvig_x, *bvig_y;
+    uint8_t *bgx, *bfx;
+    uint8_t *brgb, *bidx;               /* BIG_ROWS rows finished: RGB for the JPEG, indices for the zoom file */
+    int16_t *berr;
+    struct fos_jpeg *bjpeg;
+    void *bzoom;
+    int bfail;                          /* 1: the JPEG couldn't all be written */
+
+    /* the date in the corner (fos_dev_stamp): its mask at the screen's size and at the big print's */
+    int stamp;
+    uint8_t *smask[2];
+    int sm_w[2], sm_h[2];
+
+    /* where the time goes, for the log */
+    int ms[ST_COUNT], t_mark, t_stage;
 };
 
 /* Which raw rows are red-green: LibRaw has every Canon here RGGB from the
@@ -698,6 +735,9 @@ static int refill(struct fos_dev *d, const uint8_t *bp, int keep)
     return keep + n;
 }
 
+static void big_free(struct fos_dev *d);
+static int big_setup(struct fos_dev *d, int size);
+
 /* ---- the print's geometry: which raw rows and columns land where */
 
 static int setup_maps(struct fos_dev *d)
@@ -817,10 +857,132 @@ static int setup_maps(struct fos_dev *d)
     d->sums = fos_port_alloc(FOS_PRINT_W * FOS_PRINT_H * 3 * 4);
     if (!d->sums) return fail_mem(d, FOS_PRINT_W * FOS_PRINT_H * 3 * 4);
     memset(d->sums, 0, FOS_PRINT_W * FOS_PRINT_H * 3 * 4);
+    /* the bigger print, the size asked for or the next one down that the
+     * camera has the memory for; none of them, and the screen's print alone */
+    for (int size = d->want_big; size > FOS_SIZE_S && !d->big; size--)
+        if (!big_setup(d, size)) big_free(d);
     d->total = (long) d->raw_w * d->raw_h;
     d->sl = 0; d->sx = 0; d->sy = 0; d->sx0 = 0;
     d->sw = d->slices[0] ? d->slices[1] : d->raw_w;
     for (int c = 0; c < 4; c++) d->vpred[c] = 1 << (d->bits - 1);
+    return 1;
+}
+
+/* ---- the bigger print's geometry */
+
+static void big_free(struct fos_dev *d)
+{
+    for (int i = 0; i < BIG_BANDS; i++) { fos_port_free(d->bband[i]); d->bband[i] = 0; }
+    fos_port_free(d->barena);
+    d->barena = 0;
+    d->brow = 0;
+    d->big = 0;
+}
+
+/* FOS_SIZE_L: the sensor's pixels two by two (one of red, two of green,
+ * one of blue to a print pixel: nothing to interpolate); _M: three by
+ * three. 1 when its memory is there. */
+static int big_setup(struct fos_dev *d, int size)
+{
+    const int f = size == FOS_SIZE_L ? 2 : 3;
+    const int pw = d->crop_w / f, ph = d->crop_h / f;       /* the picture, as the sensor lies */
+    const int portrait = d->rows_axis_x;
+    const int bw = portrait ? ph : pw, bh = portrait ? pw : ph;
+    char msg[160];
+    if (bw <= FOS_PRINT_W && bh <= FOS_PRINT_H) return 0;   /* no bigger than the screen's print */
+    /* green takes up to (f * f + 1) / 2 samples of 14 bits: shifted to fit 16 */
+    int sh = 0;
+    while ((((f * f + 1) / 2) * ((1 << d->bits) - 1)) >> sh > 65535) sh++;
+    /* The sums in pieces of a megabyte at most: Magic Lantern gives those
+     * straight from the camera's picture memory, where for a bigger block
+     * it first takes all of that memory to see what is there. */
+    int per = ((1 << 20) - 64) / (bw * 6);                  /* rows in a piece */
+    if (per < 1) per = 1;
+    int nb = (bh + per - 1) / per;
+    if (nb > BIG_BANDS) return 0;
+    int line = bw > bh ? bw : bh;
+    /* everything else it needs in one block (word-sized things first), so
+     * the camera's small heaps, which Canon lives on too, aren't asked */
+    const int n_row = bh * (int) sizeof(uint16_t *), n_32 = bw * 3 * 4, n_err = (bw + 2) * 3 * 2 * 2;
+    const int n_cmap = (d->raw_w * 2 + 3) & ~3, n_rmap = (d->raw_h * 2 + 3) & ~3, n_cnt = line * 2 * 4;
+    const int n_cam = bw * 3 * 2 * 2, n_vig = ((bw + bh) * 2 + 3) & ~3;
+    const int n_rgb = (BIG_ROWS * bw * 3 + 3) & ~3, n_idx = (BIG_ROWS * bw + 3) & ~3, n_g = bw * 2;
+    const int total = n_row + n_32 + n_err + n_cmap + n_rmap + n_cnt + n_cam + n_vig + n_rgb + n_idx + n_g;
+    uint8_t *a = d->barena = fos_port_alloc(total);
+    int ok = a != 0;
+    if (ok)
+    {
+        d->brow = (uint16_t **) a; a += n_row;
+        d->b32 = (uint32_t *) a; a += n_32;
+        d->berr = (int16_t *) a; a += n_err;
+        d->bcmap = (uint16_t *) a; a += n_cmap;
+        d->brmap = (uint16_t *) a; a += n_rmap;
+        d->bne_r = (uint16_t *) a; a += n_cnt;
+        d->bcam = (uint16_t *) a; a += n_cam;
+        d->bvig_x = (int16_t *) a; a += n_vig;
+        d->brgb = a; a += n_rgb;
+        d->bidx = a; a += n_idx;
+        d->bgx = a;
+    }
+    for (int i = 0; ok && i < nb; i++)
+    {
+        int rows = i == nb - 1 ? bh - i * per : per;
+        d->bband[i] = fos_port_alloc(rows * bw * 6);
+        if (!d->bband[i]) { ok = 0; break; }
+        memset(d->bband[i], 0, rows * bw * 6);
+        for (int r = 0; r < rows; r++) d->brow[i * per + r] = d->bband[i] + r * bw * 3;
+    }
+    /* and room left for what the screen's print still has to take once the
+     * RAW is read (its RGB, the palette's tables): a megabyte and a half,
+     * tried now, so the frame doesn't fail later for the sake of its size */
+    if (ok)
+    {
+        void *spare = fos_port_alloc(FOS_PRINT_W * FOS_PRINT_H * 3 + (512 << 10));
+        ok = spare != 0;
+        fos_port_free(spare);
+    }
+    if (!ok)
+    {
+        snprintf(msg, sizeof(msg), "dev: no memory for a %d x %d print (%d KB in %d pieces, and %d KB), trying smaller", bw, bh,
+                 bw * bh * 6 / 1024, nb, total / 1024);
+        fos_port_log(msg);
+        return 0;
+    }
+    d->bno_r = d->bne_r + line; d->bne_c = d->bno_r + line; d->bno_c = d->bne_c + line;
+    memset(d->bne_r, 0, line * 2 * 4);
+    d->blin = d->bcam + bw * 3;
+    d->bvig_y = d->bvig_x + bw;
+    d->bfx = d->bgx + bw;
+    memset(d->berr, 0, (bw + 2) * 3 * 2 * 2);
+
+    /* as setup_maps: raw rows across the picture's height (landscape) or width (portrait) */
+    const int rflip = d->orient == 6 || d->orient == 3, cflip = d->orient == 8 || d->orient == 3;
+    for (int y = 0; y < d->raw_h; y++)
+    {
+        int a = y - d->crop_t;
+        d->brmap[y] = 0xFFFF;
+        if (a < 0 || a >= ph * f) continue;
+        int o = a / f;
+        if (rflip) o = ph - 1 - o;
+        if ((y ^ d->rphase) & 1) d->bno_r[o]++; else d->bne_r[o]++;
+        d->brmap[y] = (uint16_t) o;
+    }
+    for (int x = 0; x < d->raw_w; x++)
+    {
+        int a = x - d->crop_l;
+        d->bcmap[x] = 0xFFFF;
+        if (a < 0 || a >= pw * f) continue;
+        int k = a / f;
+        if (cflip) k = pw - 1 - k;
+        if (x & 1) d->bno_c[k]++; else d->bne_c[k]++;
+        d->bcmap[x] = (uint16_t) k;
+    }
+    d->big = f; d->bshift = sh; d->bsize = size;
+    d->bw = bw; d->bh = bh;
+    d->bstraight = !portrait && !cflip;
+    snprintf(msg, sizeof(msg), "dev: a %d x %d print too (the sensor %d x %d to a pixel, %d KB in %d pieces)", bw, bh, f, f,
+             bw * bh * 6 / 1024, nb);
+    fos_port_log(msg);
     return 1;
 }
 
@@ -1113,6 +1275,57 @@ static __attribute__((noinline)) void sum_row(const uint16_t *v, const uint8_t *
     }
 }
 
+/* The same samples into the big print: raw row sy's columns pa .. pb - 1
+ * (at[x]: the sample of column x). One at a time: a print pixel takes only
+ * two or three of them a row, so there are no runs to sum in registers,
+ * and against decoding a sample this is little. */
+static __attribute__((noinline)) void big_row(struct fos_dev *d, const uint16_t *at, int pa, int pb, int sy)
+{
+    const unsigned o = d->brmap[sy];
+    if (o == 0xFFFF) return;
+    const uint16_t *cm = d->bcmap;
+    const int sh = d->bshift, rs = (sy ^ d->rphase) & 1;
+    if (d->bstraight)
+    {
+        /* the picture as the sensor lies (most frames): its columns go along
+         * the row in step, so the place is counted, not looked up */
+        const int f = d->big, lo = d->crop_l, hi = lo + d->bw * f;
+        const int x0 = pa > lo ? pa : lo, x1 = pb < hi ? pb : hi;
+        if (x0 >= x1) return;
+        const int k = (x0 - lo) / f;
+        int r = x0 - lo - k * f, par = x0 & 1;
+        uint16_t *p = d->brow[o] + rs + 3 * k;
+        for (const uint16_t *v = at + x0, *ve = at + x1; v < ve; v++, par ^= 1)
+        {
+            p[par] = (uint16_t) (p[par] + (*v >> sh));
+            if (++r == f) { r = 0; p += 3; }
+        }
+    }
+    else if (!d->rows_axis_x)
+    {
+        uint16_t *row = d->brow[o] + rs;
+        for (int x = pa; x < pb; x++)
+        {
+            const unsigned k = cm[x];
+            if (k == 0xFFFF) continue;
+            uint16_t *p = row + 3 * k + (x & 1);
+            *p = (uint16_t) (*p + (at[x] >> sh));
+        }
+    }
+    else
+    {
+        uint16_t **rows = d->brow;
+        const int base = 3 * (int) o + rs;
+        for (int x = pa; x < pb; x++)
+        {
+            const unsigned k = cm[x];
+            if (k == 0xFFFF) continue;
+            uint16_t *p = rows[k] + base + (x & 1);
+            *p = (uint16_t) (*p + (at[x] >> sh));
+        }
+    }
+}
+
 /* count samples to where they fall in the print, slice by slice, top to
  * bottom: a print pixel's run of samples along a raw row is summed in
  * registers, even and odd columns (two colours of the mosaic) apart, and
@@ -1148,6 +1361,7 @@ static __attribute__((noinline)) void scatter(struct fos_dev *d, const uint16_t 
                 /* sample of raw column x at at[x]; RG rows then GB rows
                  * (row_phase), the even columns' colour then the odd ones' */
                 const uint16_t *at = src - x0;
+                if (d->big) big_row(d, at, pa, pb, sy);
                 uint32_t *row = sums + ro + ((sy ^ rphase) & 1);
                 /* the segments it touches, and those it has whole (a row
                  * of the picture is in two of Canon's slices) */
@@ -1571,6 +1785,26 @@ void fos_dev_jpeg(struct fos_dev *d, const char *path)
     if (d) snprintf(d->jpeg, sizeof(d->jpeg), "%s", path ? path : "");
 }
 
+void fos_dev_big(struct fos_dev *d, int size, const char *zoom)
+{
+    if (!d) return;
+    d->want_big = size < FOS_SIZE_S ? FOS_SIZE_S : size > FOS_SIZE_L ? FOS_SIZE_L : size;
+    snprintf(d->zoom, sizeof(d->zoom), "%s", zoom ? zoom : "");
+}
+
+void fos_dev_stamp(struct fos_dev *d, int on)
+{
+    if (d) d->stamp = on;
+}
+
+int fos_dev_made(const struct fos_dev *d, int *w, int *h)
+{
+    int pw = d && d->rows_axis_x ? d->ow : FOS_PRINT_W;
+    if (w) *w = d && d->big ? d->bw : pw;
+    if (h) *h = d && d->big ? d->bh : FOS_PRINT_H;
+    return d && d->big ? d->bsize : FOS_SIZE_S;
+}
+
 void fos_dev_free(struct fos_dev *d)
 {
     if (!d) return;
@@ -1580,6 +1814,11 @@ void fos_dev_free(struct fos_dev *d)
     fos_port_free(d->rowob); fos_port_free(d->colob); fos_port_free(d->ne_r); fos_port_free(d->ne_c);
     fos_port_free(d->sums); fos_port_free(d->glow); fos_port_free(d->rgb);
     fos_port_free(d->hist); fos_port_free(d->inv); fos_port_free(d->err_rows); fos_port_free(d->idx);
+    /* stopped in the middle of the big print: what there is of its files is closed */
+    if (d->bjpeg) fos_jpeg_end(d->bjpeg);
+    if (d->bzoom) fos_port_close(d->bzoom);
+    big_free(d);
+    fos_port_free(d->smask[0]); fos_port_free(d->smask[1]);
     fos_port_free(d);
 }
 
@@ -1602,13 +1841,25 @@ int fos_dev_doing(const struct fos_dev *d)
         case ST_DECODE: return lut_film == d->film && lut_built >= NGRID ? FOS_DEV_DEVELOPING : FOS_DEV_MIXING;
         case ST_KEY: case ST_EXPOSE: case ST_GLOW: case ST_FINISH: return FOS_DEV_FIXING;
         case ST_JPEG: case ST_QUANT: case ST_DITHER: case ST_WRITE: return FOS_DEV_DRYING;
+        case ST_BIG: return FOS_DEV_ENLARGING;
         case ST_DONE: return FOS_DEV_DONE;
     }
     return FOS_DEV_FAILED;
 }
 
 /* how far along, 0..1000: decoding is most of the work */
+static int progress_small(const struct fos_dev *d);
+
 static int progress(const struct fos_dev *d)
+{
+    /* with a bigger print to make, that is about a third of the work */
+    if (!d->big) return progress_small(d);
+    if (d->stage == ST_BIG) return 660 + (int) ((int64_t) d->row * 335 / d->bh);
+    if (d->stage == ST_WRITE || d->stage == ST_DONE || d->stage == ST_FAIL) return progress_small(d);
+    return progress_small(d) * 660 / 1000;
+}
+
+static int progress_small(const struct fos_dev *d)
 {
     const int H = FOS_PRINT_H;
     switch (d->stage)
@@ -1622,6 +1873,7 @@ static int progress(const struct fos_dev *d)
         case ST_JPEG: return 934;
         case ST_QUANT: return 940;
         case ST_DITHER: return 950 + d->row * 45 / H;
+        case ST_BIG: return 995;
         case ST_WRITE: return 995;
         case ST_DONE: return 1000;
     }
@@ -1922,13 +2174,293 @@ static void make_thumb(struct fos_dev *d)
     }
 }
 
+/* ---- the date stamp */
+
+/* The date as a compact camera's data back burns it into the corner of the
+ * frame: '26 10 22 in orange seven-segment figures. Its mask at scale s (a
+ * figure is 6 s wide and 11 s high), w x h, or NULL without a date. */
+static uint8_t *stamp_mask(const char *when, int s, int *w, int *h)
+{
+    static const uint8_t digits[10] = { 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F };
+    if (strlen(when) < 10) return 0;
+    const char text[10] = { '\'', when[2], when[3], ' ', when[5], when[6], ' ', when[8], when[9], 0 };
+    const int dw = 6 * s, dh = 11 * s, t = (3 * s + 1) / 2;
+    int total = 0;
+    for (const char *c = text; *c; c++) total += *c == ' ' ? 4 * s : *c == '\'' ? 3 * s : dw + 2 * s;
+    total -= 2 * s;
+    uint8_t *m = fos_port_alloc(total * dh);
+    if (!m) return 0;
+    memset(m, 0, total * dh);
+    int x = 0;
+    for (const char *c = text; *c; c++)
+    {
+        if (*c == ' ') { x += 4 * s; continue; }
+        if (*c == '\'')
+        {
+            for (int y = 0; y < 3 * s; y++) memset(m + y * total + x, 255, t);
+            x += 3 * s;
+            continue;
+        }
+        int bits = *c >= '0' && *c <= '9' ? digits[*c - '0'] : 0;
+        /* segments a..g: x, y, w, h */
+        const int seg[7][4] = {
+            { t / 2, 0, dw - 2 * (t / 2), t }, { dw - t, 0, t, dh / 2 + t / 2 }, { dw - t, dh / 2 - t / 2, t, dh - (dh / 2 - t / 2) },
+            { t / 2, dh - t, dw - 2 * (t / 2), t }, { 0, dh / 2 - t / 2, t, dh - (dh / 2 - t / 2) }, { 0, 0, t, dh / 2 + t / 2 },
+            { t / 2, (dh - t) / 2, dw - 2 * (t / 2), t } };
+        for (int k = 0; k < 7; k++)
+            if (bits >> k & 1)
+                for (int y = seg[k][1]; y < seg[k][1] + seg[k][3] && y < dh; y++)
+                    memset(m + y * total + x + seg[k][0], 255, seg[k][2]);
+        x += dw + 2 * s;
+    }
+    *w = total; *h = dh;
+    return m;
+}
+
+/* the stamp onto row y of a picture pw x ph, its pixels at rgb: bottom
+ * right, in from the edges by a twentieth of the shorter side */
+static void stamp_row(const uint8_t *mask, int mw, int mh, uint8_t *rgb, int pw, int ph, int y)
+{
+    int margin = (pw < ph ? pw : ph) / 20;
+    int x0 = pw - margin - mw, y0 = ph - margin - mh;
+    if (!mask || y < y0 || y >= y0 + mh || x0 < 0) return;
+    const uint8_t *m = mask + (y - y0) * mw;
+    for (int x = 0; x < mw; x++)
+        if (m[x]) { uint8_t *p = rgb + 3 * (x0 + x); p[0] = 255; p[1] = 142; p[2] = 44; }
+}
+
+static int stamp_scale(int pw, int ph)
+{
+    int s = ((pw < ph ? pw : ph) + 120) / 240;
+    return s < 1 ? 1 : s;
+}
+
+/* ---- the bigger print */
+
+/* glow_pos for a place between print lines (p may be a fraction) */
+static void glow_pos_at(float p, int n, uint8_t *cell, uint8_t *frac)
+{
+    float tf = 2 * p - 3;
+    int t = (int) (tf < 0 ? tf - 0.5f : tf + 0.5f);
+    if (t < 0) { *cell = 0; *frac = 0; return; }
+    int j = t >> 3;
+    if (j >= n - 1) { *cell = (uint8_t) (n - 2); *frac = 8; return; }
+    *cell = (uint8_t) j;
+    *frac = (uint8_t) (t & 7);
+}
+
+/* its files open, its tables made; the picture then comes BIG_ROWS rows at a time */
+static void big_begin(struct fos_dev *d)
+{
+    const int bw = d->bw, bh = d->bh;
+    char msg[200];
+    for (int x = 0; x < bw; x++) { float t = 2.0f * x / (bw - 1) - 1; d->bvig_x[x] = (int16_t) (0.06f * t * t * 4096); }
+    for (int k = 0; k < bh; k++) { float t = 2.0f * k / (bh - 1) - 1; d->bvig_y[k] = (int16_t) (0.06f * t * t * 4096); }
+    /* a column's place on the glow's grid, by where it is on the screen's print */
+    const float sx0 = d->rows_axis_x ? (float) d->ox0 : 0, sw = d->rows_axis_x ? (float) d->ow : (float) FOS_PRINT_W;
+    for (int x = 0; x < bw; x++) glow_pos_at(sx0 + (x + 0.5f) * sw / bw - 0.5f, GW, &d->bgx[x], &d->bfx[x]);
+    if (d->jpeg[0])
+    {
+        char desc[48];
+        snprintf(desc, sizeof(desc), "%s %s", fos_films[d->film].brand, fos_films[d->film].name);
+        struct fos_jpeg_meta m = { d->when, desc, d->fstop };
+        d->bjpeg = fos_jpeg_begin(d->jpeg, bw, bh, 92, &m);
+        if (!d->bjpeg)
+        {
+            snprintf(msg, sizeof(msg), "dev: can't write %s", d->jpeg);
+            fos_port_log(msg);
+            d->bfail = 1;
+        }
+    }
+    if (d->zoom[0])
+    {
+        d->bzoom = fos_port_open(d->zoom, 1);
+        uint8_t h[FOS_ZOOM_HEAD];
+        memset(h, 0, sizeof(h));
+        memcpy(h, "FOZ1", 4);
+        h[4] = (uint8_t) bw; h[5] = (uint8_t) (bw >> 8);
+        h[6] = (uint8_t) bh; h[7] = (uint8_t) (bh >> 8);
+        if (d->bzoom && fos_port_write(d->bzoom, h, FOS_ZOOM_HEAD) != FOS_ZOOM_HEAD) { fos_port_close(d->bzoom); d->bzoom = 0; }
+        if (!d->bzoom)
+        {
+            snprintf(msg, sizeof(msg), "dev: can't write %s", d->zoom);
+            fos_port_log(msg);
+        }
+    }
+    if (d->stamp) d->smask[1] = stamp_mask(d->when, stamp_scale(bw, bh), &d->sm_w[1], &d->sm_h[1]);
+}
+
+/* a finished row to the print's palette, as dither_rows: for the zoom file */
+static __attribute__((noinline)) void big_dither(struct fos_dev *d, const uint8_t *rgb, uint8_t *idx, int y)
+{
+    const int W = d->bw;
+    const uint8_t *inv = d->inv;
+    const uint8_t (*pal)[3] = d->pal;
+    const int dir = y & 1 ? -1 : 1, st = 3 * dir;
+    int16_t *cur = d->berr + ((y & 1) ? (W + 2) * 3 : 0);
+    int16_t *nxt = d->berr + ((y & 1) ? 0 : (W + 2) * 3);
+    memset(nxt, 0, (W + 2) * 3 * 2);
+    const int x = dir > 0 ? 0 : W - 1;
+    const uint8_t *p = rgb + 3 * x;
+    uint8_t *o = idx + x;
+    int16_t *c = cur + (x + 1) * 3, *n = nxt + (x + 1) * 3;
+    for (int k = 0; k < W; k++, p += st, o += dir, c += st, n += st)
+    {
+        int r = p[0] + (c[0] >> 4), g = p[1] + (c[1] >> 4), b = p[2] + (c[2] >> 4);
+        r = r < 0 ? 0 : r > 255 ? 255 : r;
+        g = g < 0 ? 0 : g > 255 ? 255 : g;
+        b = b < 0 ? 0 : b > 255 ? 255 : b;
+        int cell = (r >> 3) << 10 | (g >> 3) << 5 | b >> 3;
+        int i = inv[cell] ? inv[cell] - 1 : nearest(d, cell);
+        *o = (uint8_t) (i + 1);
+        const uint8_t *q = pal[i];
+        int e = r - q[0];
+        c[st] = (int16_t) (c[st] + e * 7); n[-st] = (int16_t) (n[-st] + e * 3); n[0] = (int16_t) (n[0] + e * 5); n[st] = (int16_t) (n[st] + e);
+        e = g - q[1];
+        c[st + 1] = (int16_t) (c[st + 1] + e * 7); n[1 - st] = (int16_t) (n[1 - st] + e * 3); n[1] = (int16_t) (n[1] + e * 5); n[st + 1] = (int16_t) (n[st + 1] + e);
+        e = b - q[2];
+        c[st + 2] = (int16_t) (c[st + 2] + e * 7); n[2 - st] = (int16_t) (n[2 - st] + e * 3); n[2] = (int16_t) (n[2] + e * 5); n[st + 2] = (int16_t) (n[st + 2] + e);
+    }
+}
+
+/* finish_grain for the big print's rows, which are most of its work: one
+ * draw of the generator a pixel in place of four (the channels' own shares
+ * are that draw multiplied apart), the strength and the tone's weight in one
+ * product. The same grain to the eye; not the same numbers. */
+static __attribute__((noinline)) unsigned big_grain(uint8_t *o, int n, unsigned seed, int grain, int mono)
+{
+    for (uint8_t *e = o + 3 * n; o < e; o += 3)
+    {
+        int l = (o[0] * 54 + o[1] * 183 + o[2] * 19) >> 8;
+        int gw = (grain * ((l * (255 - l)) >> 6)) >> 8;
+        seed = seed * 1664525u + 1013904223u;
+        int shared = (int) (seed >> 16) - 32768;
+        int k0 = shared, k1 = shared, k2 = shared;
+        if (!mono)
+        {
+            k0 = (shared * 3 + ((int) ((seed * 2654435761u) >> 16) - 32768) * 2) >> 2;
+            k1 = (shared * 3 + ((int) ((seed * 2246822519u) >> 16) - 32768) * 2) >> 2;
+            k2 = (shared * 3 + ((int) ((seed * 3266489917u) >> 16) - 32768) * 2) >> 2;
+        }
+        int v = o[0] + ((k0 * gw) >> 23);
+        o[0] = (uint8_t) (v < 0 ? 0 : v > 255 ? 255 : v);
+        v = o[1] + ((k1 * gw) >> 23);
+        o[1] = (uint8_t) (v < 0 ? 0 : v > 255 ? 255 : v);
+        v = o[2] + ((k2 * gw) >> 23);
+        o[2] = (uint8_t) (v < 0 ? 0 : v > 255 ? 255 : v);
+    }
+    return seed;
+}
+
+/* row y of the big print into rgb: as stage_expose and stage_finish do a
+ * row of the screen's, from its own sums, with the exposure and the glow
+ * the screen's print found */
+static __attribute__((noinline)) void big_finish(struct fos_dev *d, int y, uint8_t *rgb)
+{
+    const int bw = d->bw, sh = d->bshift;
+    const struct fos_look *L = d->look;
+    const uint16_t *s = d->brow[y];
+    uint32_t *t32 = d->b32;
+    for (int i = 0; i < 3 * bw; i++) t32[i] = (uint32_t) s[i] << sh;
+    int a, b;
+    const uint16_t *ra, *rb;
+    if (d->rows_axis_x) { a = d->bne_c[y]; b = d->bno_c[y]; ra = d->bne_r; rb = d->bno_r; }
+    else { a = d->bne_r[y]; b = d->bno_r[y]; ra = d->bne_c; rb = d->bno_c; }
+    expose_cam(d, t32, d->bcam, bw, a, b, ra, rb);
+    expose_lin(d, d->bcam, d->blin, bw, 0, 0);
+    int hal[3];
+    for (int c = 0; c < 3; c++) hal[c] = d->glow ? (int) (L->halation * L->hal_tint[c] * 256) : 0;
+    int32_t grow[GW];
+    if (d->glow)
+    {
+        uint8_t gy, fy;
+        glow_pos_at((y + 0.5f) * FOS_PRINT_H / d->bh - 0.5f, GH, &gy, &fy);
+        const int32_t *g0 = d->glow + gy * GW, *g1 = g0 + GW;
+        for (int j = 0; j < GW; j++) grow[j] = g0[j] * (8 - fy) + g1[j] * fy;
+    }
+    finish_pos(d->blin, d->bcam, bw, 4096 - d->bvig_y[y], d->bvig_x, d->glow ? grow : 0, d->bgx, d->bfx, hal);
+    finish_lut(d->bcam, rgb, bw);
+    int grain = (int) (L->grain * 255 * 0.55f * 256);
+    if (grain) d->seed = big_grain(rgb, bw, d->seed, grain, L->mono);
+    stamp_row(d->smask[1], d->sm_w[1], d->sm_h[1], rgb, bw, d->bh, y);
+}
+
+/* its next rows, to the JPEG and the zoom file */
+static void big_rows(struct fos_dev *d)
+{
+    const int bw = d->bw, y0 = d->row, n = d->bh - y0 < BIG_ROWS ? d->bh - y0 : BIG_ROWS;
+    for (int i = 0; i < n; i++)
+        big_finish(d, y0 + i, d->brgb + i * bw * 3);
+    if (d->bjpeg) fos_jpeg_rows(d->bjpeg, d->brgb, bw * 3, n);
+    if (d->bzoom)
+    {
+        for (int i = 0; i < n; i++)
+            big_dither(d, d->brgb + i * bw * 3, d->bidx + i * bw, y0 + i);
+        if (fos_port_write(d->bzoom, d->bidx, n * bw) != n * bw)
+        {
+            fos_port_log("dev: the zoom file couldn't all be written");
+            fos_port_close(d->bzoom);
+            d->bzoom = 0;
+        }
+    }
+    d->row += n;
+}
+
+static void big_end(struct fos_dev *d)
+{
+    if (d->bjpeg && !fos_jpeg_end(d->bjpeg))
+    {
+        char msg[200];
+        snprintf(msg, sizeof(msg), "dev: can't write %s", d->jpeg);
+        fos_port_log(msg);
+        d->bfail = 1;
+    }
+    d->bjpeg = 0;
+    if (d->bzoom) fos_port_close(d->bzoom);
+    d->bzoom = 0;
+    fos_port_free(d->glow); d->glow = 0;
+    int f = d->big, size = d->bsize;
+    big_free(d);
+    d->big = f; d->bsize = size;        /* what was made (fos_dev_made) */
+}
+
+/* where the frame's time went, once it is through */
+static void log_times(struct fos_dev *d)
+{
+    char msg[200];
+    const int *t = d->ms;
+    snprintf(msg, sizeof(msg), "dev: frame %d: read %d ms, expose %d, finish %d, jpeg %d, palette %d, big print %d (%d x %d), write %d",
+             d->frame, t[ST_OPEN] + t[ST_DECODE], t[ST_KEY] + t[ST_EXPOSE] + t[ST_GLOW], t[ST_FINISH], t[ST_JPEG],
+             t[ST_QUANT] + t[ST_DITHER], t[ST_BIG], d->big ? d->bw : 0, d->big ? d->bh : 0, t[ST_WRITE]);
+    fos_port_log(msg);
+}
+
+static int dev_step(struct fos_dev *d, int budget_ms);
+
 int fos_dev_step(struct fos_dev *d, int budget_ms)
 {
     if (!d) return -1;
+    int was = d->stage;
+    d->t_mark = fos_port_ms();
+    d->t_stage = d->stage;
+    int p = dev_step(d, budget_ms);
+    int now = fos_port_ms();
+    if (d->t_stage < ST_COUNT) d->ms[d->t_stage] += now - d->t_mark;
+    if (d->stage == ST_DONE && was != ST_DONE) log_times(d);
+    return p;
+}
+
+static int dev_step(struct fos_dev *d, int budget_ms)
+{
     int t0 = fos_port_ms(), cap = fos_port_dev_cap(), slices = 0;
     const int W = FOS_PRINT_W, H = FOS_PRINT_H, N = W * H;
-    while ((fos_port_ms() - t0 < budget_ms || d->stage == ST_OPEN) && (!cap || slices++ < cap))
+    for (;;)
     {
+        int now = fos_port_ms();
+        if (d->t_stage < ST_COUNT) d->ms[d->t_stage] += now - d->t_mark;
+        d->t_mark = now;
+        d->t_stage = d->stage;
+        if (!((now - t0 < budget_ms || d->stage == ST_OPEN) && (!cap || slices++ < cap))) break;
         switch (d->stage)
         {
             case ST_OPEN:
@@ -1993,10 +2525,19 @@ int fos_dev_step(struct fos_dev *d, int budget_ms)
                 stage_finish(d, d->row);
                 if (++d->row == H)
                 {
+                    if (d->stamp)
+                    {
+                        /* the date, on the picture (a portrait frame's is the middle of the print) */
+                        int pw = d->rows_axis_x ? d->ow : W, px0 = d->rows_axis_x ? d->ox0 : 0;
+                        d->smask[0] = stamp_mask(d->when, stamp_scale(pw, H), &d->sm_w[0], &d->sm_h[0]);
+                        for (int y = 0; y < H; y++)
+                            stamp_row(d->smask[0], d->sm_w[0], d->sm_h[0], d->rgb + 3 * (y * W + px0), pw, H, y);
+                    }
                     make_thumb(d);
                     fos_port_free(d->sums); d->sums = 0; d->lin = 0;
-                    fos_port_free(d->glow); d->glow = 0;
-                    d->stage = d->jpeg[0] ? ST_JPEG : ST_QUANT;
+                    /* the bigger print comes after the palette, which its zoom file is in; it is the JPEG then */
+                    if (!d->big) { fos_port_free(d->glow); d->glow = 0; }
+                    d->stage = d->big ? ST_QUANT : d->jpeg[0] ? ST_JPEG : ST_QUANT;
                 }
                 break;
             case ST_JPEG:
@@ -2023,7 +2564,16 @@ int fos_dev_step(struct fos_dev *d, int budget_ms)
             case ST_DITHER:
                 dither_rows(d, d->row, d->row + 8);
                 d->row += 8;
-                if (d->row >= H) d->stage = ST_WRITE;
+                if (d->row >= H) d->stage = d->big ? ST_BIG : ST_WRITE, d->row = -1;
+                break;
+            case ST_BIG:
+                if (d->row < 0) { big_begin(d); d->row = 0; break; }
+                big_rows(d);
+                if (d->row >= d->bh)
+                {
+                    big_end(d);
+                    d->stage = ST_WRITE;
+                }
                 break;
             case ST_WRITE:
                 if (!write_print(d->print, d->film, d->frame, d->when, d->fstop, d->pal, d->npal, d->idx, d->thumb,

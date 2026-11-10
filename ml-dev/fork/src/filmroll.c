@@ -53,6 +53,9 @@
 #include <tasks.h>
 #include <mem.h>
 #include <powersave.h>
+#ifdef CONFIG_BATTERY_INFO
+#include <battery.h>
+#endif
 #ifdef MODULE
 /* built as ML/modules/filmos.mo (build_fork.sh --module): the core keeps
  * these three names for its shim (filmhook.c), the module's own go by others */
@@ -67,6 +70,7 @@
 #include <stdarg.h>
 
 extern int ml_started;
+extern void set_backlight_level(int level);
 extern void CancelDateTimer();
 
 /* user settings */
@@ -75,7 +79,7 @@ static CONFIG_INT("filmroll.exp",       exp_sel,          0);
 static CONFIG_INT("filmroll.hud",       hud_enabled,      1);
 static CONFIG_INT("filmroll.focus",     focus_screen,     1);
 static CONFIG_INT("filmroll.leds",      leds_on_half,     1);
-static CONFIG_INT("filmroll.wind",      wind_mode,        1);   /* 0 off, 1 reminder, 2 block shutter */
+static CONFIG_INT("filmroll.wind",      wind_mode,        1);   /* 0 off, 1 reminder (2, from before 0.2: locked the shutter; a reminder now) */
 static CONFIG_INT("filmroll.playlock",  play_lock,        1);
 static CONFIG_INT("filmroll.startup",   startup_picker,   2);   /* 0 off, 1 when no film, 2 always */
 static CONFIG_INT("filmroll.bootanim",  boot_anim,        1);
@@ -90,6 +94,13 @@ static CONFIG_INT("filmroll.scr_warm",  scr_warm,         0);
 static CONFIG_INT("filmroll.scr_bright", scr_bright,      0);
 static CONFIG_INT("filmroll.scr_flip",  scr_flip,         0);   /* 0 Canon's hinge, 1 normal, 2 upside down, 3 mirrored */
 static CONFIG_INT("filmroll.expsim",    expsim_set,      -1);   /* LiveView's exposure simulation: 1 on, 0 off, -1 as Canon has it */
+static CONFIG_INT("filmroll.hud_style", hud_style,        0);   /* FOS_HUD_*: classic, minimal, rangefinder, clean */
+static CONFIG_INT("filmroll.hud_batt",  hud_batt,         1);   /* the battery on the HUD */
+static CONFIG_INT("filmroll.size",      print_size,       1);   /* FOS_SIZE_*: the darkroom's prints (S, M, L) */
+static CONFIG_INT("filmroll.stamp",     date_stamp,       0);   /* the date in the corner of each print */
+static CONFIG_INT("filmroll.recent",    recent_films,     0);   /* the films loaded last (FS_RECENT) */
+static CONFIG_INT("filmroll.fade",      page_fade,        1);   /* the short fade between screens */
+static CONFIG_INT("filmroll.canon_off", canon_hidden,     0);   /* the EOS M: Canon's LiveView graphics kept off the HUD (#67) */
 
 /* roll state, kept across power cycles */
 static CONFIG_INT("filmroll.loaded",    roll_loaded,      0);
@@ -155,6 +166,22 @@ static int shooting_screen()
 {
     return (lv || !FOS_LV_ONLY) && display_idle() && !is_movie_mode();
 }
+
+/* Canon's screen is held while the HUD or the plate is up (hud_step), so
+ * Canon can't draw over it: always on a DSLR. On the EOS M Canon's LiveView
+ * graphics show around the HUD as they always did, its focus frame among
+ * them, unless Advanced > Hide Canon's graphics is on: its exposure scale
+ * kept coming through the HUD (#67). */
+#define HUD_HOLDS (!FOS_LV_ONLY || canon_hidden)
+
+/* Cameras with a dial on top and another on the back: on the film shelf the
+ * top one changes shelves and the back one goes along the films (#17). The
+ * others have one, which goes along the films. */
+#if defined(CONFIG_50D) || defined(CONFIG_60D) || defined(CONFIG_70D) || defined(CONFIG_5D2) || defined(CONFIG_5D3) || defined(CONFIG_6D)
+#define FOS_TWO_DIALS 1
+#else
+#define FOS_TWO_DIALS 0
+#endif
 
 #define DBG_STATE(what) dbg("%s: ml=%d lv=%d idle=%d movie=%d mode=%d gui=%d", what, \
                             ml_started, lv, display_idle(), is_movie_mode(), shooting_mode, CURRENT_GUI_MODE)
@@ -573,9 +600,7 @@ static void poll_frames()
 
 static volatile int ui_running = 0;     /* the film OS owns the screen and the buttons */
 static volatile int ui_abort = 0;
-#if !FOS_LV_ONLY
 static volatile int canon_handover = 0; /* the film OS closed with Canon's screen still held, for the HUD or the plate (hud_step) */
-#endif
 /* the bitmap buffer on the screen as we last drew in it (vram_moved); 0 once
  * Canon has its screen back, when its own flips are none of ours */
 static const uint8_t *vram_shown = 0;
@@ -716,12 +741,11 @@ static void film_ui_close()
     if (lv) bmp_off();
     SetGUIRequestMode(0);
     msleep(100);
-#if !FOS_LV_ONLY
     /* back to the HUD or the plate: Canon's screen stays held, so it doesn't
      * show between ours (#19, #64). hud_step gives it back if ours doesn't
      * come; Canon's menu (AFTER_CANON_MENU) gets it now. */
     canon_handover = 0;
-    if (hud_enabled && roll_loaded && DISPLAY_IS_ON && !is_movie_mode() && !(ui_after & AFTER_CANON_MENU))
+    if (HUD_HOLDS && hud_enabled && roll_loaded && DISPLAY_IS_ON && !is_movie_mode() && !(ui_after & AFTER_CANON_MENU))
     {
         canon_gui_disable_front_buffer();
         clrscr();
@@ -729,13 +753,14 @@ static void film_ui_close()
         if (lv) bmp_on();
         return;
     }
-#endif
     vram_shown = 0;
     canon_gui_enable_front_buffer(0);
     clrscr();
     redraw();
     if (lv) bmp_on();
 }
+
+static void screen_dim(int on);
 
 /* frame times are kept while the film OS runs and logged when it closes:
  * writing the card in the middle of an animation would stall it */
@@ -778,6 +803,7 @@ static void ui_task(int open)
         dev_busy = 0;
         powersave_permit();
     }
+    screen_dim(0);
     if (ui_after & AFTER_CANON_MENU)
         fake_simple_button(BGMT_MENU);
 }
@@ -1281,6 +1307,13 @@ static int *setting_var(int s)
         case FS_SCR_BRIGHT: return &scr_bright;
         case FS_SCR_FLIP:   return &scr_flip;
         case FS_EXPSIM:     return &expsim_set;
+        case FS_HUD_STYLE:  return &hud_style;
+        case FS_HUD_BATT:   return &hud_batt;
+        case FS_SIZE:       return &print_size;
+        case FS_STAMP:      return &date_stamp;
+        case FS_RECENT:     return &recent_films;
+        case FS_FADE:       return &page_fade;
+        case FS_CANON_OFF:  return &canon_hidden;
     }
     return 0;
 }
@@ -1291,6 +1324,10 @@ int fos_port_get(int s)
     if (s == FS_FSTOP) return current_fstop();
     if (s == FS_SCR_FLIP && !CAN_FLIP) return -1;
     if (s == FS_EXPSIM) return expsim_get();
+    if (s == FS_WIND) return wind_mode ? 1 : 0;
+    if (s == FS_HUD_STYLE) return COERCE(hud_style, 0, FOS_HUD_STYLES - 1);
+    if (s == FS_SIZE) return COERCE(print_size, 0, FOS_SIZES - 1);
+    if (s == FS_CANON_OFF && !FOS_LV_ONLY) return -1;   /* a DSLR always holds Canon's screen under ours */
     return v ? *v : 0;
 }
 
@@ -1309,6 +1346,49 @@ void fos_port_set(int s, int value)
     }
 }
 
+/* The screen's backlight to its lowest while the darkroom works by itself
+ * (INFO on the developing screen), as Magic Lantern's own power saving dims
+ * it in LiveView. It is Canon's LCD brightness setting, which the camera
+ * keeps: so what it was goes into a file on the card before it is turned
+ * down, and comes back when the film OS closes or, had the camera lost
+ * power meanwhile (a battery run flat by a long roll), when it next starts. */
+#define DIM_FILE "ML/SETTINGS/FILMDIM.BIN"
+static int dim_saved = 0;               /* the brightness from before, 0: not dimmed */
+
+static void screen_dim(int on)
+{
+    if (on && !dim_saved && backlight_level > 1)
+    {
+        uint8_t level = (uint8_t) backlight_level;
+        FILE *f = FIO_CreateFile(DIM_FILE);
+        if (!f) return;                 /* nowhere to keep it: not dimmed */
+        FIO_WriteFile(f, &level, 1);
+        FIO_CloseFile(f);
+        dim_saved = level;
+        set_backlight_level(1);
+        dbg("screen: dimmed from %d", dim_saved);
+    }
+    else if (!on && dim_saved)
+    {
+        set_backlight_level(COERCE(dim_saved, 1, 7));
+        FIO_RemoveFile(DIM_FILE);
+        dbg("screen: brightness back to %d", dim_saved);
+        dim_saved = 0;
+    }
+}
+
+/* at start: the camera went off dimmed */
+static void screen_dim_recover()
+{
+    int size = 0;
+    uint8_t *level = (uint8_t *) read_entire_file(DIM_FILE, &size);
+    if (!level) return;
+    if (size >= 1 && level[0] >= 2 && level[0] <= 7) dim_saved = level[0];
+    fio_free(level);
+    if (dim_saved) screen_dim(0);
+    else FIO_RemoveFile(DIM_FILE);
+}
+
 void fos_port_action(int action, int a, int b)
 {
     switch (action)
@@ -1325,7 +1405,11 @@ void fos_port_action(int action, int a, int b)
             if (a && !dev_busy) powersave_prohibit();
             if (!a && dev_busy) powersave_permit();
             dev_busy = a;
-            dbg("darkroom: %s", a ? "developing" : "done");
+            dbg("darkroom: %s; memory free: malloc %d KB, AllocateMemory %d KB", a ? "developing" : "done",
+                GetFreeMemForMalloc() / 1024, GetFreeMemForAllocateMemory() / 1024);
+            break;
+        case FA_DIM:
+            screen_dim(a);
             break;
         case FA_REAPPLY:
             if (roll_loaded) ui_after |= AFTER_APPLY;
@@ -1381,6 +1465,25 @@ const char *fos_port_model()
 const char *fos_port_version()
 {
     return MFILM_VERSION;
+}
+
+/* The battery. The LP-E6 cameras' battery reports its charge (Magic Lantern
+ * reads it once a second: battery.c); on the others Canon gives the level of
+ * its own icon and nothing finer (0 nearly flat, 1 low, more: fine), which
+ * Magic Lantern's own LiveView bar draws as 5, 30 and 100 %. */
+int fos_port_battery(int *exact)
+{
+    int bars = battery_level_bars;
+    if (exact) *exact = 0;
+#ifdef CONFIG_BATTERY_INFO
+    int pct = GetBatteryLevel();
+    if (pct > 0 && pct <= 100)          /* 0 until the battery has answered */
+    {
+        if (exact) *exact = 1;
+        return pct;
+    }
+#endif
+    return bars == 0 ? 5 : bars == 1 ? 30 : 100;
 }
 
 
@@ -1499,7 +1602,7 @@ static void hud_wipe_around()
     if (!band) { clrscr(); return; }        /* drawn straight onto the screen anyway */
     for (int y = 0; y < FOS_H; y++)
     {
-        int x[4], n = fos_hud_spans(y, x), at = 0;
+        int x[4], n = fos_hud_spans(COERCE(hud_style, 0, FOS_HUD_STYLES - 1), y, x), at = 0;
         uint8_t *row = vram + y * BMPPITCH;
         for (int i = 0; i < n; i += 2)
         {
@@ -1511,6 +1614,7 @@ static void hud_wipe_around()
 }
 #else
 static void hud_all_stale() {}
+static void hud_wipe_around() { clrscr(); }     /* drawn straight onto the screen: all of it again (hud_dirty) */
 #endif
 
 /* The HUD (plate 0) or the plate onto the screen: the rows that changed and
@@ -1565,7 +1669,7 @@ static int hud_put(const struct fos_hud *h, int plate, int all, int only_stale)
         else fos_hud_draw_rows(band, FOS_W, y0, n, h, &hud_pal);
         for (int y = y0; y < y0 + n; y++)
         {
-            int x[4] = { 0, FOS_W }, nx = plate ? 2 : fos_hud_spans(y, x);
+            int x[4] = { 0, FOS_W }, nx = plate ? 2 : fos_hud_spans(h->style, y, x);
             const uint8_t *src = band + (y - y0) * FOS_W;
             uint32_t sum = span_sum(src, x, nx);
             uint8_t bit = 1 << (y & 7);
@@ -1635,6 +1739,9 @@ static void hud_draw(int lit, int blink, int plate, int all, int only_stale)
     h.focus_screen = focus_screen;
     h.film = fos_films[COERCE(roll_film, 0, fos_nfilms - 1)].name;
     h.iso = fos_films[COERCE(roll_film, 0, fos_nfilms - 1)].box_iso;
+    h.style = COERCE(hud_style, 0, FOS_HUD_STYLES - 1);
+    h.flash = get_ms_clock() - leds_until < 0;
+    h.batt = hud_batt ? fos_port_battery(&h.batt_exact) : -1;
     int put = hud_put(&h, plate, all, only_stale);
 #if !FOS_LV_ONLY
     if (put < 0 && plate) plate_sums();
@@ -1647,7 +1754,7 @@ static void hud_clear()
 {
     uint8_t *vram = bmp_vram();
     if (vram)
-        fos_hud_clear(vram, BMPPITCH, &hud_pal);
+        fos_hud_clear(vram, BMPPITCH, COERCE(hud_style, 0, FOS_HUD_STYLES - 1), &hud_pal);
     hud_all_stale();
 }
 
@@ -1671,7 +1778,6 @@ static void hud_step()
     }
     hud_showing = visible;
 
-#if !FOS_LV_ONLY
     /* On a DSLR Canon keeps drawing its own screen (the settings display, or
      * its LiveView overlays) and flipping it over ours: the two flicker in
      * turn, and a change of aperture or shutter brings Canon's back. While the
@@ -1679,7 +1785,8 @@ static void hud_step()
      * does, and wipe what it left. Canon gets the screen back as soon as ours
      * goes (a Canon menu, playback, the display off). The film OS's own pages
      * take the buffer themselves (film_ui_open), and leave it held for ours
-     * when they close (film_ui_close). */
+     * when they close (film_ui_close). The EOS M does the same where it is
+     * asked to (HUD_HOLDS). */
     /* Canon's screen comes back only once ours has been gone a moment: the
      * display isn't idle for a blink while a frame is taken, and giving the
      * screen back then (and taking it again) flashed Canon's screen, and its
@@ -1692,7 +1799,7 @@ static void hud_step()
         canon_held = 1;
         dbg("hud: Canon's screen still held from the film OS");
     }
-    if (visible)
+    if (visible && HUD_HOLDS)
     {
         gone_since = 0;
         if (!canon_held)
@@ -1713,28 +1820,42 @@ static void hud_step()
             if (!plate) hud_wipe_around();
             hud_all_stale();
             hud_stale = 1;
+            hud_dirty |= FOS_LV_ONLY;       /* drawn straight onto the screen there */
         }
     }
     else if (canon_held)
     {
         int now = get_ms_clock();
-        if (!gone_since) gone_since = now ? now : 1;
+        if (!gone_since)
+        {
+            gone_since = now ? now : 1;
+            if (!visible) dbg("hud: ours gone, Canon's screen still held (lv %d idle %d on %d gui %d job %d half %d)",
+                lv, display_idle(), DISPLAY_IS_ON, CURRENT_GUI_MODE, lens_info.job_state, get_halfshutter_pressed());
+        }
         /* and while a frame is being taken and saved (job_state), or just was:
          * the screen comes back to ours by itself, so Canon's needn't show for
          * the second or so in between (#17) */
-        int shooting = lens_info.job_state || get_halfshutter_pressed() || now - last_shot_ms < 2500;
+        int saving = lens_info.job_state != 0;
+        int shooting = saving || get_halfshutter_pressed() || now - last_shot_ms < 2500;
         /* a button (Q, MENU, INFO, the dial...) pressed as ours went, or since: that's
          * Canon's screen being asked for, not a blink, so it gets it at once */
         int asked = last_key_ms && last_key_ms - gone_since > -200;
-        if (ui_running || asked || (now - gone_since > 700 && !shooting) || now - gone_since > 4000)
+        /* however long that takes: a slow card kept the 6D saving for more than
+         * the 4 s this waited at most, and Canon's screen showed until it was
+         * done (#17). 20 s at most, should the camera never say it has finished. */
+        int longest = saving ? 20000 : 4000;
+        int unasked = visible && !HUD_HOLDS;        /* the EOS M's setting turned off */
+        if (ui_running || asked || unasked || (now - gone_since > 700 && !shooting) || now - gone_since > longest)
         {
+            dbg("hud: Canon's screen given back after %d ms%s", now - gone_since,
+                ui_running ? " (to the film OS)" : asked ? " (a button)" : unasked ? " (not hidden any more)" :
+                now - gone_since > longest ? " (waited long enough)" : "");
             canon_held = 0;
             gone_since = 0;
             if (!ui_running) { vram_shown = 0; canon_gui_enable_front_buffer(1); }
-            dbg("hud: Canon's screen given back%s", ui_running ? " (to the film OS)" : asked ? " (a button)" : "");
+            if (unasked) hud_dirty = 1;
         }
     }
-#endif
 
     /* the plate off (LiveView on, or a Canon menu over it): hand the screen back */
     if (plate_drawn && !plate)
@@ -1768,12 +1889,29 @@ static void hud_step()
 #endif
 
     int now = get_ms_clock();
-    int lit = !leds_on_half || get_halfshutter_pressed() || now < leds_until;
+    /* A dial turned: the readout lights for a moment, as a camera's does when
+     * its shutter or aperture is changed. With "LEDs on half-press" it stayed
+     * dim until the shutter button was pressed, so a change only showed
+     * clearly once a picture was taken (#23).
+     * Only for a value the photographer sets (the shutter in M and Tv, the
+     * aperture in M and Av), or one that changed as a button or dial was used:
+     * the camera's own metering changing them is not a dial. */
+    static int seen_shutter = -1, seen_fstop = -1, dial_until = 0;
+    int fstop_now = current_fstop();
+    int by_hand = last_key_ms && now - last_key_ms < 600;
+    int shutter_set = shooting_mode == SHOOTMODE_M || shooting_mode == SHOOTMODE_TV || by_hand;
+    int fstop_set = shooting_mode == SHOOTMODE_M || shooting_mode == SHOOTMODE_AV || by_hand;
+    if (seen_shutter >= 0 && ((lens_info.raw_shutter != seen_shutter && shutter_set) || (fstop_now != seen_fstop && fstop_set)))
+        dial_until = now + 2000;
+    seen_shutter = lens_info.raw_shutter;
+    seen_fstop = fstop_now;
+    int lit = !leds_on_half || get_halfshutter_pressed() || now < leds_until || now - dial_until < 0;
     int blink = (now / 400) % 2;
     int ev8 = lit ? get_ae_value() : 0;
 
     int sig = lit | blink << 1 | need_wind << 2 | (frames_shot & 0xFF) << 3
             | lens_info.raw_shutter << 11 | (ev8 & 0xFF) << 19 | (current_fstop() & 0x1F) << 27;
+    if (now - leds_until < 0) sig ^= 0x400;     /* the clean viewfinder's count goes when this does */
 
     /* put together on change (the rows that changed go to the screen), the
      * stale rows put back, and every second all of it, to win over Canon's
@@ -1812,8 +1950,8 @@ static int ui_key(struct event *event, int key)
         case MODULE_KEY_UNPRESS_FULLSHUTTER:
             return 1;                   /* Canon must see the shutter let go */
 
-        case MODULE_KEY_WHEEL_LEFT:     dir = FK_WHEEL_L; break;
-        case MODULE_KEY_WHEEL_RIGHT:    dir = FK_WHEEL_R; break;
+        case MODULE_KEY_WHEEL_LEFT:     dir = FOS_TWO_DIALS ? FK_DIAL_L : FK_WHEEL_L; break;    /* the top dial, or the only one */
+        case MODULE_KEY_WHEEL_RIGHT:    dir = FOS_TWO_DIALS ? FK_DIAL_R : FK_WHEEL_R; break;
         case MODULE_KEY_WHEEL_UP:       dir = FK_WHEEL_L; break;
         case MODULE_KEY_WHEEL_DOWN:     dir = FK_WHEEL_R; break;
 
@@ -1917,8 +2055,6 @@ static unsigned int lv_key(unsigned int key)
             hud_dirty = 1;
             return 0;
         }
-        if (wind_mode == 2 && (key == MODULE_KEY_PRESS_HALFSHUTTER || key == MODULE_KEY_PRESS_FULLSHUTTER))
-            return 0;
     }
 
     return 1;
@@ -2080,6 +2216,7 @@ static void filmroll_task()
     load_fonts();
     load_films();
     dbg("read: %s", card_buffer() ? "card buffer ready" : "no card buffer: the darkroom can't read the card");
+    screen_dim_recover();
     startup_task();
     film_capture_check();
 

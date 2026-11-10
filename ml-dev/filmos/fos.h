@@ -94,6 +94,8 @@ enum
     FK_WHEEL_L, FK_WHEEL_R,                 /* turning it */
     FK_SET, FK_MENU, FK_INFO, FK_PLAY,
     FK_HOME,                                /* what used to open the ML menu */
+    FK_DIAL_L, FK_DIAL_R,                   /* the top dial of a camera that has two: the shelves on the film shelf,
+                                               the same as turning the rear one anywhere else (#17) */
     FK_RELEASE = 0x100,                     /* or-ed in: a press above ended */
 };
 
@@ -112,9 +114,28 @@ enum
                            the port answers -1 on a camera that can't, and the item isn't shown */
     FS_EXPSIM,          /* LiveView's exposure simulation: 1 on (the exposure the frame gets), 0 off (bright
                            enough to focus a manual lens); -1 where Magic Lantern can't set it: not shown */
+    FS_HUD_STYLE,       /* the viewfinder: FOS_HUD_CLASSIC .. FOS_HUD_CLEAN */
+    FS_HUD_BATT,        /* the battery on the viewfinder HUD */
+    FS_SIZE,            /* the darkroom's prints: FOS_SIZE_S (the screen's 720 x 480), _M (a third of the sensor
+                           each way), _L (half of it) */
+    FS_STAMP,           /* the date in the corner of each print, as a compact camera's data back puts it */
+    FS_RECENT,          /* the films loaded last, newest in the low byte: film + 1 in each byte, 0 = none */
+    FS_FADE,            /* the short fade between screens (shelf, darkroom, prints); 0: every screen changes at once */
+    FS_CANON_OFF,       /* Canon's own LiveView graphics kept off the viewfinder (its exposure scale drew over
+                           the HUD, #67); the port answers -1 where that is always so: not shown */
     FS_COUNT
 };
 #define FOS_SCR_STEPS 6
+
+/* the viewfinder HUD's looks (FS_HUD_STYLE) */
+enum { FOS_HUD_CLASSIC,     /* an SLR's: aperture scale and needle on the right, red LEDs below */
+       FOS_HUD_MINIMAL,     /* a small readout in the corner: meter, aperture, frame */
+       FOS_HUD_RANGE,       /* a rangefinder's: bright frame lines, a needle under them */
+       FOS_HUD_CLEAN,       /* nothing, but the frame count for a moment after each shot */
+       FOS_HUD_STYLES };
+
+/* print sizes (FS_SIZE) */
+enum { FOS_SIZE_S, FOS_SIZE_M, FOS_SIZE_L, FOS_SIZES };
 
 enum
 {
@@ -123,7 +144,11 @@ enum
     FA_REAPPLY,         /* film settings again (after changing WB by hand) */
     FA_CANON_MENU,      /* leave and open Canon's menu */
     FA_BUSY,            /* a = 1: long work (developing) begins, keep the camera awake; 0: done */
+    FA_DIM,             /* a = 1: the screen's backlight to its lowest while the camera works by itself; 0: back */
 };
+
+/* the films loaded last (FS_RECENT), newest first */
+#define FOS_NRECENT 4
 
 #define FOS_RECENT 5
 struct fos_roll
@@ -179,6 +204,11 @@ int  fos_port_lens_manual();
 const char *fos_port_lens_name();
 const char *fos_port_version();
 const char *fos_port_model();               /* "Canon EOS M": the camera it runs on */
+/* the battery, 0..100, or -1 if the camera doesn't say. *exact is 1 where the
+ * battery reports its charge in percent (the LP-E6 cameras: 60D, 6D, 70D, 5D
+ * Mark II and III); elsewhere Canon knows three levels only, given here as
+ * 100, 30 and 5, and the film OS shows the icon without a number */
+int  fos_port_battery(int *exact);
 /* photographs: palette entries 1..n become pal's colours at k/256 of
  * their brightness, FOS_FIXED_BASE.. the fixed overlay colours (fos_dev.h);
  * fos_port_palette() goes back to the film OS's own */
@@ -207,6 +237,10 @@ struct fos_hud
     int focus_screen;
     const char *film;
     int iso;                    /* the film's speed (the top plate shows it) */
+    int style;                  /* FOS_HUD_* */
+    int flash;                  /* something just happened (a frame, the aperture, the wind): the clean
+                                   viewfinder shows its count while this is set */
+    int batt, batt_exact;       /* as fos_port_battery; batt < 0: not shown */
 };
 
 struct fos_hud_palette
@@ -216,7 +250,7 @@ struct fos_hud_palette
 };
 
 void fos_hud_draw(uint8_t *vram, int pitch, const struct fos_hud *h, const struct fos_hud_palette *p);
-void fos_hud_clear(uint8_t *vram, int pitch, const struct fos_hud_palette *p);
+void fos_hud_clear(uint8_t *vram, int pitch, int style, const struct fos_hud_palette *p);
 /* the top plate: a DSLR's back screen while you shoot through the viewfinder */
 void fos_hud_plate(uint8_t *vram, int pitch, const struct fos_hud *h, const struct fos_hud_palette *p);
 void fos_hud_plate_clear(uint8_t *vram, int pitch, const struct fos_hud_palette *p);
@@ -225,7 +259,7 @@ void fos_hud_plate_clear(uint8_t *vram, int pitch, const struct fos_hud_palette 
  * was; fos_hud_spans says where in row y it draws (x0, x1 pairs; returns 2 or 4) */
 void fos_hud_draw_rows(uint8_t *buf, int pitch, int y0, int n, const struct fos_hud *h, const struct fos_hud_palette *p);
 void fos_hud_plate_rows(uint8_t *buf, int pitch, int y0, int n, const struct fos_hud *h, const struct fos_hud_palette *p);
-int  fos_hud_spans(int y, int x[4]);
+int  fos_hud_spans(int style, int y, int x[4]);
 
 /* ---------------------------------------------------------------- the UI */
 

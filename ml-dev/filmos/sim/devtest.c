@@ -5,6 +5,8 @@
  *
  * -r checks the RAW decoder against the samples mkcr2 wrote (--raw);
  * out.ppm is the print as the screen would show it.
+ * FOS_SIZE=1|2 the bigger print as the JPEG (FOS_JPEG), FOS_ZOOM its zoom
+ * file, FOS_STAMP=1 the date on it, FOS_MEM_KB a camera short of memory.
  */
 
 #include <stdio.h>
@@ -20,10 +22,21 @@ int fos_port_ms()
     clock_gettime(CLOCK_MONOTONIC, &t);
     return (int) (t.tv_sec * 1000 + t.tv_nsec / 1000000);
 }
-void *fos_port_alloc(int size) { return malloc(size); }
+/* FOS_MEM_KB: a camera with that much memory to give at a time, to see the
+ * darkroom make the print size it has room for */
+#include <malloc.h>
+static long mem_used;
+void *fos_port_alloc(int size)
+{
+    const char *lim = getenv("FOS_MEM_KB");
+    if (lim && mem_used + size > atol(lim) * 1024) return 0;
+    void *p = malloc(size);
+    if (p) mem_used += (long) malloc_usable_size(p);
+    return p;
+}
 int fos_port_dev_cap() { return 0; }
 void fos_port_log(const char *msg) { fprintf(stderr, "%s\n", msg); }
-void fos_port_free(void *p) { free(p); }
+void fos_port_free(void *p) { if (p) mem_used -= (long) malloc_usable_size(p); free(p); }
 
 /* the decoder's samples, to compare with mkcr2's */
 static uint16_t *raw;
@@ -123,6 +136,9 @@ int main(int argc, char **argv)
     struct fos_dev *d = fos_dev_start(argv[a], argv[a + 1], film, 1, "2026-10-22 17:45", "2.8");
     /* FOS_JPEG: the full-colour frame as a JPEG too, as the camera writes it to DCIM */
     if (getenv("FOS_JPEG")) fos_dev_jpeg(d, getenv("FOS_JPEG"));
+    /* FOS_SIZE=1|2: the bigger print (M, L) as the JPEG, FOS_ZOOM: its zoom file; FOS_STAMP=1: the date on it */
+    if (getenv("FOS_SIZE")) fos_dev_big(d, atoi(getenv("FOS_SIZE")), getenv("FOS_ZOOM"));
+    if (getenv("FOS_STAMP")) fos_dev_stamp(d, 1);
     while ((p = fos_dev_step(d, 40)) >= 0 && p < 1000) steps++;
     if (p < 0) { fprintf(stderr, "%s: %s\n", argv[a], fos_dev_error(d)); fos_dev_free(d); return 1; }
     printf("%s: %d ms, %d steps\n", argv[a], fos_port_ms() - t0, steps);

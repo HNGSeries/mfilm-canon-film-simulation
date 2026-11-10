@@ -1,5 +1,6 @@
 M-Film for the camera (Film OS + Magic Lantern)
 ================================================
+M-Film by HNGSeries, built on Magic Lantern.
 
 What is in here: autoexec.bin, the ML/ folder and ML-SETUP.FIR, for ONE camera model and
 ONE Canon firmware version (the zip's name says which, e.g. 650D.104 = EOS 650D, firmware 1.0.4).
@@ -30,8 +31,14 @@ Update to a new version
 If the camera doesn't start (black screen, card light stays on): take the battery out, take the
 card out, and the camera starts normally without it. Tell us (see TESTING.md).
 
-If Magic Lantern's own menu shows instead of the film shelf: on some cameras the film OS is a
-module (ML/modules/filmos.mo), and it didn't load. Its line in the Modules tab says why. Tell us.
+If Magic Lantern's own menu shows instead of the film shelf: the film OS is a module
+(ML/modules/filmos.mo) that loads once the camera has started, and it didn't load. Its line in
+the Modules tab says why. Tell us.
+
+Prints: the darkroom develops Small (the screen's 720 x 480), Medium or Large; it asks when you
+start it. Bigger takes longer, and can be zoomed into in the camera. If the screen is very dim
+after the camera lost power while developing with the screen dimmed (INFO), switch it on once
+more: M-Film puts the brightness back when it starts.
 
 Remove: format the card in the camera, or delete autoexec.bin and ML/.
 Logs for a bug report: ML/FILMROLL.LOG on the card.

@@ -2,10 +2,12 @@
  * stand-in for Canon's palette (white 1, black 2, red 8, dark red 12,
  * greys 38..79)
  *   hudtest [1|0|e|p] [liveview.ppm]   the picture: a 720 x 480 binary PPM;
- *   p: the top plate a DSLR shows instead when you shoot through the viewfinder */
+ *   p: the top plate a DSLR shows instead when you shoot through the viewfinder
+ *   HUD_STYLE=0..3 (classic, minimal, rangefinder, clean), HUD_BATT=percent, HUD_OUT=file.ppm */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "../fos.h"
 
@@ -24,6 +26,11 @@ int main(int argc, char **argv)
     if (argc > 1 && argv[1][0] == '0') { h.lit = 0; h.need_wind = 1; }
     if (argc > 1 && argv[1][0] == 'e') { h.finished = 1; strcpy(h.shutter, "0.5\""); h.want = 30; }
     h.iso = 400;
+    h.style = getenv("HUD_STYLE") ? atoi(getenv("HUD_STYLE")) : 0;
+    h.batt = getenv("HUD_BATT") ? atoi(getenv("HUD_BATT")) : 82;
+    h.batt_exact = 1;
+    h.flash = 1;
+    if (h.style) h.need_wind = 0;           /* the other viewfinders as they are between frames */
     fos_gfx_init();
     sim_fonts();
     if (argc > 1 && argv[1][0] == 'p') { h.want = h.fstop + 2; fos_hud_plate(ov, 960, &h, &p); }
@@ -42,7 +49,7 @@ int main(int argc, char **argv)
     }
 
     /* a dusk street as LiveView: sky gradient, a sun, dark buildings */
-    FILE *f = fopen("out/hud.ppm", "wb");
+    FILE *f = fopen(getenv("HUD_OUT") ? getenv("HUD_OUT") : "out/hud.ppm", "wb");
     fprintf(f, "P6 720 480 255\n");
     for (int y = 0; y < 480; y++)
         for (int x = 0; x < 720; x++)

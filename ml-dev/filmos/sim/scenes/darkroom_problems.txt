@@ -1,5 +1,6 @@
-# the darkroom on the card of problem rolls (mkcard.sh --problems, cardtest.sh): develop all
+# the darkroom on the card of problem rolls (mkcard.sh --problems, cardtest.sh): develop all (INFO asks, SET goes)
 noroll
 open darkroom
 1500 info
+2400 set
 45000 end

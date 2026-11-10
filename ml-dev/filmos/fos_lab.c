@@ -71,6 +71,11 @@ void fos_lab_print_path(char *buf, int size, int roll, int frame)
     else snprintf(buf, size, "%sML/DARKROOM/R%03d/SHEET.BMP", card, roll);
 }
 
+void fos_lab_zoom_path(char *buf, int size, int roll, int frame)
+{
+    snprintf(buf, size, "%sML/DARKROOM/R%03d/F%02d.ZOM", roll_card(roll), roll, frame);
+}
+
 void fos_lab_cache_dir(char *buf, int size)
 {
     snprintf(buf, size, "%sML/DARKROOM", fos_port_card());
@@ -607,14 +612,14 @@ int fos_lab_frames(int roll, struct fos_lab_frame *frames, int max)
 
 /* ---------------------------------------------------------------- deleting a roll */
 
-/* A folder of ours: the roll's prints (ML/DARKROOM/Rnnn: Fnn.BMP, SHEET.BMP),
+/* A folder of ours: the roll's prints (ML/DARKROOM/Rnnn: Fnn.BMP, Fnn.ZOM, SHEET.BMP),
  * or its folder in DCIM (IMG_0102.JPG and the roll's tag, ROLL012.TXT).
  * Those files go, the tag last and only once the rest has (a folder that
  * couldn't all go is still the roll's, to delete again), then the folder
  * once nothing else is in it: one with anything left is never removed. The
  * names are taken first and removed after, not while the folder is read.
  * How many files couldn't be removed; a folder that stays adds to *dirs. */
-#define SWEEP_MAX (FOS_MAX_FRAMES + 2)
+#define SWEEP_MAX (2 * FOS_MAX_FRAMES + 2)       /* each frame's print and its zoom file, the sheet */
 struct sweep { int n; char names[SWEEP_MAX][13]; };
 
 static int sweep_entry(void *ctx, const char *name, int is_dir)
@@ -622,7 +627,7 @@ static int sweep_entry(void *ctx, const char *name, int is_dir)
     struct sweep *s = ctx;
     int len = (int) strlen(name);
     if (!is_dir && len >= 5 && len <= 12 && s->n < SWEEP_MAX
-        && (!strcmp(name + len - 4, ".BMP") || !strcmp(name + len - 4, ".JPG")))
+        && (!strcmp(name + len - 4, ".BMP") || !strcmp(name + len - 4, ".JPG") || !strcmp(name + len - 4, ".ZOM")))
         memcpy(s->names[s->n++], name, len + 1);
     return 1;
 }
