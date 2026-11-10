@@ -44,6 +44,19 @@ def cameras():
     return out
 
 
+def model_order(c):
+    """The tables' order, the way the cameras are named: the EOS M, then the one-digit
+    bodies (5D Mark II, 5D Mark III, 6D...), two digits (50D, 60D, 70D), three
+    (100D, 550D, 700D...), four (1100D); anything else after them"""
+    model, fw = c["plat"].split(".", 1)
+    if model == "EOSM":
+        return (0, 0, 0, "", fw)
+    m = re.match(r"(\d+)D(.*)", model)
+    if m:
+        return (1, len(m.group(1)), int(m.group(1)), m.group(2), fw)
+    return (2, 0, 0, model, fw)
+
+
 def issue_links(text):
     """'#31' -> a link to the issue (a README on GitHub doesn't link them by itself)"""
     return re.sub(r"#(\d+)", r"[#\1](../../issues/\1)", text)
@@ -62,7 +75,7 @@ def replace(path, start, end, body):
 
 
 def main():
-    cams = cameras()
+    cams = sorted(cameras(), key=model_order)
     def table(head, status, not_yet, why_text, end=".", th=False):
         rows = [head, "|---|---|---|---|---|"]
         for c in cams:
