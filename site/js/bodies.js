@@ -1,9 +1,9 @@
-// Every camera M-Film runs on, as the page draws it from the back: its body,
-// its screen, and each control where it sits, in the body's own coordinates.
-// The EOS M is img/eosm-back.svg; the others are drawn here from their
-// family's shape. Positions are close to the real cameras but drawn from
-// memory: a photo can take a drawing's place (body.image), the controls
-// staying where these numbers put them.
+// Every camera M-Film runs on, from the back: its body, its screen, and each
+// control where it sits, in the body's own coordinates.
+// Each camera is a photo of its back (img/backs/<id>.webp, PHOTOS below, in the
+// photo's pixels): the page's buttons sit invisibly over the photo's own. Without
+// a photo, a body is drawn here from its family's shape (rebel, mid, pro), the
+// EOS M from img/eosm-back.svg.
 //
 // What the film OS sees of each (web.c, web_config): the name, a DSLR (no
 // LiveView until the LV button; the top plate on the back screen meanwhile),
@@ -89,6 +89,28 @@ export const BODIES = [
   rebel('700d', '700D.115', 'Canon EOS 700D', '700D / T5i', { swivel: true }),
   rebel('1100d', '1100D.105', 'Canon EOS 1100D', '1100D / T3', { expsim: false }),
 ];
+
+// The photos, 1400 px wide with room above the body for the shutter button (which a back
+// can't show; drawn by the page, as is the main dial beside it). screen: the glass, in which
+// the 3:2 picture is letterboxed on a 4:3 screen. Only the controls the film OS uses are listed.
+const PHOTOS = {
+  'eosm': {"image": "img/backs/eosm.webp", "view": [1400, 905], "screen": [178, 238, 795, 531], "photo": true, "shutter": [1060, 50, 84], "power": [931, 103], "dial": {"x": 1203, "y": 630, "r": 102, "ring": true}, "controls": [["MENU", 1127, 462, 46], ["PLAY", 1268, 462, 46], ["INFO", 1127, 797, 46], ["HOME", 1203, 690, 15]], "top": null},
+  '100d': {"image": "img/backs/100d.webp", "view": [1400, 1202], "screen": [118, 572, 775, 522], "photo": true, "shutter": [1250, 359, 92], "power": [1170, 330], "dial": {"x": 1152, "y": 940, "r": 95, "ring": false}, "controls": [["MENU", 150, 445, 32, "pill"], ["INFO", 255, 445, 32, "pill"], ["LV", 908, 422, 34], ["PLAY", 1072, 1100, 32], ["HOME", 1205, 1110, 34]], "top": [1142, 382, 96]},
+  '1100d': {"image": "img/backs/1100d.webp", "view": [1400, 1172], "screen": [149, 583, 628, 452], "photo": true, "shutter": [1250, 340, 92], "power": [1192, 330], "dial": {"x": 1032, "y": 890, "r": 130, "ring": false}, "controls": [["HOME", 903, 525, 34], ["LV", 905, 635, 36], ["Q", 905, 718, 34], ["INFO", 1155, 720, 32], ["MENU", 903, 1066, 32, "pill"], ["PLAY", 1158, 1066, 32]], "top": [1142, 363, 96]},
+  '500d': {"image": "img/backs/500d.webp", "view": [1400, 1200], "screen": [113, 612, 680, 514], "photo": true, "shutter": [1250, 307, 92], "power": [1225, 320], "dial": {"x": 1040, "y": 925, "r": 140, "ring": false}, "controls": [["MENU", 183, 483, 37], ["INFO", 300, 483, 37], ["LV", 950, 745, 37], ["PLAY", 943, 1100, 37], ["HOME", 1130, 1100, 37]], "top": [1142, 330, 96]},
+  '550d': {"image": "img/backs/550d.webp", "view": [1400, 1162], "screen": [116, 579, 698, 469], "photo": true, "shutter": [1250, 319, 92], "power": [1180, 300], "dial": {"x": 1013, "y": 890, "r": 130, "ring": false}, "controls": [["MENU", 165, 458, 30, "pill"], ["INFO", 277, 458, 30, "pill"], ["LV", 890, 402, 33], ["Q", 915, 720, 34], ["PLAY", 915, 1055, 34], ["HOME", 1103, 1065, 34]], "top": [1142, 342, 96]},
+  '600d': {"image": "img/backs/600d.webp", "view": [1400, 1110], "screen": [195, 513, 702, 484], "photo": true, "shutter": [1250, 289, 92], "power": [1222, 300], "dial": {"x": 1095, "y": 865, "r": 120, "ring": false}, "controls": [["MENU", 212, 412, 32, "pill"], ["INFO", 322, 412, 32, "pill"], ["LV", 922, 380, 33], ["Q", 1040, 690, 34], ["PLAY", 1020, 1025, 34], ["HOME", 1153, 1025, 34]], "top": [1142, 312, 96]},
+  '650d': {"image": "img/backs/650d.webp", "view": [1400, 1130], "screen": [217, 527, 697, 453], "photo": true, "shutter": [1250, 311, 92], "power": [1175, 300], "dial": {"x": 1100, "y": 880, "r": 115, "ring": false}, "controls": [["MENU", 197, 402, 38], ["INFO", 313, 405, 38], ["LV", 905, 385, 33], ["Q", 1050, 705, 34], ["PLAY", 1030, 1040, 34], ["HOME", 1155, 1040, 34]], "top": [1142, 334, 96]},
+  '700d': {"image": "img/backs/700d.webp", "view": [1400, 1126], "screen": [219, 525, 694, 454], "photo": true, "shutter": [1250, 303, 92], "power": [1180, 300], "dial": {"x": 1100, "y": 882, "r": 115, "ring": false}, "controls": [["MENU", 197, 400, 38], ["INFO", 312, 400, 38], ["LV", 905, 390, 33], ["Q", 1048, 710, 34], ["PLAY", 1025, 1037, 34], ["HOME", 1155, 1037, 34]], "top": [1142, 326, 96]},
+  '60d': {"image": "img/backs/60d.webp", "view": [1400, 1113], "screen": [200, 558, 611, 418], "photo": true, "shutter": [1250, 300, 92], "power": [240, 340], "dial": {"x": 1035, "y": 855, "r": 140, "ring": true}, "controls": [["MENU", 925, 578, 32], ["INFO", 930, 668, 32], ["Q", 1040, 650, 32], ["LV", 915, 382, 34], ["PLAY", 925, 1030, 32], ["HOME", 1030, 1040, 32]], "top": null},
+  '70d': {"image": "img/backs/70d.webp", "view": [1400, 1138], "screen": [199, 543, 669, 458], "photo": true, "shutter": [1250, 309, 92], "power": [285, 288], "dial": {"x": 1055, "y": 868, "r": 140, "ring": true}, "controls": [["MENU", 152, 422, 36], ["INFO", 250, 422, 36], ["LV", 905, 422, 46], ["Q", 968, 575, 32], ["PLAY", 985, 672, 32], ["HOME", 968, 1035, 32]], "top": null},
+  '6d': {"image": "img/backs/6d.webp", "view": [1400, 1155], "screen": [185, 532, 659, 463], "photo": true, "shutter": [1250, 317, 92], "power": [240, 350], "dial": {"x": 1035, "y": 880, "r": 150, "ring": true}, "controls": [["MENU", 185, 438, 34], ["INFO", 290, 438, 34], ["LV", 925, 455, 46], ["Q", 1032, 640, 32], ["PLAY", 920, 690, 32], ["HOME", 920, 1065, 32]], "top": null},
+  '5d3': {"image": "img/backs/5d3.webp", "view": [1400, 1191], "screen": [207, 586, 629, 430], "photo": true, "shutter": [1250, 334, 92], "power": [215, 365], "dial": {"x": 1045, "y": 912, "r": 150, "ring": true}, "controls": [["MENU", 140, 453, 36], ["INFO", 245, 453, 36], ["LV", 903, 460, 44], ["Q", 933, 740, 32], ["PLAY", 120, 905, 36], ["HOME", 120, 1015, 36]], "top": null, "joystick": [960, 615]},
+  '5d2': {"image": "img/backs/5d2.webp", "view": [1400, 1126], "screen": [213, 547, 550, 410], "photo": true, "shutter": [1250, 303, 92], "power": [865, 1050], "dial": {"x": 965, "y": 865, "r": 150, "ring": true}, "controls": [["LV", 243, 438, 33], ["MENU", 125, 540, 34], ["INFO", 125, 773, 34], ["PLAY", 125, 890, 34], ["HOME", 125, 1005, 34]], "top": null, "joystick": [895, 570]},
+  '50d': {"image": "img/backs/50d.webp", "view": [1400, 1179], "screen": [129, 542, 613, 450], "photo": true, "shutter": [1250, 280, 92], "power": [830, 1110], "dial": {"x": 1000, "y": 890, "r": 165, "ring": true}, "controls": [["MENU", 150, 455, 35], ["LV", 255, 430, 33], ["PLAY", 168, 1100, 35], ["HOME", 292, 1100, 35], ["INFO", 412, 1100, 35]], "top": null, "joystick": [912, 575]},
+
+};
+for (const b of BODIES) if (PHOTOS[b.id]) Object.assign(b, PHOTOS[b.id], { small: false });
 
 export function bodyFor(id) {
   return BODIES.find((b) => b.id === id) || EOSM;
@@ -239,7 +261,8 @@ const ARIA = {
 const KEYOF = { MENU: 'MENU', INFO: 'INFO', PLAY: 'PLAY', HOME: 'HOME', Q: 'SET' };
 
 // MENU and INFO are printed on a DSLR's body (dslrSvg), on the EOS M's buttons
-const printed = (b, kind) => !b.image && (kind === 'MENU' || kind === 'INFO');
+// (on a photo, every label is the camera's own)
+const printed = (b, kind) => b.photo || (!b.image && (kind === 'MENU' || kind === 'INFO'));
 
 // the camera's buttons over the drawing, each in % of the body
 export function buildCamera(cam, b) {
@@ -249,6 +272,7 @@ export function buildCamera(cam, b) {
   cam.dataset.model = b.id;
   cam.dataset.family = b.family;
   cam.classList.toggle('dslr', b.dslr);
+  cam.classList.toggle('photo', !!b.photo);
   if (b.small) cam.style.maxWidth = '880px';
 
   const img = cam.querySelector('.body');
