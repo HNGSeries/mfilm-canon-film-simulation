@@ -63,3 +63,31 @@
 - **เมนูด่วนบน HUD (กด INFO ค้าง)**: ต้องดักปุ่ม INFO ใน LiveView ซึ่งเป็นปุ่มสลับหน้าจอของ Canon ทดสอบไม่ได้โดยไม่มีกล้อง
   ตอนนี้ใช้ INFO ที่ Home เข้า Settings แทน
 - **ปิดจอจริงตอนล้าง**: film OS ปิดตัวเองเมื่อจอดับ จึงใช้การหรี่ไฟจอแทน
+
+## 6. กล้องรุ่นใหม่และทางเลือกการล้าง (แผน ยังไม่เริ่ม)
+
+ข้อมูลจากการสำรวจ ณ 10 พ.ย. 2026 ยังไม่ได้ลองบนกล้องจริง
+
+### 6.1 Magic Lantern รุ่นใหม่
+- **ใส่ในรายการ "Not yet"** ของ `README.md` / `README.th.md`: 1300D, M6 Mark II, XF605
+  (มีใน `platform/` ของ magiclantern_simplified branch `dev` แต่ยังไม่มีใน README)
+- **1300D** (DIGIC IV แบบเดียวกับ 1100D): ML รองรับครั้งแรกใน commit `142472e` (16 ก.ย. 2026, "experimental")
+  global draw, โมดูล และค่า RAW มีแล้ว แต่ปิด `CONFIG_PROP_REQUEST_CHANGE` ไว้
+  M-Film จึงตั้ง ISO และ Picture Style ตอนโหลดม้วนไม่ได้ (`filmroll/filmroll.c` ที่เรียก `prop_request_change_wait` และ `lens_set_rawiso`)
+  รอ ML เปิดก่อน แล้ว build โดยใช้ 1100D เป็นต้นแบบ และตรวจหน่วยความจำตอนบูต (1100D ใช้ไป 493,056 จาก 524,032 ไบต์)
+- **EOS R** (DIGIC 8): PR #281 ของ magiclantern_simplified ยังเป็น draft (แก้ ROM ผ่าน MMU remap, ถ่ายรูปได้, ตั้ง ISO / รูรับแสงได้)
+  ส่วนที่พร้อม merge แยกไปเป็น PR #279 และ #280 รอให้เข้า `dev` ก่อนลอง build `R.180`
+
+### 6.2 พอร์ตไป CHDK (PowerShot)
+- CHDK stable 1.6.1 (rev 6355, 146 รุ่น), dev 1.7.0 (rev 6358, 154 รุ่น) จาก mighty-hoernsche.de
+- **ทำก่อน**: G7 X (เซนเซอร์ 1"), S110 / S100 / S95 (เล็ก ราคาถูก), G16 / G15 (มีช่องมองภาพ) ทุกรุ่นมี build stable
+- **รองลงมา**: G1 X, G5 X, G10–G12, G7 X II (BETA) และ EOS M3 / M10 (BETA, APS-C)
+- **ไม่แนะนำ**: IXUS / ELPH และ A-series ส่วนใหญ่ไม่มีกลีบรูรับแสงจริง (ใช้แผ่น ND)
+- ข้อมูลฟิล์มและ Darkrooms บนคอมใช้ต่อได้ (DNG) แต่ชั้นวางฟิล์ม, HUD และตัวนับเฟรมต้องเขียนใหม่
+- ขั้นแรก: สคริปต์ Lua บน G7 X ที่วาดตัวนับเฟรมทับ LiveView ถ้าจอของ Canon วาดทับ (แบบ #64) ค่อยเปลี่ยนเป็น C module (`.flt`)
+
+### 6.3 โหมด JPG (ทางเลือก, RAW ยังเป็นโหมดหลัก)
+- ทำใน Darkrooms บนคอมก่อน (อ่าน JPG แล้วใช้ LUT ของฟิล์ม) ห้องมืดในกล้องทีหลัง เพราะต้องมีตัวถอดรหัส JPEG
+- ข้อเสีย: 8 bit, ส่วนสว่างที่ขาวแล้วดึงกลับไม่ได้, ไวท์บาลานซ์และ Picture Style ของ Canon ติดมาแล้ว ต้องเตือนผู้ใช้
+- ค่าที่แนะนำให้ตั้ง: Picture Style Neutral / Faithful, Contrast และ Saturation −2, Sharpness 0, WB Daylight, ชดเชยแสง −⅓ ถึง −⅔
+- ทำให้ CHDK ใช้ได้ทุกรุ่น รวมรุ่นที่ไม่มี DNG
