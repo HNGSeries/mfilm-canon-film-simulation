@@ -26,18 +26,17 @@ then open http://localhost:8000. Building needs clang, lld, `wasi-libc`,
 
 ## What to replace
 
-- **The cameras**: every camera M-Film runs on is in `js/bodies.js`: its body
-  (the EOS M is `img/eosm-back.svg`; the DSLRs are drawn from their family's
-  shape: Rebel, 60D/70D/6D, 5D/50D), its screen, and each control where it
-  sits. Give a body an `image` (a photo of its back) and it replaces the
-  drawing; the controls stay where its numbers put them. `web_config` tells
-  the film OS which camera it is: its name, a DSLR (top plate until the LV
-  button), a swivel screen, exposure simulation.
-- **The EOS M's body**: `img/eosm-back.svg` is a drawing. A photo of the back
-  (1100 × 740, or the same proportions, the screen's glass at x 60–740,
-  y 140–593) can take its place in `index.html`. The buttons sit over it in
-  `css/site.css` (`.ctl.info`, `.dial`, …), each at its centre in % of the
-  body: x / 1100, y / 740.
+- **The cameras**: every camera M-Film runs on is in `js/bodies.js`, each a
+  photo of its back in `img/backs/<id>.webp` (`PHOTOS`): 1400 px wide, the
+  background cut away, room left above the body for the shutter button. Its
+  screen is the glass in the photo's pixels (a 4:3 screen letterboxes the
+  3:2 picture), and each control the film OS uses is a page button sitting
+  unseen over the photo's own (`.cam.photo` in `css/site.css`), lighting up
+  when pointed at or pressed. A new photo needs the screen and the buttons
+  measured again. Without a photo a body is drawn from its family's shape
+  (Rebel, 60D/70D/6D, 5D/50D; the EOS M `img/eosm-back.svg`). `web_config`
+  tells the film OS which camera it is: its name, a DSLR (top plate until the
+  LV button), a swivel screen, exposure simulation.
 - **LiveView**: `media/liveview.mp4`, a short loop, plays under the screen if
   it is there. Without it, the stills in `img/samples/` drift by instead.
 - **Developing pace**: the browser develops far faster than the camera; the

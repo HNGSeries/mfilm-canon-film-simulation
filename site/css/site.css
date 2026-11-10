@@ -116,7 +116,7 @@ p { margin: 0 0 1em; color: var(--muted); max-width: 62ch; }
   position: absolute;
   overflow: hidden; background: #000; border-radius: 2px;
 }
-.screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: auto; }
+.screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: auto; object-fit: contain; }
 .blackout { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
 .blackout.on { animation: blackout .18s ease-out; }
 @keyframes blackout { 0% { opacity: 1; } 60% { opacity: 1; } 100% { opacity: 0; } }
@@ -486,6 +486,33 @@ footer { display: block; }
 .screen.flip-3 { transform: scaleX(-1); }
 .lvbtn { font: 700 12px Barlow, sans-serif; width: auto; padding: 0 12px; border-radius: 999px; }
 .cam.lv-on ~ .cam-under .lvbtn { border-color: var(--red); color: #ffb3a5; }
+
+/* a photo of the camera's back: the buttons are the photo's own, the page's sit over them
+   unseen, and light up as they are pointed at or pressed */
+.cam.photo .ctl:not(.shutter):not(.dpad):not(.set),
+.cam.photo .dial.ring .ctl.set, .cam.photo .dial.cross .ctl.set, .cam.photo .dial.stick .ctl.set {
+  background: transparent; box-shadow: none; color: transparent;
+}
+.cam.photo .ctl:not(.shutter):not(.dpad):not(.set):hover, .cam.photo .ctl:not(.shutter):not(.dpad):not(.set):focus-visible,
+.cam.photo .dial .ctl.set.set:hover, .cam.photo .dial .ctl.set.set:focus-visible {
+  filter: none; box-shadow: 0 0 0 2px rgba(236, 168, 52, .75), 0 0 14px rgba(236, 168, 52, .35);
+}
+.cam.photo .ctl:not(.shutter):not(.dpad):not(.set):active, .cam.photo .ctl.down:not(.shutter):not(.dpad):not(.set),
+.cam.photo .dial .ctl.set.set:active, .cam.photo .dial .ctl.set.set.down {
+  transform: none; filter: none; background: rgba(236, 168, 52, .28);
+}
+.cam.photo .ctl.dpad:hover { box-shadow: none; }
+.cam.photo .ctl.dpad::after { opacity: 0; }
+.cam.photo .ctl.dpad:hover::after { opacity: .9; }
+.cam.photo .dial.cross::before, .cam.photo .dial.stick::before { display: none; }
+.cam.photo .dial-ring { background: transparent; box-shadow: none; }
+.cam.photo .dial.ring .ctl.set { --d: 34; }
+.cam.photo .ctl.power { background: transparent; }
+.cam.photo .ctl.lv::after { opacity: 0; }
+.cam.photo.lv-on .ctl.lv::after { opacity: .9; inset: 40%; }
+.cam.photo .ctl.pill { aspect-ratio: 1.6; border-radius: 18px; }
+/* the EOS M's trash is printed on its dial's lower edge: there it opens Home, over the dial */
+.cam.photo .ctl.home { z-index: 2; }
 
 /* the screen's glass: a faint sheen over whatever is on it */
 .screen::after {
