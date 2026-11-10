@@ -11,7 +11,7 @@ GRAY, METAL, AMBER, RED, ORANGE, CRIMSON, GREEN, VIOLET, BLUE = range(9)
 BAND, CAP, STRIPES = range(3)
 
 DESC = {
-    "cinestill400t": "Your own LUT, cine colour",
+    "cinestill400t": "Cine film, cool shadows, red halos",
     "portra160": "Fine grain, natural skin tones",
     "portra800": "Low light portraits, warm grain",
     "portra160nc": "Natural colour, soft contrast",

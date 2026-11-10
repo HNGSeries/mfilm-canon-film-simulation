@@ -322,6 +322,8 @@ The camera side of M-Film is free and stays free. If it gave you a roll you like
 
 ## License
 
+M-Film is made by **HNGSeries**, on top of [Magic Lantern](https://www.magiclantern.fm/).
+
 This repository: GPL-2.0 ([LICENSE](LICENSE)), as the camera side builds on Magic Lantern.
 Darkrooms (the desktop program) is a separate, closed-source program under its own licence. Fonts, film LUTs and other
 parts: [THIRD_PARTY.md](THIRD_PARTY.md). Not affiliated with Canon, Kodak, Fujifilm or any film maker.

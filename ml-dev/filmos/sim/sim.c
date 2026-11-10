@@ -40,6 +40,7 @@ static int settings[FS_COUNT] = {
     [FS_STARTUP] = 2, [FS_PLAYLOCK] = 1, [FS_BOOTANIM] = 1, [FS_DEBUG] = 0, [FS_MODE] = 0,
     [FS_FILM] = 0, [FS_EXP] = 0, [FS_SCR_FLIP] = 0, [FS_EXPSIM] = 1,
     [FS_HUD_STYLE] = 0, [FS_HUD_BATT] = 1, [FS_SIZE] = FOS_SIZE_M, [FS_STAMP] = 0, [FS_RECENT] = 0,
+    [FS_FADE] = 1,
 };
 static struct fos_roll roll = { 1, 12, 1, 36, 14, 0, "2026-10-21 18:02", 3,
     { { 14, "21:47", "2" }, { 13, "21:40", "2" }, { 12, "21:33", "2.8" } } };
@@ -249,6 +250,7 @@ int main(int argc, char **argv)
     if (getenv("FOS_HUD_STYLE")) settings[FS_HUD_STYLE] = atoi(getenv("FOS_HUD_STYLE"));
     if (getenv("FOS_SIZE")) settings[FS_SIZE] = atoi(getenv("FOS_SIZE"));
     if (getenv("FOS_STAMP")) settings[FS_STAMP] = atoi(getenv("FOS_STAMP"));
+    if (getenv("FOS_FADE")) settings[FS_FADE] = atoi(getenv("FOS_FADE"));
     int open = FOS_OPEN_SHELF;
     FILE *f = fopen(argv[1], "r");
     if (!f) { perror(argv[1]); return 1; }

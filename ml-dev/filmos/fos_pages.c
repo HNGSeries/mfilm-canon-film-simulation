@@ -377,7 +377,8 @@ static const struct item settings_items[] =
     { "Manual lens", IT_PAGE, PAGE_LENS, 0, 0, "The aperture of an adapted lens, which the camera can't read." },
     { "Advanced", IT_PAGE, PAGE_ADVANCED, 0, 0, "LEDs, wind lever, start up, screen colour, the debug log." },
     { "Canon menu", IT_ACTION, FA_CANON_MENU, 0, 0, "Leave and open the camera's own menu (format card, RAW...)." },
-    { "About", IT_INFO, -2, 0, 0, FOS_NAME " " T_DOT " Barlow typeface by Jeremy Tribby (SIL OFL)" },
+    { "About", IT_INFO, -2, 0, 0, FOS_NAME " by HNGSeries " T_DOT " Barlow typeface by Jeremy Tribby (SIL OFL)" },
+    { "Support " FOS_NAME, IT_INFO, -3, 0, 0, "Scan the code with your phone to buy the developer a coffee." },
 };
 
 static const struct item lens_items[] =
@@ -396,12 +397,12 @@ static const struct item advanced_items[] =
     { "Battery in the viewfinder", IT_TOGGLE, FS_HUD_BATT, 0, 0, "A small battery beside the readout." },
     { "Start screen", IT_CHOICE, FS_STARTUP, start_choices, 3, "The film shelf when the camera turns on." },
     { "Boot animation", IT_TOGGLE, FS_BOOTANIM, 0, 0, "The aperture opening on the name at power on." },
+    { "Page fade", IT_TOGGLE, FS_FADE, 0, 0, "A short fade between the shelf, the darkroom and the prints. Off: they change at once." },
     { "Screen colour", IT_PAGE, PAGE_SCREEN, 0, 0, "Match these colours to what you see around you." },
     { "Screen orientation", IT_CHOICE, FS_SCR_FLIP, flip_choices, 4, "Auto follows the hinge. Set one if the screen shows the wrong way round." },
     { "PLAY shows prints only", IT_TOGGLE, FS_PLAYLOCK, 0, 0, "Canon's playback would show frames the darkroom hasn't developed." },
     { "Re-apply film settings", IT_ACTION, FA_REAPPLY, 0, 0, "After changing picture style, white balance or ISO by hand." },
     { "Debug log", IT_TOGGLE, FS_DEBUG, 0, 0, "Writes ML/FILMROLL.LOG for troubleshooting." },
-    { "Support " FOS_NAME, IT_INFO, -3, 0, 0, "Scan the code with your phone to buy the developer a coffee." },
 };
 
 static const char *const std_choices[] = { "Canon", "Rec.709" };
@@ -935,16 +936,18 @@ static void preview_about()
 {
     int cx = PV_X + PV_W / 2;
     fos_text_c(cv, &fos_font_xs, cx, PV_Y + PV_H - 14, "ABOUT", C_TEXT3, OPAQUE, 48);
-    ui_aperture(cx, PV_Y + 64, 40, 1700, 5000);
-    fos_text_c(cv, &fos_font_lg, cx, PV_Y + 142, FOS_NAME, C_TEXT, OPAQUE, 64);
+    ui_aperture(cx, PV_Y + 56, 40, 1700, 5000);
+    fos_text_c(cv, &fos_font_lg, cx, PV_Y + 132, FOS_NAME, C_TEXT, OPAQUE, 64);
     char m[48];
     snprintf(m, sizeof(m), "Film OS for the %s", fos_port_model());
-    fos_text_c(cv, &fos_font_sm, cx, PV_Y + 166, m, C_TEXT2, OPAQUE, 0);
+    fos_text_c(cv, &fos_font_sm, cx, PV_Y + 156, m, C_TEXT2, OPAQUE, 0);
+    /* who made it, then what it stands on */
+    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 186, FOS_NAME " BY HNGSERIES", C_TEXT2, OPAQUE, 24);
     char b[48];
     snprintf(b, sizeof(b), "VERSION %s " T_DOT " %s", fos_port_version(), __DATE__);
-    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 196, b, C_TEXT3, OPAQUE, 24);
-    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 214, "MAGIC LANTERN INSIDE", C_TEXT3, OPAQUE, 24);
-    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 232, "BARLOW TYPEFACE " T_DOT " SIL OFL", C_TEXT3, OPAQUE, 24);
+    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 204, b, C_TEXT3, OPAQUE, 24);
+    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 222, "MAGIC LANTERN INSIDE", C_TEXT3, OPAQUE, 24);
+    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 240, "BARLOW TYPEFACE " T_DOT " SIL OFL", C_TEXT3, OPAQUE, 24);
 }
 
 /* an on / off switch; k = 0..1 where the knob is */

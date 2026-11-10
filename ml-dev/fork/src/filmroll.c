@@ -99,6 +99,7 @@ static CONFIG_INT("filmroll.hud_batt",  hud_batt,         1);   /* the battery o
 static CONFIG_INT("filmroll.size",      print_size,       1);   /* FOS_SIZE_*: the darkroom's prints (S, M, L) */
 static CONFIG_INT("filmroll.stamp",     date_stamp,       0);   /* the date in the corner of each print */
 static CONFIG_INT("filmroll.recent",    recent_films,     0);   /* the films loaded last (FS_RECENT) */
+static CONFIG_INT("filmroll.fade",      page_fade,        1);   /* the short fade between screens */
 
 /* roll state, kept across power cycles */
 static CONFIG_INT("filmroll.loaded",    roll_loaded,      0);
@@ -1298,6 +1299,7 @@ static int *setting_var(int s)
         case FS_SIZE:       return &print_size;
         case FS_STAMP:      return &date_stamp;
         case FS_RECENT:     return &recent_films;
+        case FS_FADE:       return &page_fade;
     }
     return 0;
 }

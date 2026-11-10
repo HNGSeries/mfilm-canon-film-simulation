@@ -54,12 +54,14 @@ float clampf(float v, float lo, float hi);
 /* ---------------------------------------------------------------- navigation */
 
 enum { SCR_NONE, SCR_BOOT, SCR_SHELF, SCR_HOME, SCR_PAGE, SCR_ROLL, SCR_DARK, SCR_DEVELOP, SCR_PRINTS };
+/* how a screen change shows: PUSH (deeper) and POP (back) change at once; FADE dips
+ * through black in 320 ms, where the Page fade setting is on */
 enum { GO_PUSH = 1, GO_POP = -1, GO_FADE = 0 };
 
 void ui_go(int screen, int arg, int how);
 void ui_leave();                    /* back to LiveView, shutter opening on it */
 int  ui_from();                     /* screen we came from */
-int  ui_settled();                  /* no screen change, shutter or iris under way */
+int  ui_settled();                  /* the screen gone to has been shown; no fade, shutter or iris under way */
 
 /* ---------------------------------------------------------------- widgets */
 

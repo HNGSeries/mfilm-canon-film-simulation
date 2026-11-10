@@ -26,7 +26,9 @@ static int dmg_y0 = FOS_H, dmg_y1 = 0;
 static int cv_on_screen;                    /* the screen shows the canvas as it is (no screen change on its way) */
 
 /* screen change in progress */
-static int tr_how, tr_t, tr_len;            /* tr_t counts up to tr_len (ms) */
+static int tr_t, tr_len;                    /* the fade: tr_t counts up to tr_len (ms); 0 = none */
+static int go_shown;                        /* the screen gone to has reached the panel once */
+#define FADE_LEN 320
 static int leaving;                         /* 1 while the shutter opens on LiveView */
 static int leave_t;
 static int quit;
@@ -550,16 +552,24 @@ static void boot_draw(int t)
 
 void ui_go(int to, int arg, int how)
 {
-    /* keep what is on screen now; the new screen slides over it */
-    memcpy(buf_snap, cv->px, FOS_W * FOS_H);
+    /* a screen changes at once (GO_PUSH, GO_POP: deeper into the menus and
+     * back), or through a short dip to black (GO_FADE) where the setting
+     * has it. The fade keeps what is on screen now; that buffer is only
+     * taken the first time one is wanted, and given back once the setting
+     * is off */
+    int fades = fos_port_get(FS_FADE), fade = how == GO_FADE && fades;
+    if (!fades && buf_snap) { fos_port_free(buf_snap); buf_snap = 0; }
+    if (fade && !buf_snap) buf_snap = fos_port_alloc(FOS_W * FOS_H);
+    if (fade && buf_snap) memcpy(buf_snap, cv->px, FOS_W * FOS_H);
+    else fade = 0;
     screen_from = screen;
     if (screen == SCR_SHELF) shelf_leave();
     if (screen == SCR_DEVELOP) develop_leave();
     if (screen == SCR_PRINTS) prints_leave();
     screen = to;
-    tr_how = how;
     tr_t = 0;
-    tr_len = how == GO_FADE ? 520 : 340;
+    tr_len = fade ? FADE_LEN : 0;
+    go_shown = 0;
     ui_clobbered = 1;               /* the new screen starts from nothing */
     switch (to)
     {
@@ -576,7 +586,7 @@ void ui_go(int to, int arg, int how)
 
 int ui_settled()
 {
-    return !(tr_len && tr_t < tr_len) && !leaving && enter_t >= ENTER_LEN;
+    return go_shown && !(tr_len && tr_t < tr_len) && !leaving && enter_t >= ENTER_LEN;
 }
 
 int ui_from()
@@ -640,88 +650,25 @@ static void screen_draw()
     }
 }
 
-/* the screen change: the old frame (snapshot) and the new one, composed a
- * row at a time straight into the presented rows */
+/* the fade between screens: the old one (the snapshot) sinks into the dark,
+ * the new one rises from it, a row at a time straight into the presented
+ * rows */
 static uint8_t row_buf[FOS_W];
 static uint8_t dim_lut[256];
 
-/* row_buf[x0..x1): the dimmed layer where it has pixels (u0..u1), else bg */
-static void dim_run(uint8_t *row, const uint8_t *urow, int x0, int x1, int u0, int u1, uint8_t bg)
-{
-    int a = fos_clamp(u0, x0, x1), b = fos_clamp(u1, a, x1);
-    memset(row + x0, bg, a - x0);
-    int x = a;
-    for (; x + 4 <= b; x += 4)
-    {
-        row[x] = dim_lut[urow[x]];
-        row[x + 1] = dim_lut[urow[x + 1]];
-        row[x + 2] = dim_lut[urow[x + 2]];
-        row[x + 3] = dim_lut[urow[x + 3]];
-    }
-    for (; x < b; x++)
-        row[x] = dim_lut[urow[x]];
-    memset(row + b, bg, x1 - b);
-}
-
 static void present_transition(float t)
 {
-    float e = ease_out(t);
-    int how = tr_how;
-    int shift_new, shift_old, dim;
-    if (how == GO_PUSH)      { shift_new = (int) ((1 - e) * FOS_W); shift_old = -(int) (e * FOS_W * 0.3f); dim = (int) (256 - e * 150); }
-    else if (how == GO_POP)  { shift_new = -(int) ((1 - e) * FOS_W * 0.3f); shift_old = (int) (e * FOS_W); dim = (int) (106 + e * 150); }
-    else                     { shift_new = 0; shift_old = 0; dim = 0; }
-
-    if (how == GO_FADE)
-    {
-        /* dip: the old screen sinks into the dark, the new one rises from it */
-        int k = t < 0.45f ? (int) ((1 - t / 0.45f) * 256) : (int) (ease_out((t - 0.45f) / 0.55f) * 256);
-        const uint8_t *src = t < 0.45f ? buf_snap : cv->px;
-        for (int i = 0; i < 256; i++)
-        {
-            fcol c = fos_colour_of(i);
-            dim_lut[i] = fos_ix(FC(FC_RAMP(c), FC_LEVEL(c) * k / 256));
-        }
-        for (int y = 0; y < FOS_H; y++)
-        {
-            for (int x = 0; x < FOS_W; x++)
-                row_buf[x] = dim_lut[src[y * FOS_W + x]];
-            fos_port_present(row_buf, FOS_W, y, y + 1);
-        }
-        return;
-    }
-
+    int k = t < 0.45f ? (int) ((1 - t / 0.45f) * 256) : (int) (ease_out((t - 0.45f) / 0.55f) * 256);
+    const uint8_t *src = t < 0.45f ? buf_snap : cv->px;
     for (int i = 0; i < 256; i++)
     {
         fcol c = fos_colour_of(i);
-        dim_lut[i] = fos_ix(FC(FC_RAMP(c), FC_LEVEL(c) * dim / 256));
+        dim_lut[i] = fos_ix(FC(FC_RAMP(c), FC_LEVEL(c) * k / 256));
     }
-    const uint8_t *top = how == GO_PUSH ? cv->px : buf_snap;      /* the sliding layer */
-    const uint8_t *under = how == GO_PUSH ? buf_snap : cv->px;
-    int shift_top = how == GO_PUSH ? shift_new : shift_old;
-    int shift_under = how == GO_PUSH ? shift_old : shift_new;
-    uint8_t bg = fos_ix(C_BG);
-    /* the sliding layer covers [t0, t1); the dimmed one shows elsewhere
-     * where it has pixels, [u0, u1) */
-    int t0 = fos_clamp(shift_top, 0, FOS_W), t1 = fos_clamp(shift_top + FOS_W, 0, FOS_W);
-    int u0 = fos_clamp(shift_under, 0, FOS_W), u1 = fos_clamp(shift_under + FOS_W, 0, FOS_W);
     for (int y = 0; y < FOS_H; y++)
     {
-        const uint8_t *trow = top + y * FOS_W, *urow = under + y * FOS_W - shift_under;
-        dim_run(row_buf, urow, 0, t0, u0, u1, bg);
-        dim_run(row_buf, urow, t1, FOS_W, u0, u1, bg);
-        if (t1 > t0)
-            memcpy(row_buf + t0, trow + (t0 - shift_top), t1 - t0);
-        /* a soft shadow on the edge of the sliding layer */
-        for (int s = 1; s <= 10; s++)
-        {
-            int x = shift_top - s;
-            if (x >= 0 && x < FOS_W)
-            {
-                fcol c = fos_colour_of(row_buf[x]);
-                row_buf[x] = fos_ix(FC(FC_RAMP(c), FC_LEVEL(c) * (156 + s * 10) / 256));
-            }
-        }
+        for (int x = 0; x < FOS_W; x++)
+            row_buf[x] = dim_lut[src[y * FOS_W + x]];
         fos_port_present(row_buf, FOS_W, y, y + 1);
     }
 }
@@ -730,11 +677,11 @@ static int ui_alloc()
 {
     buf_cv = fos_port_alloc(FOS_W * FOS_H);
     buf_bg = fos_port_alloc(FOS_W * FOS_H);
-    buf_snap = fos_port_alloc(FOS_W * FOS_H);
-    if (!buf_cv || !buf_bg || !buf_snap)
+    buf_snap = 0;               /* the fade's, taken when one is first wanted (ui_go) */
+    if (!buf_cv || !buf_bg)
     {
-        fos_port_free(buf_cv); fos_port_free(buf_bg); fos_port_free(buf_snap);
-        buf_cv = buf_bg = buf_snap = 0;
+        fos_port_free(buf_cv); fos_port_free(buf_bg);
+        buf_cv = buf_bg = 0;
         return 0;
     }
     fos_canvas_init(&canvas, buf_cv, FOS_W, FOS_W, FOS_H);
@@ -832,7 +779,8 @@ void fos_ui_run(int open)
             default:                screen = SCR_SHELF; shelf_enter(0); break;
         }
     }
-    tr_how = 0; tr_t = tr_len = 0;
+    tr_t = tr_len = 0;
+    go_shown = 0;
 
     int last = fos_port_ms();
     int boot_t = 0;
@@ -968,6 +916,7 @@ void fos_ui_run(int open)
                 if (!opened) { opened = 1; stat.open_ms = fos_port_ms() - t_open; }
             }
             dmg_y0 = FOS_H; dmg_y1 = 0;
+            go_shown = 1;
         }
         if (moving || in_tr)
             frame_stats(t_present - t_draw, fos_port_ms() - t_present);

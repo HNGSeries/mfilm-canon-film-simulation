@@ -311,6 +311,8 @@ Microsoft ครั้งแรกจึงมีคำเตือน
 
 ## License
 
+M-Film สร้างโดย **HNGSeries** ต่อยอดจาก [Magic Lantern](https://www.magiclantern.fm/)
+
 repo นี้ใช้ GPL-2.0 ([LICENSE](LICENSE)) เพราะส่วนในกล้องต่อยอดจาก Magic Lantern
 Darkrooms (โปรแกรมบนคอม) เป็นโปรแกรมแยก ปิดซอร์ส ใช้สัญญาอนุญาตของตัวเอง ฟอนต์, LUT ของฟิล์ม และส่วนอื่นๆ:
 [THIRD_PARTY.md](THIRD_PARTY.md) ไม่มีส่วนเกี่ยวข้องกับ Canon, Kodak, Fujifilm หรือผู้ผลิตฟิล์มรายใด

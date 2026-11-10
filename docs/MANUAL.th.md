@@ -15,7 +15,7 @@
 | ![](../ml-dev/filmos/preview/shelf.png) | ![](../ml-dev/filmos/preview/home.png) |
 | **ชั้นวางฟิล์ม** หน้าแรกตอนเปิดกล้อง กลักฟิล์มเป็นทรงกระบอกที่มีแสงเงา ฉลากพันรอบ ฝาโลหะ แกนม้วน หางฟิล์ม และรหัส DX ด้านหลัง เลื่อนแล้วกลักจะหมุนหันเข้าหากลาง | **Home** แทนเมนู ML: ม้วนที่อยู่ในกล้อง (กลักหมุนช้าๆ) แถวบนสุดในกรอบสีเหลืองคือสิ่งที่ต้องทำต่อไป (ใส่ฟิล์ม / ม้วนที่กำลังถ่าย / ล้างม้วนที่ถ่ายครบ) ตามด้วย Change film, Darkroom และ Settings แบตเตอรี่อยู่ข้างนาฬิกาทุกหน้า |
 | ![](../ml-dev/filmos/preview/viewfinder.png) | ![](../ml-dev/filmos/preview/lens.png) |
-| **Settings** หน้าเดียว: Viewfinder, Exposure simulation, Print size, Date stamp, Film mode แล้วต่อไปที่ Manual lens, Advanced, Canon menu ภาพตัวอย่างด้านขวาเปลี่ยนตามแถวที่เลือกและค่าที่ตั้ง (กด INFO ที่ Home เพื่อมาหน้านี้ทันที) | **Manual lens** ม่านรูรับแสงขยับตามค่า f ของเลนส์แมนนวล |
+| **Settings** หน้าเดียว: Viewfinder, Exposure simulation, Print size, Date stamp, Film mode แล้วต่อไปที่ Manual lens, Advanced, Canon menu, About (เวอร์ชันและผู้สร้าง: M·FILM BY HNGSERIES) และ Support M·FILM ภาพตัวอย่างด้านขวาเปลี่ยนตามแถวที่เลือกและค่าที่ตั้ง (กด INFO ที่ Home เพื่อมาหน้านี้ทันที) | **Manual lens** ม่านรูรับแสงขยับตามค่า f ของเลนส์แมนนวล |
 | ![](../ml-dev/filmos/preview/roll.png) | ![](../ml-dev/filmos/preview/hud.png) |
 | **ม้วนฟิล์ม** หน้าปัดนับรูปแบบกล้องฟิล์ม หมุนจาก S ไปเลขรูปปัจจุบัน และกรอฟิล์มกลับได้ | **HUD ตอนถ่าย: Classic** แบบช่องมอง SLR: สเกลรูรับแสงกับเข็มวัดแสง และไฟ LED แดงแบบ 7 ส่วน |
 | ![](../ml-dev/filmos/preview/hud-minimal.png) | ![](../ml-dev/filmos/preview/hud-rangefinder.png) |
@@ -29,6 +29,9 @@
 
 การโหลดฟิล์มจะดึงหางฟิล์มออกจากกลัก แล้วม่านชัตเตอร์ปิดและเปิดเข้าสู่ LiveView
 ตอนเปิดกล้องมี animation ม่านรูรับแสงเปิดออก (ปิดได้ใน Settings > Advanced)
+
+การเข้าและออกจากเมนูเปลี่ยนหน้าทันที ไม่มีการเลื่อนซ้าย-ขวา (ตั้งแต่ 0.2.1) ส่วนการเปลี่ยนระหว่างชั้นวาง ห้องมืด และหน้า Prints
+เป็นเฟดสั้น ๆ 320 ms ปิดได้ที่ Settings > Advanced > Page fade (ปิดแล้วทุกหน้าเปลี่ยนทันที และไม่ต้องจองหน่วยความจำ 345 KB ของเฟด)
 
 ### ฟิล์ม 72 ตัว บน 4 ชั้น
 - ชั้นวางแยกตามชนิด: COLOUR (เนกาทีฟสี), SLIDE (สไลด์และ cross-process), B&W, CINE
@@ -48,7 +51,7 @@
   ทุกรุ่นได้ชุดเดียวกัน (รวม build ที่ไม่มีห้องมืด) เปลี่ยนรูปได้โดยวาง CR2 จาก EOS M ไฟล์ใหม่แทนแล้ว build ใหม่
 
 ### สนับสนุน
-Settings > Advanced > Support M·FILM แสดง QR code ของลิงก์โดเนท (สูงสุด 2 อัน) ใส่ลิงก์ใน `ml-dev/donate.txt`
+Settings > Support M·FILM (แถวล่างสุด ใต้ About) แสดง QR code ของลิงก์โดเนท (สูงสุด 2 อัน) ใส่ลิงก์ใน `ml-dev/donate.txt`
 บรรทัดละ `ชื่อ URL` แล้ว build ใหม่ (`tools/genqr.py`, ต้องมี segno: `setup_wsl.sh` ลง `python3-segno` ให้)
 ไม่มีลิงก์ หน้านี้จะขึ้นคำขอบคุณแทน
 

@@ -1,5 +1,6 @@
 M-Film for the camera (Film OS + Magic Lantern)
 ================================================
+M-Film by HNGSeries, built on Magic Lantern.
 
 What is in here: autoexec.bin, the ML/ folder and ML-SETUP.FIR, for ONE camera model and
 ONE Canon firmware version (the zip's name says which, e.g. 650D.104 = EOS 650D, firmware 1.0.4).

@@ -1,4 +1,4 @@
-# Settings > Advanced > Support: the donation codes
+# Settings: About (who made it), and under it Support: the donation codes
 roll 1 14 36
 open home
 500 info
@@ -8,16 +8,7 @@ open home
 1750 down
 1900 down
 2050 down
-2300 set
-3100 down
-3250 down
-3400 down
-3550 down
-3700 down
-3850 down
-4000 down
-4150 down
-4300 down
-4450 down
-4600 down
-5800 end
+2200 down
+2350 down
+3600 down
+4800 end

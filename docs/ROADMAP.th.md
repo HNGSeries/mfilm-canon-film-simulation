@@ -35,6 +35,13 @@
   ตัด Wind lever แบบ "Locks shutter" ออก
 - **build เดียว**: film OS เป็นโมดูลบนทุกรุ่น (`build_fork.sh` ไม่ต้องใส่ `--module` แล้ว, `--built-in` คือแบบเดิม)
 
+### 0.2.1
+- **ไม่มีสไลด์ซ้าย-ขวา** เข้า/ออกเมนูเปลี่ยนหน้าทันที (เดิม 340 ms ราว 15 เฟรมเต็มจอต่อครั้ง)
+  เฟดระหว่างชั้นวาง ห้องมืด และ Prints เหลือ 320 ms (เดิม 520) ปิดได้ที่ Advanced > Page fade
+  บัฟเฟอร์ของเฟด (345 KB) จองเมื่อมีเฟดครั้งแรกเท่านั้น
+- **Support M·FILM** ย้ายมาอยู่หน้า Settings ใต้ About, หน้า About มีบรรทัด **M·FILM BY HNGSERIES**
+- CineStill 400T: คำบรรยายใหม่ "Cine film, cool shadows, red halos"
+
 ### ที่ต้องวัดบนกล้องจริงก่อนปล่อย
 - EOS M, 6D, 5D Mark III, 60D, 500D, 50D, 5D Mark II: โมดูลโหลดขึ้นไหม (เดิม build รวมไว้)
 - เวลาต่อรูปของแต่ละขนาด (บรรทัด `dev: frame N: read ... big print ...` ใน `ML/FILMROLL.LOG`)

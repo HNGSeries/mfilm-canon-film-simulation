@@ -23,7 +23,7 @@ FOS_LUT_DIR=out/lut ./out/devtest -S ../../films/sample/SAMPLE.CR2 out/card/ML/S
 
 run shelf;  still shelf 660 shelf; still shelf 1110 shelf-gliding
 run sample; still sample 1600 sample
-run load;   still load 1300 boot; still load 5300 loaded; still load 5800 shutter
+run load;   still load 1300 boot; still load 5300 loaded; still load 5760 shutter
 run home;   still home 800 home
 run roll;   still roll 2400 roll; still roll 3400 rewind
 run pages;  still pages 1400 viewfinder; still pages 5000 print-size; still pages 7200 date-stamp; still pages 8000 film-mode

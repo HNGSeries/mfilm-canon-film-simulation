@@ -118,6 +118,7 @@ enum
                            each way), _L (half of it) */
     FS_STAMP,           /* the date in the corner of each print, as a compact camera's data back puts it */
     FS_RECENT,          /* the films loaded last, newest in the low byte: film + 1 in each byte, 0 = none */
+    FS_FADE,            /* the short fade between screens (shelf, darkroom, prints); 0: every screen changes at once */
     FS_COUNT
 };
 #define FOS_SCR_STEPS 6
