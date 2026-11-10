@@ -99,6 +99,12 @@ the frame will get: with a slow film, or an adapted lens stopped down, it can be
 - **The films you loaded last** have a shelf of their own, where the film shelf opens: the same film again is one press.
 - **Settings** is one page (viewfinder, exposure simulation, print size, date stamp, film mode); the rest is
   under *Manual lens* and *Advanced*. The wind lever no longer locks the shutter: it reminds, or is off.
+- **Menus that are simply there.** Going into a menu and back no longer slides; the fade between the shelf,
+  the darkroom and the prints is shorter, and *Advanced → Page fade* turns it off.
+- **The readout lights when you turn a dial**, not only on a half-press. On cameras with two dials (50D, 60D,
+  70D, 5D Mark II, 5D Mark III, 6D) the top one changes shelves on the film shelf and the rear one picks the film.
+- **EOS M: *Advanced → Hide Canon's graphics*** keeps Canon's exposure scale and icons off the viewfinder
+  (its focus frame goes too, so it is off unless you turn it on).
 - **One build.** The film OS now loads as a module after the camera starts on every camera, so Magic Lantern
   takes no more memory at power on than it does alone ([why](ml-dev/MEMORY.md)). On the cameras that had it
   built in until 0.1.6 (EOS M, 6D, 5D Mark III, 60D, 500D, 50D, 5D Mark II) this is new: see [Cameras](#cameras).
@@ -201,11 +207,11 @@ still wrong. If you have one marked *needs a tester*, you can help: [TESTING.md]
 <!-- cameras:start -->
 | Camera | Canon firmware | Status | Notes | Card files |
 |---|---|---|---|---|
-| Canon EOS M | 2.0.2 | ✅ **Works** | From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-EOSM.202.zip` |
+| Canon EOS M | 2.0.2 | ✅ **Works** | From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. 0.2 can keep Canon's exposure scale off the viewfinder: *Advanced → Hide Canon's graphics* ([#67](../../issues/67)). | `M-Film-camera-EOSM.202.zip` |
 | Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | ⚠️ Tried, known problem | Works on 0.1.5, the film OS as a module ([#48](../../issues/48)). 0.1.6 as first released (8 Nov) flickered and took no buttons ([#73](../../issues/73)); the zips were rebuilt with a fix on 9 Nov: download again, and say in [#73](../../issues/73) if it works. | `M-Film-camera-100D.101.zip` |
 | Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | ✅ **Works** | Works with the film OS as a module, darkroom included ([#54](../../issues/54)). From 0.1.3 to 0.1.5 the plain zip came without the darkroom (with it built in, the 650D doesn't start: [#34](../../issues/34)): in 0.1.5, take the `-module.zip`. | `M-Film-camera-650D.104.zip` |
 | Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | ⚠️ Tried, known problem | 0.1.5's module build works on a tester's 700D, darkroom included ([#19](../../issues/19)), but M-Film's and Canon's menus still glitch over each other; 0.1.6 holds Canon's screen as the film OS opens, and as it closes back to the HUD: reports wanted. From 0.1.3 to 0.1.5 the plain zip came without the darkroom: in 0.1.5, take the `-module.zip`. | `M-Film-camera-700D.115.zip` |
-| Canon EOS 6D | 1.1.6 | ✅ **Works** | Works since 0.1.2 ([#17](../../issues/17), [#22](../../issues/22)). From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-6D.116.zip` |
+| Canon EOS 6D | 1.1.6 | ✅ **Works** | Works since 0.1.2 ([#17](../../issues/17), [#22](../../issues/22)). From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. 0.2 keeps Canon's screen away for as long as a frame is being saved, and lights the readout when a dial is turned ([#17](../../issues/17), [#23](../../issues/23)): say if either still happens. | `M-Film-camera-6D.116.zip` |
 | Canon EOS 70D | 1.1.2 | ⚠️ Tried, known problem | 0.1.5 works on a tester's 70D, with the film OS as a module ([#40](../../issues/40)); on another, Magic Lantern installs but the camera then starts Canon's own firmware ([#58](../../issues/58)): more reports wanted. | `M-Film-camera-70D.112.zip` |
 | Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | ⚠️ Tried, known problem | Starts and shoots; the in-camera darkroom couldn't find the RAWs ([#31](../../issues/31)): fixed in 0.1.3. From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-5D3.113.zip` |
 | Canon EOS 5D Mark III (firmware 1.2.3) | 1.2.3 | ⚠️ Tried, known problem | Starts and shoots; the in-camera darkroom couldn't find the RAWs ([#16](../../issues/16), [#37](../../issues/37)): fixed in 0.1.3. From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-5D3.123.zip` |
