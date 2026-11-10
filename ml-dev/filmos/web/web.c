@@ -59,7 +59,7 @@ static int settings[FS_COUNT] = {
     [FS_STARTUP] = 2, [FS_PLAYLOCK] = 1, [FS_BOOTANIM] = 1, [FS_DEBUG] = 0, [FS_MODE] = 0,
     [FS_FILM] = 0, [FS_EXP] = 2, [FS_SCR_FLIP] = -1, [FS_EXPSIM] = 1,
     [FS_HUD_STYLE] = 0, [FS_HUD_BATT] = 1, [FS_SIZE] = FOS_SIZE_M, [FS_STAMP] = 0, [FS_RECENT] = 0,
-    [FS_FADE] = 1,
+    [FS_FADE] = 1, [FS_CANON_OFF] = -1,
 };
 static struct fos_roll roll;
 static int file_no = 100;                   /* the card's last IMG_nnnn */

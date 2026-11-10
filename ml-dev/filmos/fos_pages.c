@@ -391,13 +391,14 @@ static const struct item lens_items[] =
 
 static const struct item advanced_items[] =
 {
-    { "LEDs on half-press", IT_TOGGLE, FS_LEDS, 0, 0, "Like a real SLR: the readout lights only while metering." },
+    { "LEDs on half-press", IT_TOGGLE, FS_LEDS, 0, 0, "Like a real SLR: the readout lights while metering, and when you turn a dial." },
     { "Focusing screen", IT_TOGGLE, FS_FOCUS, 0, 0, "A split-image circle, or the rangefinder's patch (decoration only)." },
     { "Wind lever", IT_TOGGLE, FS_WIND, 0, 0, "After each frame the viewfinder asks for SET, to wind on." },
     { "Battery in the viewfinder", IT_TOGGLE, FS_HUD_BATT, 0, 0, "A small battery beside the readout." },
     { "Start screen", IT_CHOICE, FS_STARTUP, start_choices, 3, "The film shelf when the camera turns on." },
     { "Boot animation", IT_TOGGLE, FS_BOOTANIM, 0, 0, "The aperture opening on the name at power on." },
     { "Page fade", IT_TOGGLE, FS_FADE, 0, 0, "A short fade between the shelf, the darkroom and the prints. Off: they change at once." },
+    { "Hide Canon's graphics", IT_TOGGLE, FS_CANON_OFF, 0, 0, "Canon's exposure scale and icons stay off the viewfinder. Its focus frame goes too." },
     { "Screen colour", IT_PAGE, PAGE_SCREEN, 0, 0, "Match these colours to what you see around you." },
     { "Screen orientation", IT_CHOICE, FS_SCR_FLIP, flip_choices, 4, "Auto follows the hinge. Set one if the screen shows the wrong way round." },
     { "PLAY shows prints only", IT_TOGGLE, FS_PLAYLOCK, 0, 0, "Canon's playback would show frames the darkroom hasn't developed." },
@@ -1073,7 +1074,7 @@ void page_draw()
         else if (st == FS_STAMP) preview_stamp();
         else if (st == FS_MODE) preview_mode();
         else if (it->setting == -3 && it->kind == IT_INFO) preview_support();
-        else if (st == VS_FINDER || st == FS_EXPSIM || st == FS_LEDS || st == FS_FOCUS || st == FS_WIND || st == FS_HUD_BATT)
+        else if (st == VS_FINDER || st == FS_EXPSIM || st == FS_LEDS || st == FS_FOCUS || st == FS_WIND || st == FS_HUD_BATT || st == FS_CANON_OFF)
             preview_finder();
         else preview_about();
         *cv = save;

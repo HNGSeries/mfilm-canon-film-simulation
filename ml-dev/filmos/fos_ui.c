@@ -605,6 +605,9 @@ void ui_leave()
 
 static void screen_key(int k)
 {
+    /* the top dial is the wheel everywhere but on the shelf, where it changes shelves */
+    if (screen != SCR_SHELF && (k == FK_DIAL_L || k == FK_DIAL_R))
+        k = k == FK_DIAL_L ? FK_WHEEL_L : FK_WHEEL_R;
     switch (screen)
     {
         case SCR_BOOT:

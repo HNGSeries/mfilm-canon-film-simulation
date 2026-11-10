@@ -503,6 +503,9 @@ static void sample_draw()
 void shelf_key(int k)
 {
     if (loading) return;
+    /* the top dial: the shelves while browsing, the wheel in the sample and the question */
+    if ((sm_state != SM_OFF || asking) && (k == FK_DIAL_L || k == FK_DIAL_R))
+        k = k == FK_DIAL_L ? FK_WHEEL_L : FK_WHEEL_R;
     if (sm_state != SM_OFF)
     {
         sample_key(k);
@@ -525,10 +528,10 @@ void shelf_key(int k)
         case FK_RIGHT: case FK_WHEEL_R:
             if (target < nlist - 1) target++; else nudge = 1;
             break;
-        case FK_UP: case FK_DOWN:
+        case FK_UP: case FK_DOWN: case FK_DIAL_L: case FK_DIAL_R:
         {
             /* the next shelf (skipping empty ones), at the film last chosen there */
-            int dir = k == FK_DOWN ? 1 : -1, from = group, g = group, at = 0;
+            int dir = k == FK_DOWN || k == FK_DIAL_R ? 1 : -1, from = group, g = group, at = 0;
             group_at[group] = target;
             while (shelf_order[at] != group) at++;
             do

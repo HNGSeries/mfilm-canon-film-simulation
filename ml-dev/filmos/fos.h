@@ -94,6 +94,8 @@ enum
     FK_WHEEL_L, FK_WHEEL_R,                 /* turning it */
     FK_SET, FK_MENU, FK_INFO, FK_PLAY,
     FK_HOME,                                /* what used to open the ML menu */
+    FK_DIAL_L, FK_DIAL_R,                   /* the top dial of a camera that has two: the shelves on the film shelf,
+                                               the same as turning the rear one anywhere else (#17) */
     FK_RELEASE = 0x100,                     /* or-ed in: a press above ended */
 };
 
@@ -119,6 +121,8 @@ enum
     FS_STAMP,           /* the date in the corner of each print, as a compact camera's data back puts it */
     FS_RECENT,          /* the films loaded last, newest in the low byte: film + 1 in each byte, 0 = none */
     FS_FADE,            /* the short fade between screens (shelf, darkroom, prints); 0: every screen changes at once */
+    FS_CANON_OFF,       /* Canon's own LiveView graphics kept off the viewfinder (its exposure scale drew over
+                           the HUD, #67); the port answers -1 where that is always so: not shown */
     FS_COUNT
 };
 #define FOS_SCR_STEPS 6

@@ -40,7 +40,7 @@ static int settings[FS_COUNT] = {
     [FS_STARTUP] = 2, [FS_PLAYLOCK] = 1, [FS_BOOTANIM] = 1, [FS_DEBUG] = 0, [FS_MODE] = 0,
     [FS_FILM] = 0, [FS_EXP] = 0, [FS_SCR_FLIP] = 0, [FS_EXPSIM] = 1,
     [FS_HUD_STYLE] = 0, [FS_HUD_BATT] = 1, [FS_SIZE] = FOS_SIZE_M, [FS_STAMP] = 0, [FS_RECENT] = 0,
-    [FS_FADE] = 1,
+    [FS_FADE] = 1, [FS_CANON_OFF] = -1,
 };
 static struct fos_roll roll = { 1, 12, 1, 36, 14, 0, "2026-10-21 18:02", 3,
     { { 14, "21:47", "2" }, { 13, "21:40", "2" }, { 12, "21:33", "2.8" } } };
@@ -230,7 +230,7 @@ static int key_of(const char *s)
 {
     static const struct { const char *n; int k; } names[] = {
         { "left", FK_LEFT }, { "right", FK_RIGHT }, { "up", FK_UP }, { "down", FK_DOWN },
-        { "wl", FK_WHEEL_L }, { "wr", FK_WHEEL_R }, { "set", FK_SET }, { "menu", FK_MENU },
+        { "wl", FK_WHEEL_L }, { "wr", FK_WHEEL_R }, { "dl", FK_DIAL_L }, { "dr", FK_DIAL_R }, { "set", FK_SET }, { "menu", FK_MENU },
         { "info", FK_INFO }, { "play", FK_PLAY }, { "home", FK_HOME },
     };
     for (unsigned i = 0; i < sizeof(names) / sizeof(names[0]); i++)
