@@ -67,6 +67,8 @@ M-Film เปลี่ยนเมนูของกล้องเป็นห�
 
 ### ใหม่ใน 0.2
 
+**0.2.1** เพิ่ม [Canon EOS 1300D](TESTING.md#canon-eos-1300d) ให้ผู้ทดสอบลอง รุ่นอื่นไม่มีอะไรเปลี่ยน ไม่ต้องอัปเดต
+
 <table>
 <tr>
 <td width="50%"><img src="ml-dev/filmos/preview/develop-size.png" alt="เลือกขนาดรูปก่อนล้าง"></td>

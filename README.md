@@ -69,6 +69,8 @@ the frame will get: with a slow film, or an adapted lens stopped down, it can be
 
 ### New in 0.2
 
+**0.2.1** adds the [Canon EOS 1300D](TESTING.md#canon-eos-1300d), for testers. Nothing changes on the other cameras: they don't need to update.
+
 <table>
 <tr>
 <td width="50%"><img src="ml-dev/filmos/preview/develop-size.png" alt="Choosing the print size before developing"></td>
