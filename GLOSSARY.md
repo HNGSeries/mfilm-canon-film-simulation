@@ -19,6 +19,20 @@ _Avoid_: supported, experimental
 **Tester**:
 Someone who owns the camera, tries a build on it and reports in that camera's issue.
 
+## Shooting
+
+**Film stock**:
+One of the films on the shelf, such as a colour negative or a black-and-white film, with its own look and ISO.
+_Avoid_: film (on its own), preset, LUT
+
+**Roll**:
+A run of frames shot on one film stock, up to the roll's length.
+_Avoid_: session, album
+
+**Loading a roll**:
+Choosing a film stock and starting a roll. Where the camera allows it, the camera takes on the film stock's ISO, white balance and picture style. Where it doesn't, the look comes only when the roll is developed.
+_Avoid_: applying a film, selecting a preset
+
 ## Website
 
 **Body**:
