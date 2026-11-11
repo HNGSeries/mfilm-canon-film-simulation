@@ -43,7 +43,7 @@ FILMS = {
         black=(0.03, 0.026, 0.028), white=(0.97, 0.955, 0.92),
         hues=[("orange", "red", 0.06, 1.05), ("green", "yellow", 0.12, 0.85),
               ("blue", "cyan", 0.08, 0.85)],
-        halation=1.0, grain=0.018, grain_size=1.1, soft=0.7,
+        halation=1.0, grain=0.014, grain_size=0.95, soft=0.7,
     ),
     "cinestill800t": dict(
         name="CineStill 800T", iso=800, kind="cine", short="CineStill800T", balance=3200, ev=0.0, sat=0.95,

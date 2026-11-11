@@ -101,8 +101,19 @@ def grain_for(iso, kind):
     return round(amount, 4), round(0.7 + 0.11 * steps, 2)
 
 
+# The professional 400s are finer than their box speed says (#80): the grain
+# of these, amplitude and clump size, in place of grain_for's. Pro 400H just
+# above Portra 400 in films.py; the older Portra 400s a step coarser.
+GRAIN = {
+    "pro400h": (0.016, 1.0),
+    "portra400nc": (0.018, 1.05),
+    "portra400vc": (0.018, 1.05),
+    "portra400uc": (0.018, 1.05),
+}
+
+
 def film(key, path, brand, name, iso, kind):
-    amount, size = grain_for(iso, kind)
+    amount, size = GRAIN.get(key) or grain_for(iso, kind)
     f = dict(
         name=f"{brand} {name}", iso=iso, kind=kind, balance=5500,
         lut=f"{DIR}/{path}.cube", lut_space="srgb",
