@@ -309,6 +309,14 @@ static void apply_film(int index)
 {
     const struct fos_film *f = &fos_films[COERCE(index, 0, fos_nfilms - 1)];
 
+#ifndef CONFIG_PROP_REQUEST_CHANGE
+    /* Magic Lantern can't change Canon's settings on this camera (the 1300D: off in its features.h),
+     * so the roll keeps the camera's ISO, white balance and picture style: the look comes when the
+     * roll is developed. Asking anyway would only wait a second for an answer that never comes. */
+    (void)f;
+    return;
+#endif
+
     int ps = f->picstyle;
     prop_request_change_wait(PROP_PICTURE_STYLE, &ps, 4, 1000);
     msleep(100);
@@ -343,7 +351,7 @@ static void apply_film(int index)
  * is Canon's reading of the exposure (get_ae_value), not of the picture on
  * the screen; that Canon keeps metering with it off wants checking on a
  * camera (the log has the reading each time it is set). Magic Lantern can't
- * set it on the 600D and 1100D (no CONFIG_EXPSIM): there the item isn't shown. */
+ * set it on the 600D, 1100D and 1300D (no CONFIG_EXPSIM): there the item isn't shown. */
 static volatile int expsim_due = 0;     /* set it at the next chance */
 
 static int expsim_get()

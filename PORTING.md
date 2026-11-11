@@ -92,13 +92,18 @@ palette looks, which keys arrive, and whether the darkroom has the memory it nee
    someone has tried it; the boot limit when you know it).
 2. `python3 ml-dev/tools/cameras.py` rewrites the tables in README.md, README.th.md and TESTING.md and
    the cameras CI builds.
+3. If Magic Lantern's support for it came after the base commit every camera builds on (`ed3e7c0`),
+   carry that commit as a camera patch in `ml-dev/fork/ml-patches/<platform>/`, as the 1300D does,
+   rather than moving every camera to a newer Magic Lantern ([ml-patches/README.md](ml-dev/fork/ml-patches/README.md),
+   [ADR 0001](docs/adr/0001-one-magic-lantern-base-with-camera-patches.md)).
 
 ## Which cameras are worth trying
 
 All the DIGIC 4 and 5 cameras build already, and testers have tried most of them
 ([the list](README.md#cameras)): what they need now is someone with a camera still marked *needs a
 tester*, or with one of the known problems there. The closest to the EOS M are the **100D, 650D and
-700D**: the same sensor, the same DIGIC 5. DIGIC 6 and later (80D, 200D, EOS R …) wait for Magic
+700D**: the same sensor, the same DIGIC 5. The 1300D (DIGIC 4+) is the newest: Magic Lantern added it in October 2026, and
+M-Film builds it from a camera patch. DIGIC 6 and later (80D, 200D, EOS R …) wait for Magic
 Lantern itself, and the 7D doesn't build in Magic Lantern's current source.
 
 ## How to go about a port

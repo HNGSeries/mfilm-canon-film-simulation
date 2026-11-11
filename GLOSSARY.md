@@ -16,6 +16,14 @@ _Avoid_: support (for a camera nobody has tried)
 How far M-Film has got on a camera. The statuses are **Working** (tried, works), **Issues** (tried, with a known problem), **Testing** (has a download, nobody has tried it), **Planned** and **No** (Magic Lantern can't run there yet).
 _Avoid_: supported, experimental
 
+**Base**:
+The one Magic Lantern version that every camera is built on.
+_Avoid_: ML version, pin (on its own)
+
+**Camera patch**:
+A change to Magic Lantern that only one camera's build gets, because the base doesn't have it yet.
+_Avoid_: fork patch, hotfix
+
 **Tester**:
 Someone who owns the camera, tries a build on it and reports in that camera's issue.
 

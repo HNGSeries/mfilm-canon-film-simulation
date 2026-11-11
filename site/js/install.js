@@ -32,6 +32,9 @@ addStrings({
     'ig.6.t': 'Run the installer, once', 'ig.6.d': 'Camera off, card in, camera on. Then:',
     'ig.6.d2': 'Magic Lantern\'s installer appears and says when it\'s done (a few seconds). Switch the camera off.',
     'ig.6.tip': 'This doesn\'t replace Canon\'s firmware: it only tells the camera to start Magic Lantern from the card. You only do it once.',
+    'ig.6u.d': 'This camera has no installer on the card: it is done from a computer, with the free program mlinstall, over USB. It takes two clicks: Enable Boot Disk with the camera connected, then Write card boot flags with the card in the reader.',
+    'ig.6u.btn': 'The steps, with mlinstall →',
+    'ig.7.av': 'This camera has no trash button: a short press of Av opens M-Film\'s home.',
     'ig.7.t': 'Switch on: the film shelf appears',
     'ig.7.d': 'Turn the camera on. After a moment you\'ll see M-Film\'s shelf of films. Pick one and press SET: the roll is loaded. Now shoot.',
     'ig.7.tip': 'The delete (trash) button opens M-Film\'s home; PLAY shows the developed prints. Canon\'s own menu is in M-Film: Home → Settings (INFO on Home goes straight there) → Canon menu.',
@@ -77,6 +80,9 @@ addStrings({
     'ig.6.t': 'รันตัวติดตั้ง ครั้งเดียว', 'ig.6.d': 'ปิดกล้อง ใส่การ์ด เปิดกล้อง แล้ว:',
     'ig.6.d2': 'หน้าติดตั้งของ Magic Lantern จะขึ้นมา และบอกเมื่อเสร็จ (ไม่กี่วินาที) แล้วปิดกล้อง',
     'ig.6.tip': 'ขั้นนี้ไม่ได้ลบ firmware ของ Canon แค่บอกให้กล้องเปิด Magic Lantern จากการ์ด ทำครั้งเดียวพอ',
+    'ig.6u.d': 'รุ่นนี้ไม่มีตัวติดตั้งบนการ์ด ต้องติดตั้งจากคอมด้วยโปรแกรมฟรี mlinstall ผ่าน USB กดแค่สองครั้ง: Enable Boot Disk ตอนต่อกล้อง แล้ว Write card boot flags ตอนการ์ดอยู่ในเครื่องอ่าน',
+    'ig.6u.btn': 'ขั้นตอนติดตั้งด้วย mlinstall →',
+    'ig.7.av': 'รุ่นนี้ไม่มีปุ่มถังขยะ กดปุ่ม Av สั้นๆ เพื่อเปิดหน้า Home ของ M-Film',
     'ig.7.t': 'เปิดกล้อง: ชั้นวางฟิล์มจะขึ้นมา',
     'ig.7.d': 'เปิดกล้อง รอสักครู่จะเห็นชั้นวางฟิล์มของ M-Film เลือกม้วนแล้วกด SET ฟิล์มก็ถูกใส่แล้ว เริ่มถ่ายได้เลย',
     'ig.7.tip': 'ปุ่มลบ (ถังขยะ) เปิดหน้า Home ของ M-Film ปุ่ม PLAY ดูรูปที่ล้างแล้ว ส่วนเมนูของ Canon อยู่ใน M-Film: Home → Settings (กด INFO ที่หน้า Home ก็ไปได้ทันที) → Canon menu',
@@ -96,6 +102,11 @@ addStrings({
   },
 });
 
+// cameras Magic Lantern has no ML-SETUP.FIR for: the boot flag is set over USB with mlinstall (TESTING.md)
+const USB_INSTALL = new Set(['1300D.110']);
+// cameras with no trash button, where a short Av press is Home (Magic Lantern's CONFIG_MENU_WITH_AV)
+const AV_HOME = new Set(['1300D.110']);
+
 const sel = document.getElementById('ig-camera');
 let cams = [];
 
@@ -108,7 +119,11 @@ function show() {
   const status = c.status === 'nodark' ? 'working' : c.status;
   const note = (currentLang() === 'th' && c.note_th) || c.note;
   st.className = 'ig-status ' + status;
-  st.textContent = T('ig.st.' + status) + (status === 'issues' && note ? ' ' + note.replace(/`/g, '') : '');
+  const plain = (note || '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/`/g, '');
+  st.textContent = T('ig.st.' + status) + ((status === 'issues' || status === 'testing') && plain ? ' ' + plain : '');
+  document.getElementById('ig-fir').hidden = USB_INSTALL.has(c.platform);
+  document.getElementById('ig-usb').hidden = !USB_INSTALL.has(c.platform);
+  document.getElementById('ig-av').hidden = !AV_HOME.has(c.platform);
   try { localStorage.setItem('mfilm.camera', c.platform); } catch {}
 }
 
