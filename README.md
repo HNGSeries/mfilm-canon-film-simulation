@@ -287,7 +287,7 @@ roll you shot with its film, and develops them at full resolution.
 
 | | Free | Darkrooms Full |
 |---|---|---|
-| Rolls a day | 1, of up to 36 frames (the same roll again that day doesn't count) | as many as you like |
+| Rolls | 3 every 12 hours, of up to 36 frames each (the same roll again in those hours doesn't count) | as many as you like |
 | Every film, full size, EXIF, contact sheets | ✓ | ✓ |
 | Many rolls at once on every core | | ✓ |
 | Price | free, with a Google account | **US$2.99 a month** or **US$14.99 once** (checkout shows your currency), updates included |
