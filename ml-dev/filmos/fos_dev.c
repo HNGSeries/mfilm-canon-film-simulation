@@ -488,6 +488,9 @@ static const float XYZ_CAM[3][3] = M3(6941, -1164, -857, -3825, 11597, 2534, -41
 static const float XYZ_CAM[3][3] = M3(6461, -907, -882, -4300, 12184, 2378, -819, 1944, 5931);
 #elif defined(CONFIG_1100D)
 static const float XYZ_CAM[3][3] = M3(6444, -904, -893, -4563, 12308, 2535, -903, 2016, 6728);
+#elif defined(CONFIG_1300D)
+/* Magic Lantern's (modules/raw_video/mlv_rec/dng/camera_id.h, ColorMatrix2): not checked against a 1300D's RAWs yet */
+static const float XYZ_CAM[3][3] = M3(6939, -1016, -866, -4428, 12473, 2177, -1175, 2178, 6162);
 #else   /* EOS M, 100D, 650D, 700D */
 static const float XYZ_CAM[3][3] = { { 0.6602f, -0.0841f, -0.0939f }, { -0.4472f, 1.2458f, 0.2247f }, { -0.0975f, 0.2039f, 0.6148f } };
 #endif
@@ -502,8 +505,8 @@ static const float RGB_XYZ[3][3] = { { 0.4124564f, 0.3575761f, 0.1804375f }, { 0
 #define WHITE_LEVEL 15488
 #elif defined(CONFIG_5D2)
 #define WHITE_LEVEL 15600
-#elif defined(CONFIG_7D) || defined(CONFIG_600D) || defined(CONFIG_1100D)
-#define WHITE_LEVEL 13584
+#elif defined(CONFIG_7D) || defined(CONFIG_600D) || defined(CONFIG_1100D) || defined(CONFIG_1300D)
+#define WHITE_LEVEL 13584   /* 1300D: the 600D's, not measured on a 1300D yet */
 #elif defined(CONFIG_50D)
 #define WHITE_LEVEL 15763
 #elif defined(CONFIG_60D)

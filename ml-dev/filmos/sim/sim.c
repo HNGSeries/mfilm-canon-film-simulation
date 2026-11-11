@@ -185,7 +185,7 @@ int  fos_port_get(int s)
 {
     /* the screen orientation is only on swivel screens: not on the EOS M, unless FOS_SWIVEL=1 */
     if (s == FS_SCR_FLIP && !getenv("FOS_SWIVEL")) return -1;
-    /* exposure simulation: FOS_NOEXPSIM=1 is a camera Magic Lantern can't set it on (600D, 1100D) */
+    /* exposure simulation: FOS_NOEXPSIM=1 is a camera Magic Lantern can't set it on (600D, 1100D, 1300D) */
     if (s == FS_EXPSIM && getenv("FOS_NOEXPSIM")) return -1;
     return s >= 0 && s < FS_COUNT ? settings[s] : 0;
 }

@@ -1,7 +1,7 @@
 # Testing M-Film on your camera
 
-M-Film was made on the **Canon EOS M**. The same code **builds** for 14 more cameras (100D, 650D,
-700D, 6D, 70D, 5D Mark III on two firmwares, 550D, 600D, 60D, 1100D, 500D, 50D, 5D Mark II), and
+M-Film was made on the **Canon EOS M**. The same code **builds** for 15 more cameras (100D, 650D,
+700D, 6D, 70D, 5D Mark III on two firmwares, 550D, 600D, 60D, 1100D, 1300D, 500D, 50D, 5D Mark II), and
 testers have tried most of them: the [camera table](README.md#cameras) says how far each one got and
 what's still wrong. If yours needs a first tester, or has a known problem you can check, you can help:
 it takes about 20 minutes, and you can always go back.
@@ -34,6 +34,7 @@ From the [latest release](../../releases/latest) (or the newest run under *Actio
 | Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | `M-Film-camera-650D.104.zip` |
 | Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | `M-Film-camera-700D.115.zip` |
 | Canon EOS 1100D / Rebel T3 / Kiss X50 | 1.0.5 | `M-Film-camera-1100D.105.zip` |
+| Canon EOS 1300D / Rebel T6 / Kiss X80 | 1.1.0 | `M-Film-camera-1300D.110.zip` |
 <!-- cameras:end -->
 
 The firmware must match exactly (MENU → last settings tab → *Firmware ver.*).
@@ -56,6 +57,37 @@ its line in the *Modules* tab says why. Tell us what it says.
 4. In Canon's menu set **Image quality** to **RAW** (RAW+JPEG works too) and **Image review** to
    **Off**. The in-camera darkroom develops the RAWs: frames shot as JPEG can't be developed.
 
+### Canon EOS 1300D
+
+The 1300D has no `ML-SETUP.FIR`: Magic Lantern doesn't make one for it. Step 2 above is done from a
+computer instead, with [mlinstall](https://github.com/petabyt/mlinstall/releases) (free, GPL), as Magic
+Lantern's developers suggest ([magiclantern_simplified#325](https://github.com/reticulatedpines/magiclantern_simplified/issues/325)).
+Magic Lantern's 1300D port is new (October 2026) and marked experimental by its authors.
+
+1. Format a card in the camera and copy the zip's files to it, as in step 1.
+2. Camera on, connected to the computer by USB. In mlinstall, wait until it finds the camera, then
+   **Enable Boot Disk** (*Enable Custom Boot* in some versions). This tells the camera to start Magic
+   Lantern from a card. It doesn't need administrator rights.
+3. Camera off, card in the computer's reader. In mlinstall's card tab, **Write card boot flags**
+   (`EOS_DEVELOP` and `BOOTDISK`). This one needs administrator rights (Windows: *Run as
+   administrator*; Mac and Linux: `sudo`). It writes to the first card called `EOS_DIGITAL` it finds:
+   have only that card plugged in.
+4. Card back in the camera, camera on, then step 4 above.
+
+Good to know before you start:
+- **Two firmwares called 1.1.0.** Canon shipped the 1300D's 1.1.0 in two builds, and Magic Lantern may
+  not tell them apart ([magiclantern_simplified#310](https://github.com/reticulatedpines/magiclantern_simplified/issues/310)).
+  If the camera hangs at power on: battery out, put the old card back. Tell us either way: `ML/FILMROLL.LOG`
+  and Magic Lantern's crash log, if there is one, say which build yours is.
+- **Loading a roll doesn't change the camera's settings here.** Magic Lantern can't change ISO, white
+  balance or picture style on the 1300D yet, so set ISO yourself. The film's look comes when the roll is
+  developed, in the camera or in Darkrooms.
+- **No trash button:** a short press of **Av** opens Home.
+- **Don't add Magic Lantern's RAW video modules** (`mlv_lite` and the like) to the card: Magic Lantern
+  has reports of them damaging 1300Ds for good
+  ([magiclantern_simplified#199](https://github.com/reticulatedpines/magiclantern_simplified/pull/199)).
+  The M-Film zip leaves them out.
+
 ## 3. What to try, and what to tell us
 
 Go through these and note what happens (a photo of the screen helps a lot):
@@ -65,7 +97,7 @@ Go through these and note what happens (a photo of the screen helps a lot):
 - [ ] **Colours** look right (shelf canisters: Portra yellow, Ektar red; Settings → Advanced → Screen colour has a chart).
 - [ ] **Buttons**: the dial and arrows move along the shelf, SET loads a film, MENU goes back,
       half-shutter returns to the camera. Which buttons do nothing?
-- [ ] **Trash** opens Home; **PLAY** opens the prints instead of Canon's playback.
+- [ ] **Trash** (a short Av press on the 1300D) opens Home; **PLAY** opens the prints instead of Canon's playback.
 - [ ] Load a roll and shoot a few frames **through the viewfinder**, and a few in **LiveView**.
       Does the frame count go up? Is the HUD drawn in LiveView?
 - [ ] *Settings → Viewfinder*: try **Minimal**, **Rangefinder** and **Clean**. Is each drawn whole, and does
@@ -155,7 +187,8 @@ which camera and firmware, and whether the card light stayed on.
 ## 4. Remove it
 
 Format the card in the camera. To stop the camera looking for Magic Lantern at all, run
-`ML-SETUP.FIR` again from *Firmware ver.* and choose to remove the boot flag.
+`ML-SETUP.FIR` again from *Firmware ver.* and choose to remove the boot flag. On the 1300D, connect it to
+mlinstall and **Disable Boot Disk**.
 
 Thank you! Every camera someone tries moves it from *testing* to *working* in the
 [list on the front page](README.md#cameras).

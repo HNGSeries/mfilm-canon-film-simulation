@@ -91,15 +91,22 @@
 
     <li id="s6">
       <h3 data-i18n="ig.6.t">Run the installer, once</h3>
+      <div id="ig-fir">
       <p data-i18n="ig.6.d">Camera off, card in, camera on. Then:</p>
       <div class="path"><span>MENU</span><i>→</i><span>Firmware ver.</span><i>→</i><span>SET</span><i>→</i><span>OK</span></div>
       <p data-i18n="ig.6.d2">Magic Lantern's installer appears and says when it's done (a few seconds). Switch the camera off.</p>
+      </div>
+      <div id="ig-usb" hidden>
+      <p data-i18n="ig.6u.d">This camera has no installer on the card: it is done from a computer, with the free program mlinstall, over USB. It takes two clicks: Enable Boot Disk with the camera connected, then Write card boot flags with the card in the reader.</p>
+      <a class="btn ghost" href="https://github.com/HNGSeries/mfilm-canon-film-simulation/blob/main/TESTING.md#canon-eos-1300d" data-i18n="ig.6u.btn">The steps, with mlinstall →</a>
+      </div>
       <p class="tip" data-i18n="ig.6.tip">This doesn't replace Canon's firmware: it only tells the camera to start Magic Lantern from the card. You only do it once.</p>
     </li>
 
     <li id="s7">
       <h3 data-i18n="ig.7.t">Switch on: the film shelf appears</h3>
       <p data-i18n="ig.7.d">Turn the camera on. After a moment you'll see M-Film's shelf of films. Pick one and press SET: the roll is loaded. Now shoot.</p>
+      <p class="tip" id="ig-av" hidden data-i18n="ig.7.av">This camera has no trash button: a short press of Av opens M-Film's home.</p>
       <p class="tip" data-i18n="ig.7.tip">The delete (trash) button opens M-Film's home; PLAY shows the developed prints. Canon's own menu is in M-Film: Home → Settings (INFO on Home goes straight there) → Canon menu.</p>
       <a class="btn ghost" href="./" data-i18n="ig.7.try">Practise on the camera in your browser first →</a>
     </li>

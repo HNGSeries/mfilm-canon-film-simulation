@@ -1,0 +1,9 @@
+# Magic Lantern has reports of mlv_lite damaging 1300Ds for good (reticulatedpines/magiclantern_simplified#199).
+# The film OS needs none of the RAW video modules; the 1300D's modules.included has none of them today:
+# this is so that it stays that way.
+mlv_lite
+mlv_rec
+mlv_play
+mlv_snd
+raw_vid
+raw_vidx

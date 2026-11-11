@@ -8,7 +8,7 @@
 // What the film OS sees of each (web.c, web_config): the name, a DSLR (no
 // LiveView until the LV button; the top plate on the back screen meanwhile),
 // a screen that swivels (Screen orientation in Settings), and whether Magic
-// Lantern can set exposure simulation there (not on the 600D and 1100D).
+// Lantern can set exposure simulation there (not on the 600D, 1100D and 1300D).
 
 // ---------------------------------------------------------------- the cameras
 
@@ -88,6 +88,7 @@ export const BODIES = [
   rebel('650d', '650D.104', 'Canon EOS 650D', '650D / T4i', { swivel: true }),
   rebel('700d', '700D.115', 'Canon EOS 700D', '700D / T5i', { swivel: true }),
   rebel('1100d', '1100D.105', 'Canon EOS 1100D', '1100D / T3', { expsim: false }),
+  rebel('1300d', '1300D.110', 'Canon EOS 1300D', '1300D / T6', { expsim: false }),
 ];
 
 // The photos, 1400 px wide with room above the body for the shutter button (which a back

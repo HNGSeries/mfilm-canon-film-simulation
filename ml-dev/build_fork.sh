@@ -70,6 +70,16 @@ sed -i 's/\r$//' "$SRC"/src/filmroll.{c,h} "$SRC"/src/filmhook.c "$SRC"/src/fos*
 VERSION=$(tr -d ' \r\n' < "$HERE/../VERSION")
 printf '#define MFILM_VERSION "%s"\n' "$VERSION" > "$SRC/src/fos_version.h"
 echo "M-Film $VERSION"
+# this camera's own changes to Magic Lantern, where the base commit hasn't got them (fork/ml-patches/README.md)
+for P in "$HERE"/fork/ml-patches/"$PLAT"/*.patch; do
+    [ -e "$P" ] || continue
+    if git -C "$SRC" apply --reverse --check "$P" 2> /dev/null; then
+        echo "camera patch $(basename "$P"): already in the checkout"
+    else
+        git -C "$SRC" apply --whitespace=nowarn "$P" || { echo "camera patch $(basename "$P") doesn't apply to $SRC"; exit 1; }
+        echo "camera patch $(basename "$P"): applied"
+    fi
+done
 python3 "$HERE/fork/apply_fork.py" "$SRC" "$PLAT" $NODARK $MODULE
 
 cd "$SRC/platform/$PLAT"
@@ -106,6 +116,15 @@ mkdir -p "$HERE/out" && echo "$USED" > "$HERE/out/.size-$PLAT$TAG"
 
 rm -rf "$OUT" && mkdir -p "$OUT"
 (cd "$OUT" && unzip -q "$SRC/platform/$PLAT/$ZIP")
+# modules that must never reach this camera's card (fork/ml-patches/<camera>/no-modules)
+NOMOD="$HERE/fork/ml-patches/$PLAT/no-modules"
+if [ -f "$NOMOD" ]; then
+    for M in $(sed 's/#.*//' "$NOMOD"); do
+        if [ -n "$(find "$OUT" -iname "$M.mo")" ]; then
+            echo "$M.mo is in the card files, and must not be on a $PLAT ($NOMOD)"; exit 1
+        fi
+    done
+fi
 
 if [ -n "$MODULE" ]; then
     # the film OS as ML/modules/filmos.mo, built for this camera only (fork/module/Makefile)

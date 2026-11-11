@@ -24,6 +24,7 @@ let CAMERAS = [
   ['5D3.123', 'Canon EOS 5D Mark III (firmware 1.2.3)', 'issues'],
   ['5D2.212', 'Canon EOS 5D Mark II', 'issues'],
   ['1100D.105', 'Canon EOS 1100D / Rebel T3 / Kiss X50', 'testing'],
+  ['1300D.110', 'Canon EOS 1300D / Rebel T6 / Kiss X80', 'testing'],
 ];
 const REPO = 'https://github.com/HNGSeries/mfilm-canon-film-simulation';
 const DONATE = 'https://darkrooms-licence.suphalapruksasathit.workers.dev/v1/donate';
