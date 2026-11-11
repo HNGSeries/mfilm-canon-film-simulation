@@ -1,9 +1,12 @@
-"""Write fos_looks.c, the film looks the camera develops with, from
+"""Write fos_looks.c, the looks of the films built into fos_film.c, from
 ml-dev/films/films.py, so the camera and the desktop darkroom can't drift apart.
 
     python3 genlooks.py            # -> ../fos_looks.c
 
-Run it again after changing a film in films/films.py.
+Only the built-in films, in fos_film.c's order: the others carry their look
+in ML/DATA/FOSFILMS.BIN (genfilms.py), and the camera has no memory to spare
+for a second copy. Run it again after changing a built-in film in
+films/films.py.
 """
 
 import sys
@@ -11,7 +14,9 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1] / "films"))
+sys.path.insert(0, str(HERE))
 from films import FILMS  # noqa: E402
+from genfilms import builtin_keys  # noqa: E402
 
 HUES = ["red", "orange", "yellow", "green", "cyan", "blue", "magenta"]
 
@@ -50,7 +55,7 @@ def main():
            '',
            'const struct fos_look fos_looks[] =',
            '{']
-    out += [look(k, d) for k, d in FILMS.items()]
+    out += [look(k, FILMS[k]) for k in builtin_keys()]
     out += ['};', 'const int fos_nlooks = sizeof(fos_looks) / sizeof(fos_looks[0]);', '']
     dst = HERE.parent / "fos_looks.c"
     dst.write_text("\n".join(out))
