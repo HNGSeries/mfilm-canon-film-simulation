@@ -710,7 +710,7 @@ static const char *shelf_name(int g)
 
 static void draw_static(int alpha)
 {
-    struct hint h[] = { { "<>", "Film" }, { "^v", "Shelf" }, { "INFO", "Exposures" },
+    struct hint h[] = { { "<>", "Film" }, { "^v", "Shelf" }, { FOS_KEY_INFO, "Exposures" },
                         { "SET", roll_in_progress() ? (ui_realistic() ? "Rewind & load" : "Finish & load") : "Load" }, { "MENU", "Back" },
                         { "PLAY", "Sample" } };
     if (alpha >= OPAQUE) ui_hints(h, has_samples ? 6 : 5);

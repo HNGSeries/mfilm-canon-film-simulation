@@ -89,6 +89,32 @@ extern struct fos_font fos_font_xs, fos_font_sm, fos_font_md, fos_font_mdb,
 int fos_fonts_load(const uint8_t *blob, int size);
 int fos_fonts_ready();
 
+/* Big UI: a camera whose screen has few pixels (the 1100D's 2.7" is about
+ * 320 x 240 for our 720 x 480) gets every small font one step up, so the
+ * film OS is readable there. No font is added: xs and sm draw with mdb and md,
+ * md and mdb with lg (fos_fonts_load), and the layouts make room (FOS_BIG). */
+#if defined(CONFIG_1100D) && !defined(FOS_BIGUI)
+#define FOS_BIGUI
+#endif
+/* The buttons' names as they are printed on the camera: on the 1100D INFO
+ * is DISP, and the trash button is Av (it erases in Canon's playback) */
+#if defined(CONFIG_1100D) || defined(FOS_KEY_DISP)
+#define FOS_KEY_INFO  "DISP"
+#define FOS_KEY_TRASH "AV"
+#else
+#define FOS_KEY_INFO  "INFO"
+#define FOS_KEY_TRASH "TRASH"
+#endif
+
+/* xs, sm and mdb as they are drawn without the big UI: for what is a picture
+ * rather than something to read (a dial's scale, a viewfinder in miniature) */
+extern struct fos_font fos_font_xs_fine, fos_font_sm_fine, fos_font_mdb_fine;
+#ifdef FOS_BIGUI
+#define FOS_BIG(normal, big) (big)
+#else
+#define FOS_BIG(normal, big) (normal)
+#endif
+
 /* characters beyond ASCII in our strings (see tools/mkfont.py) */
 #define T_DOT       "\x80"      /* middle dot */
 #define T_DEG       "\x81"
@@ -198,6 +224,9 @@ void fos_tri(struct fos_canvas *cv, int cx, int cy, int size, int dir, fcol c, i
 /* text: y is the baseline; track is extra spacing in 1/16 px */
 int fos_text(struct fos_canvas *cv, const struct fos_font *f, int x, int y, const char *s, fcol c, int alpha, int track);
 int fos_text_w(const struct fos_font *f, const char *s, int track);
+/* fos_text, cut with an ellipsis where it would run past maxw pixels */
+int fos_text_fit(struct fos_canvas *cv, const struct fos_font *f, int x, int y, const char *s, fcol c, int alpha, int track, int maxw);
+int fos_text_cfit(struct fos_canvas *cv, const struct fos_font *f, int cx, int y, const char *s, fcol c, int alpha, int track, int maxw);
 int fos_text_c(struct fos_canvas *cv, const struct fos_font *f, int cx, int y, const char *s, fcol c, int alpha, int track);
 int fos_text_r(struct fos_canvas *cv, const struct fos_font *f, int rx, int y, const char *s, fcol c, int alpha, int track);
 

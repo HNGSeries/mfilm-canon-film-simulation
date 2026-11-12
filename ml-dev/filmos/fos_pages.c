@@ -144,7 +144,7 @@ static void home_bake()
     ui_bg_plain();
     ui_to_bg(1);
     ui_status_bar("HOME");
-    struct hint h[] = { { "^v", "Select" }, { "SET", "Open" }, { "INFO", "Settings" }, { "PLAY", "Prints" }, { "MENU", "Camera" } };
+    struct hint h[] = { { "^v", "Select" }, { "SET", "Open" }, { FOS_KEY_INFO, "Settings" }, { "PLAY", "Prints" }, { "MENU", "Camera" } };
     ui_hints(h, 5);
     film_card();
     ui_to_bg(0);
@@ -278,13 +278,13 @@ static void home_row(int i, int selected)
         fos_rrect_line(cv, LIST_X, y + 4, LIST_W, h - 8, 12, 1, selected ? C_ACCENT : C_ACCENT2, OPAQUE);
         ui_icon(icon, x + 14, y + h / 2, C_ACCENT, OPAQUE);
         fos_text(cv, &fos_font_lg, x + 46, y + 46, title, C_TEXT, OPAQUE, 0);
-        fos_text(cv, &fos_font_sm, x + 46, y + 70, sub, C_TEXT2, OPAQUE, 0);
+        fos_text_fit(cv, &fos_font_sm, x + 46, y + 70, sub, C_TEXT2, OPAQUE, 0, FOS_BIG(FOS_W, LIST_X + LIST_W - 36 - (x + 46)));
         fos_tri(cv, LIST_X + LIST_W - 22, y + h / 2, 9, 0, C_ACCENT, OPAQUE);
         return;
     }
     ui_icon(icon, x + 14, y + h / 2, selected ? C_ACCENT : C_TEXT3, OPAQUE);
     fos_text(cv, &fos_font_mdb, x + 46, y + 31, title, selected ? C_TEXT : C_TEXT2, OPAQUE, 0);
-    fos_text(cv, &fos_font_sm, x + 46, y + 52, sub, C_TEXT3, OPAQUE, 0);
+    fos_text_fit(cv, &fos_font_sm, x + 46, y + 52, sub, C_TEXT3, OPAQUE, 0, FOS_BIG(FOS_W, LIST_X + LIST_W - 36 - (x + 46)));
     fos_tri(cv, LIST_X + LIST_W - 22, y + h / 2, 8, 0, selected ? C_TEXT2 : FC(RAMP_GRAY, 60), OPAQUE);
 }
 
@@ -682,7 +682,7 @@ int page_update(int dt)
 
 static void preview_caption(const char *s)
 {
-    fos_text_c(cv, &fos_font_xs, PV_X + PV_W / 2, PV_Y + PV_H - 14, s, C_TEXT3, OPAQUE, 48);
+    fos_text_cfit(cv, &fos_font_xs, PV_X + PV_W / 2, PV_Y + PV_H - 14, s, C_TEXT3, OPAQUE, FOS_BIG(48, 16), FOS_BIG(FOS_W, PV_W - 16));
 }
 
 /* a dusk scene through the viewfinder, with the HUD as set */
@@ -724,13 +724,13 @@ static void preview_finder()
             for (int i = 0; i < 10; i++)
                 fos_fill(cv, sx + sw - 12, sy + 8 + i * 12, 5, 1, FC(RAMP_GRAY, 120));
             fos_tri(cv, sx + sw - 16, sy + 8 + 5 * 12, 6, 0, FC(RAMP_RED, 150), OPAQUE);
-            fos_text(cv, &fos_font_xs, sx + 50, sy + sh - 3, "125   f4   12", led, OPAQUE, 16);
-            if (wind) fos_text(cv, &fos_font_xs, sx + 6, sy + sh - 3, "WIND", FC(RAMP_RED, 150), OPAQUE, 16);
+            fos_text(cv, &fos_font_xs_fine, sx + 50, sy + sh - 3, "125   f4   12", led, OPAQUE, 16);
+            if (wind) fos_text(cv, &fos_font_xs_fine, sx + 6, sy + sh - 3, "WIND", FC(RAMP_RED, 150), OPAQUE, 16);
             if (batt) fos_rrect_line(cv, sx + sw - 16, sy + sh - 24, 10, 6, 1, 1, FC(RAMP_GRAY, 150), OPAQUE);
             break;
         case FOS_HUD_MINIMAL:
             fos_fill(cv, sx + sw - 96, sy + sh - 14, 96, 14, black);
-            fos_text(cv, &fos_font_xs, sx + sw - 74, sy + sh - 3, "f4   12/36", led, OPAQUE, 16);
+            fos_text(cv, &fos_font_xs_fine, sx + sw - 74, sy + sh - 3, "f4   12/36", led, OPAQUE, 16);
             if (batt) fos_rrect_line(cv, sx + sw - 91, sy + sh - 10, 10, 6, 1, 1, FC(RAMP_GRAY, 150), OPAQUE);
             break;
         case FOS_HUD_RANGE:
@@ -744,13 +744,13 @@ static void preview_finder()
             fos_fill(cv, sx, sy + sh - 14, sw, 14, black);
             fos_fill(cv, sx + 84, sy + sh - 7, 60, 1, FC(RAMP_GRAY, 110));
             fos_tri(cv, sx + 122, sy + sh - 10, 5, 1, FC(RAMP_RED, 150), OPAQUE);
-            fos_text(cv, &fos_font_xs, sx + 22, sy + sh - 3, "125  f4", led, OPAQUE, 16);
-            fos_text(cv, &fos_font_xs, sx + 164, sy + sh - 3, "12/36", led, OPAQUE, 16);
+            fos_text(cv, &fos_font_xs_fine, sx + 22, sy + sh - 3, "125  f4", led, OPAQUE, 16);
+            fos_text(cv, &fos_font_xs_fine, sx + 164, sy + sh - 3, "12/36", led, OPAQUE, 16);
             if (batt) fos_rrect_line(cv, sx + 5, sy + sh - 10, 10, 6, 1, 1, FC(RAMP_GRAY, 150), OPAQUE);
             break;
         case FOS_HUD_CLEAN:
             fos_fill(cv, sx + sw - 52, sy + sh - 14, 52, 14, black);
-            fos_text(cv, &fos_font_xs, sx + sw - 42, sy + sh - 3, "12/36", FC(RAMP_RED, 150), OPAQUE, 16);
+            fos_text(cv, &fos_font_xs_fine, sx + sw - 42, sy + sh - 3, "12/36", FC(RAMP_RED, 150), OPAQUE, 16);
             break;
     }
     if (focus && (style == FOS_HUD_CLASSIC || style == FOS_HUD_MINIMAL))
@@ -770,8 +770,8 @@ static void preview_finder()
                      style == FOS_HUD_STYLES ? "" :
                      style == FOS_HUD_CLEAN ? "Nothing over the picture" :
                      fos_port_get(FS_LEDS) ? "LEDs light on half-press" : "LEDs always lit";
-    fos_text_c(cv, &fos_font_sm, PV_X + PV_W / 2, sy + sh + 32, about[fos_clamp(style, 0, FOS_HUD_STYLES)], C_TEXT2, OPAQUE, 0);
-    fos_text_c(cv, &fos_font_sm, PV_X + PV_W / 2, sy + sh + 54, l2, C_TEXT3, OPAQUE, 0);
+    fos_text_cfit(cv, &fos_font_sm, PV_X + PV_W / 2, sy + sh + 32, about[fos_clamp(style, 0, FOS_HUD_STYLES)], C_TEXT2, OPAQUE, 0, FOS_BIG(FOS_W, PV_W - 16));
+    fos_text_cfit(cv, &fos_font_sm, PV_X + PV_W / 2, sy + sh + 54, l2, C_TEXT3, OPAQUE, 0, FOS_BIG(FOS_W, PV_W - 16));
     preview_caption("LIVEVIEW PREVIEW");
 }
 
@@ -790,8 +790,8 @@ static void preview_size()
     }
     static const char *const what[FOS_SIZES] = { "720 " T_TIMES " 480, the screen's", "A third of the sensor each way", "Half the sensor each way" };
     static const char *const more[FOS_SIZES] = { "The quickest. No zoom.", "About 2 MP from 18. Zooms in.", "About 4.5 MP from 18. Slowest." };
-    fos_text_c(cv, &fos_font_sm, cx, by + 28, what[sel], C_TEXT2, OPAQUE, 0);
-    fos_text_c(cv, &fos_font_sm, cx, by + 50, more[sel], C_TEXT3, OPAQUE, 0);
+    fos_text_cfit(cv, &fos_font_sm, cx, by + 28, what[sel], C_TEXT2, OPAQUE, 0, FOS_BIG(FOS_W, PV_W - 16));
+    fos_text_cfit(cv, &fos_font_sm, cx, by + 50, more[sel], C_TEXT3, OPAQUE, 0, FOS_BIG(FOS_W, PV_W - 16));
     preview_caption("PRINT SIZE");
 }
 
@@ -805,7 +805,7 @@ static void preview_stamp()
     fos_disc(cv, (x + w - 46) * 256, (y + 34) * 256, 13 * 256, FC(RAMP_GRAY, 250), OPAQUE);
     if (fos_port_get(FS_STAMP))
         fos_text_r(cv, &fos_font_mdb, x + w - 10, y + h - 9, "'26 11 09", FC(RAMP_ORANGE, 200), OPAQUE, 24);
-    fos_text_c(cv, &fos_font_sm, PV_X + PV_W / 2, y + h + 40, fos_port_get(FS_STAMP) ? "The day, on every print" : "No date on the prints", C_TEXT2, OPAQUE, 0);
+    fos_text_cfit(cv, &fos_font_sm, PV_X + PV_W / 2, y + h + 40, fos_port_get(FS_STAMP) ? "The day, on every print" : "No date on the prints", C_TEXT2, OPAQUE, 0, FOS_BIG(FOS_W, PV_W - 16));
     preview_caption("DATE STAMP");
 }
 
@@ -815,8 +815,8 @@ static void preview_mode()
     int cx = PV_X + PV_W / 2, real = ui_realistic();
     ui_icon(ICON_ROLL, cx, PV_Y + 60, C_ACCENT, OPAQUE);
     fos_text_c(cv, &fos_font_lg, cx, PV_Y + 116, real ? "Realistic" : "Basic", C_TEXT, OPAQUE, 0);
-    fos_text_c(cv, &fos_font_sm, cx, PV_Y + 146, real ? "Rewind the roll, as on a film" : "Shoot the roll, develop it.", C_TEXT2, OPAQUE, 0);
-    fos_text_c(cv, &fos_font_sm, cx, PV_Y + 168, real ? "camera, before it is developed." : "Nothing to rewind.", C_TEXT2, OPAQUE, 0);
+    fos_text_cfit(cv, &fos_font_sm, cx, PV_Y + 146, real ? "Rewind the roll, as on a film" : "Shoot the roll, develop it.", C_TEXT2, OPAQUE, 0, FOS_BIG(FOS_W, PV_W - 16));
+    fos_text_cfit(cv, &fos_font_sm, cx, PV_Y + 168, real ? "camera, before it is developed." : "Nothing to rewind.", C_TEXT2, OPAQUE, 0, FOS_BIG(FOS_W, PV_W - 16));
     preview_caption("FILM MODE");
 }
 
@@ -835,7 +835,7 @@ static void preview_lens()
         snprintf(b, sizeof(b), "WIDEST THE LENS OPENS");
     else
         snprintf(b, sizeof(b), "SET ON THE RING");
-    fos_text_c(cv, &fos_font_xs, cx, cy + 148, b, C_ACCENT2, OPAQUE, 32);
+    fos_text_cfit(cv, &fos_font_xs, cx, cy + 148, b, C_ACCENT2, OPAQUE, 32, FOS_BIG(FOS_W, PV_W - 16));
     preview_caption("APERTURE");
 }
 
@@ -852,7 +852,7 @@ static void preview_chart()
     {
         int x = x0 + (i % 4) * (sw + gap), y = y0 + (i / 4) * 74;
         fos_rrect(cv, x, y, sw, 44, 8, FC(inks[i].ramp, inks[i].level), OPAQUE);
-        fos_text_c(cv, &fos_font_xs, x + sw / 2, y + 60, inks[i].name, C_TEXT3, OPAQUE, 16);
+        fos_text_cfit(cv, &fos_font_xs, x + sw / 2, y + 60, inks[i].name, C_TEXT3, OPAQUE, 16, FOS_BIG(FOS_W, PV_W - 16));
     }
     /* eleven steps from black to white: the darkest two should still differ */
     int wy = y0 + 160, ww = PV_W - 28;
@@ -923,32 +923,32 @@ static void preview_support()
     {
         ui_aperture(cx, PV_Y + 80, 40, 1700, 5000);
         fos_text_c(cv, &fos_font_lg, cx, PV_Y + 162, "Thank you", C_TEXT, OPAQUE, 0);
-        fos_text_c(cv, &fos_font_sm, cx, PV_Y + 186, "for shooting film with " FOS_NAME, C_TEXT2, OPAQUE, 0);
+        fos_text_cfit(cv, &fos_font_sm, cx, PV_Y + 186, "for shooting film with " FOS_NAME, C_TEXT2, OPAQUE, 0, FOS_BIG(FOS_W, PV_W - 16));
     }
     else if (nqr == 1)
         draw_qr(&qrs[0], cx, PV_Y + 116, 200 / (qrs[0].n + 4), PV_Y + 238);
     else
         for (int i = 0; i < 2; i++)
             draw_qr(&qrs[i], cx + (i ? 62 : -62), PV_Y + 116, 112 / (qrs[i].n + 4), PV_Y + 190);
-    fos_text_c(cv, &fos_font_xs, cx, PV_Y + PV_H - 14, "SUPPORT", C_TEXT3, OPAQUE, 48);
+    fos_text_cfit(cv, &fos_font_xs, cx, PV_Y + PV_H - 14, "SUPPORT", C_TEXT3, OPAQUE, 48, FOS_BIG(FOS_W, PV_W - 16));
 }
 
 static void preview_about()
 {
     int cx = PV_X + PV_W / 2;
-    fos_text_c(cv, &fos_font_xs, cx, PV_Y + PV_H - 14, "ABOUT", C_TEXT3, OPAQUE, 48);
+    fos_text_cfit(cv, &fos_font_xs, cx, PV_Y + PV_H - 14, "ABOUT", C_TEXT3, OPAQUE, 48, FOS_BIG(FOS_W, PV_W - 16));
     ui_aperture(cx, PV_Y + 56, 40, 1700, 5000);
     fos_text_c(cv, &fos_font_lg, cx, PV_Y + 132, FOS_NAME, C_TEXT, OPAQUE, 64);
     char m[48];
     snprintf(m, sizeof(m), "Film OS for the %s", fos_port_model());
-    fos_text_c(cv, &fos_font_sm, cx, PV_Y + 156, m, C_TEXT2, OPAQUE, 0);
+    fos_text_cfit(cv, &fos_font_sm, cx, PV_Y + 156, m, C_TEXT2, OPAQUE, 0, FOS_BIG(FOS_W, PV_W - 16));
     /* who made it, then what it stands on */
-    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 186, FOS_NAME " BY HNGSERIES", C_TEXT2, OPAQUE, 24);
+    fos_text_cfit(cv, &fos_font_xs, cx, PV_Y + 186, FOS_NAME " BY HNGSERIES", C_TEXT2, OPAQUE, 24, FOS_BIG(FOS_W, PV_W - 16));
     char b[48];
     snprintf(b, sizeof(b), "VERSION %s " T_DOT " %s", fos_port_version(), __DATE__);
-    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 204, b, C_TEXT3, OPAQUE, 24);
-    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 222, "MAGIC LANTERN INSIDE", C_TEXT3, OPAQUE, 24);
-    fos_text_c(cv, &fos_font_xs, cx, PV_Y + 240, "BARLOW TYPEFACE " T_DOT " SIL OFL", C_TEXT3, OPAQUE, 24);
+    fos_text_cfit(cv, &fos_font_xs, cx, PV_Y + 204, b, C_TEXT3, OPAQUE, 24, FOS_BIG(FOS_W, PV_W - 16));
+    fos_text_cfit(cv, &fos_font_xs, cx, PV_Y + 222, "MAGIC LANTERN INSIDE", C_TEXT3, OPAQUE, 24, FOS_BIG(FOS_W, PV_W - 16));
+    fos_text_cfit(cv, &fos_font_xs, cx, PV_Y + 240, "BARLOW TYPEFACE " T_DOT " SIL OFL", C_TEXT3, OPAQUE, 24, FOS_BIG(FOS_W, PV_W - 16));
 }
 
 /* an on / off switch; k = 0..1 where the knob is */
@@ -1084,7 +1084,7 @@ void page_draw()
         /* help for the selected row, fading in */
         float a = clampf(help_fade / 260.0f, 0, 1);
         if (!ui_toast_up())
-            fos_text(cv, &fos_font_sm, P_X + 22, HINTS_Y - 14, items[page_sel].help, C_TEXT3, (int) (ease_out(a) * 256), 0);
+            fos_text_fit(cv, &fos_font_sm, P_X + 22, HINTS_Y - 14, items[page_sel].help, C_TEXT3, (int) (ease_out(a) * 256), 0, FOS_BIG(FOS_W, FOS_W - P_X - 22 - 16));
     }
     if (!(what & D_LIST)) return;
     fos_clip(cv, 0, P_LIST_Y - 2, PV_X - 4, P_LIST_Y + P_ROWS * P_ROW_H + 2);
@@ -1228,13 +1228,13 @@ static void counter_dial(float frames)
         int x = cx + fos_cos(a) * r / 16, y = cy + fos_sin(a) * r / 16;
         float near = clampf(1 - absf(rel) / 3.0f, 0, 1);
         if (f == -2)
-            fos_text_c(cv, &fos_font_mdb, x >> 8, (y >> 8) + 7, "S", FC(RAMP_RED, 140 + (int) (near * 40)), OPAQUE, 0);
+            fos_text_c(cv, &fos_font_mdb_fine, x >> 8, (y >> 8) + 7, "S", FC(RAMP_RED, 140 + (int) (near * 40)), OPAQUE, 0);
         else if (f >= 0 && f % 2 == 0)
         {
             char b[4];
             snprintf(b, sizeof(b), "%d", f);
             fcol c = near > 0.5f ? C_TEXT : FC(RAMP_GRAY, 120 + (int) (near * 100));
-            fos_text_c(cv, &fos_font_mdb, x >> 8, (y >> 8) + 7, b, c, OPAQUE, 0);
+            fos_text_c(cv, &fos_font_mdb_fine, x >> 8, (y >> 8) + 7, b, c, OPAQUE, 0);
         }
         else if (f > 0)
             fos_disc(cv, x, y, 2 * 256, FC(RAMP_GRAY, 120), OPAQUE);

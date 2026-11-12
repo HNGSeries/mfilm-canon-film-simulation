@@ -180,7 +180,7 @@ static void dark_hints()
     int n = 0;
     if (r && is_waiting(r)) h[n++] = (struct hint) { "SET", marked[dk_sel] ? "Unmark" : "Mark" };
     else if (r && has_prints(r)) h[n++] = (struct hint) { "SET", "Prints" };
-    if (count_waiting(0)) h[n++] = (struct hint) { "INFO", dev };
+    if (count_waiting(0)) h[n++] = (struct hint) { FOS_KEY_INFO, dev };
     if (r && !r->in_camera) h[n++] = (struct hint) { "<", "Delete" };
     h[n++] = (struct hint) { "PLAY", "Prints" };
     h[n++] = (struct hint) { "MENU", "Back" };
@@ -1117,7 +1117,7 @@ static void develop_hints()
     {
         x += ui_keycap(x, base, "MENU") + 8;
         x += fos_text(cv, &fos_font_sm, x, base - 1, "Stop", SL_TEXT2, OPAQUE, 0) + 22;
-        x += ui_keycap(x, base, "INFO") + 8;
+        x += ui_keycap(x, base, FOS_KEY_INFO) + 8;
         fos_text(cv, &fos_font_sm, x, base - 1, dv_dimmed ? "Any button: screen back" : "Dim the screen", SL_TEXT2, OPAQUE, 0);
         fos_text_r(cv, &fos_font_sm, FOS_W - 24, base - 1, "Keep the camera on", SL_TEXT3, OPAQUE, 0);
     }
@@ -1592,14 +1592,17 @@ void prints_draw()
         int x = 20 + ui_photo_text(&fos_font_xs, 20, y + 28, b, 1, 0);
         snprintf(b, sizeof(b), "%s " T_DOT " frame %d of %d", fos_films[r->film].name, pv_cur, pv_frames);
         x += 14 + ui_photo_text(&fos_font_sm, x + 14, y + 28, b, 0, 0);
+        const char *hint = pv_note[0] ? pv_note : zoomed ? "ARROWS MOVE   SET OUT" :
+                           !pv_mode ? "SET OPEN   WHEEL ROLLS" : pv_znsteps ? "WHEEL ZOOM   SET SHEET" : "SET SHEET   " FOS_KEY_INFO " HIDE";
+        int hint_w = fos_text_w(&fos_font_xs, hint, pv_note[0] ? 40 : 0);
         if (m && m->when[0])
         {
             snprintf(c, sizeof(c), "%s%s%s", m->when, m->fstop[0] ? "  f/" : "", m->fstop);
-            ui_photo_text(&fos_font_sm, x + 14, y + 28, c, 0, 0);
+            /* with the big UI's fonts it could run into the hint: then it is left out */
+            if (!FOS_BIG(0, 1) || x + 14 + fos_text_w(&fos_font_sm, c, 0) <= FOS_W - 20 - hint_w - 16)
+                ui_photo_text(&fos_font_sm, x + 14, y + 28, c, 0, 0);
         }
-        ui_photo_text(&fos_font_xs, FOS_W - 20, y + 28,
-                      pv_note[0] ? pv_note : zoomed ? "ARROWS MOVE   SET OUT" :
-                      !pv_mode ? "SET OPEN   WHEEL ROLLS" : pv_znsteps ? "WHEEL ZOOM   SET SHEET" : "SET SHEET   INFO HIDE", pv_note[0] != 0, 2);
+        ui_photo_text(&fos_font_xs, FOS_W - 20, y + 28, hint, pv_note[0] != 0, 2);
     }
     ui_damage_all();
 }
