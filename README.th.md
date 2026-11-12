@@ -218,7 +218,7 @@ M-Film ทำบน EOS M และใช้ได้จริงบนรุ่
 | Canon EOS 600D / Rebel T3i / Kiss X5 | 1.0.2 | ✅ **ใช้ได้** | เปิดและถ่ายได้ตั้งแต่ 0.1.5 แบบโมดูล ([#46](../../issues/46)) ห้องมืดในกล้องยังไม่มีคนยืนยัน ให้ตั้ง Image quality เป็น RAW | `M-Film-camera-600D.102.zip` |
 | Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | ✅ **ใช้ได้** | ใช้ได้ แบบ film OS เป็นโมดูล ห้องมืดในกล้องครบ ([#54](../../issues/54)) ตั้งแต่ 0.1.3 ถึง 0.1.5 zip ปกติไม่มีห้องมืด (ถ้าห้องมืดอยู่ในตัว 650D เปิดไม่ขึ้น [#34](../../issues/34)) ถ้าใช้ 0.1.5 ให้เอา `-module.zip` | `M-Film-camera-650D.104.zip` |
 | Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | ⚠️ ลองแล้ว ยังมีปัญหา | build แบบโมดูลของ 0.1.5 ใช้ได้บน 700D ของผู้ทดสอบ ห้องมืดในกล้องครบ ([#19](../../issues/19)) แต่เมนูของ M-Film กับของ Canon ยังวาดทับกันเป็นบางครั้ง 0.1.6 ยึดจอของ Canon ไว้ตอนเปิด film OS และตอนปิดกลับไปที่ HUD รอรายงาน ตั้งแต่ 0.1.3 ถึง 0.1.5 zip ปกติไม่มีห้องมืด ถ้าใช้ 0.1.5 ให้เอา `-module.zip` | `M-Film-camera-700D.115.zip` |
-| Canon EOS 1100D / Rebel T3 / Kiss X50 | 1.0.5 | 🧪 build ได้แล้ว รอคนทดสอบ | film OS แบบโมดูลพอดีหน่วยความจำตอนบูต (493,056 จาก 524,032 ไบต์) รอคนลองเป็นคนแรก | `M-Film-camera-1100D.105.zip` |
+| Canon EOS 1100D / Rebel T3 / Kiss X50 | 1.0.5 | 🧪 build ได้แล้ว รอคนทดสอบ | เปิดขึ้นบน 1100D ของผู้ทดสอบและชั้นฟิล์มใช้ได้ ([#81](../../issues/81)) การถ่ายและห้องมืดในกล้องยังไม่มีคนยืนยัน รอรายงานเพิ่ม firmware ล่าสุดของ Canon สำหรับรุ่นนี้คือ 1.0.6 แต่ M-Film ต้องใช้ 1.0.5 ถ้ากล้องเป็น 1.0.6 ให้ลงตัวอัปเดต 1.0.5 ของ Canon กลับก่อน ([#81](../../issues/81)) ไม่อย่างนั้น *Firmware ver.* → update อาจค้างที่ *Loading* ([TESTING.md](TESTING.md#if-firmware-ver--update-stays-on-loading)) | `M-Film-camera-1100D.105.zip` |
 | Canon EOS 1300D / Rebel T6 / Kiss X80 | 1.1.0 | 🧪 build ได้แล้ว รอคนทดสอบ | ใหม่ใน 0.2.1 ใช้พอร์ต 1300D ของ Magic Lantern ที่ยังใหม่และเป็นรุ่นทดลอง ติดตั้งด้วย mlinstall ผ่าน USB ไม่ใช่การอัปเดต firmware ([TESTING.md](TESTING.md#canon-eos-1300d)) ใส่ฟิล์มแล้วกล้องจะไม่ปรับ ISO, white balance และ picture style ให้ เพราะ Magic Lantern ยังเปลี่ยนค่ากล้องบน 1300D ไม่ได้ ลุคฟิล์มจะมาตอนล้างฟิล์ม firmware 1.1.0 ของ Canon มีสองแบบ ถ้าเปิดเครื่องแล้วค้าง ให้ถอดแบตแล้วใส่การ์ดเดิมกลับ รอคนลองเป็นคนแรก | `M-Film-camera-1300D.110.zip` |
 
 **ยังไม่รองรับ:** 5D Mark IV, 5DS R, 6D Mark II, 7D Mark II, 77D, 80D, 200D, 750D, 850D, M50, R, R5, R6, RP, SX70 HS, SX740 HS (Magic Lantern เองยังเป็นรุ่นทดลองบนกล้องเหล่านี้) · 7D (source ปัจจุบันของ Magic Lantern build รุ่นนี้ไม่ได้)
@@ -293,7 +293,7 @@ M-Film ทำบน EOS M และใช้ได้จริงบนรุ่
 
 | คอมของคุณ | ไฟล์ | เปิดยังไง |
 |---|---|---|
-| **Windows 10 / 11** | `Darkrooms-windows-x64.zip` | แตกไฟล์ เปิดโฟลเดอร์ `Darkrooms` แล้วเปิด `Darkrooms.exe` ถ้า Windows เตือน: *More info* → *Run anyway* |
+| **Windows 10 / 11** | `Darkrooms-windows-x64.zip` | แตกไฟล์ เปิดโฟลเดอร์ `Darkrooms` แล้วเปิด `Darkrooms.exe` (ไอคอนสีส้ม Windows มักแสดงชื่อแค่ `Darkrooms` ไม่มี `.exe`) ถ้า Windows เตือน: *More info* → *Run anyway* |
 | **Mac ชิป Intel** | `Darkrooms-macos-intel.zip` | แตกไฟล์ ลากไปไว้ใน Applications แล้วเปิด ครั้งแรกไปที่ *System Settings → Privacy & Security → Open Anyway* (macOS 14 ลงไป: คลิกขวา → Open) |
 | **Mac ชิป Apple silicon** | `Darkrooms-macos-apple-silicon.zip` | เหมือนกัน |
 
