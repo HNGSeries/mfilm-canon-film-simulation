@@ -47,7 +47,8 @@ done
 # and the top plate a DSLR shows instead, shooting through the viewfinder
 ./out/hudtest p && python3 -c "from PIL import Image; Image.open('out/hud.ppm').save('$OUT/plate.png')"
 
-# browsing the shelf, half size
+# browsing the shelf, at the screen's own 720 x 480 and in the screen's own palette: a GIF
+# holds 256 colours and so does the screen, so every frame is exactly what the camera draws
 run browse
 python3 - <<'PY'
 from pathlib import Path
@@ -58,13 +59,14 @@ rgb = np.stack([(pal >> 16) & 255, (pal >> 8) & 255, pal & 255], axis=1).astype(
 frames = sorted(Path("out/frames/browse").glob("*.idx"))
 imgs, times = [], []
 for f in frames:
-    idx = np.fromfile(f, dtype=np.uint8).reshape(480, 720)
-    imgs.append(Image.fromarray(rgb[idx], "RGB").resize((360, 240), Image.LANCZOS))
+    im = Image.fromarray(np.fromfile(f, dtype=np.uint8).reshape(480, 720), "P")
+    im.putpalette(rgb.tobytes())
+    imgs.append(im)
     times.append(int(f.stem.split("_")[-1]))
-durs = [max(20, b - a) for a, b in zip(times, times[1:])] + [600]
-pal_img = imgs[len(imgs) // 2].quantize(colors=255, method=Image.MEDIANCUT)
-q = [im.quantize(palette=pal_img, dither=Image.NONE) for im in imgs]
-q[0].save("../preview/shelf.gif", save_all=True, append_images=q[1:], duration=durs, loop=0)
-print(len(q), "frames")
+# a GIF counts in 1/100 s: round where each frame ends, not how long it lasts, so the timing does not drift
+ends = [round(t / 10) * 10 for t in times[1:]] + [round(times[-1] / 10) * 10 + 600]
+durs = [max(20, b - a) for a, b in zip([round(times[0] / 10) * 10] + ends, ends)]
+imgs[0].save("../preview/shelf.gif", save_all=True, append_images=imgs[1:], duration=durs, loop=0)
+print(len(imgs), "frames")
 PY
 ls -la "$OUT"
