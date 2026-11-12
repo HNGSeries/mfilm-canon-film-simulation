@@ -130,6 +130,21 @@ The camera found no update file it accepts on the card:
   `dot_clean -m /Volumes/EOS_DIGITAL` in *Terminal* (your card's name in place of `EOS_DIGITAL`),
   then eject the card before taking it out.
 
+### If *Firmware ver.* → update stays on *Loading*
+
+The installer started but can't go on, most often because the Canon firmware isn't the one in the table.
+`ML-SETUP.FIR` isn't a Canon firmware update: it only tells the camera to start Magic Lantern from the
+card, so nothing is being written to the camera while it waits.
+- Take the battery out, wait a few seconds and put it back: the camera starts normally (take the card
+  out if it doesn't).
+- Check *Firmware ver.* with the mode dial on P or M. On the **1100D** Canon's newest firmware is 1.0.6
+  and M-Film needs 1.0.5: go back with Canon's own 1.0.5 updater first ([#81](../../issues/81)), then
+  install again.
+- Copying the files on Linux: unmount the card (or run `sync`) before taking it out, so every file is
+  written whole.
+- If the firmware is right and it still stays on *Loading*, tell us: the camera, the zip, the card's size
+  and whether the card light blinks ([#87](../../issues/87)).
+
 ### If the camera says "ML directory not found"
 
 Magic Lantern's installer (`ML-SETUP.FIR`, run by *Firmware ver.* → update) prints this, with
