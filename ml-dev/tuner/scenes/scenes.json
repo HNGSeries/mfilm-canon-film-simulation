@@ -1,0 +1,5 @@
+[
+ {"id": "street", "name": "ถนนยามเย็น", "from": "SAMPLE.CR2", "big": {"file": "street-m.png", "size": [1728, 1152], "label": "Medium"}},
+ {"id": "chart", "name": "แผ่นสี · ภาพวาด"},
+ {"id": "sun", "name": "แสงจ้า · ภาพวาด"}
+]
