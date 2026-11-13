@@ -1,0 +1,93 @@
+the camera code's linear picture against the one rebuilt here: ratio median 0.9967, 5th to 95th percentile 0.920 to 1.064
+
+what the table is fed (8-bit luminance codes at the 5/25/50/75/95th percentile)
+  neg/canon    exposure +0.64 EV  today [43.8, 57.9, 98.5, 149.5, 183.0]  photo [36.1, 60.4, 130.4, 190.2, 213.7]  clipped 1.64 % / 10.9 %  exposure that matches the median +1.50 EV
+     scene stops -> code today / photo: -3: 32/20  -2: 48/44  -1: 68/80  +0: 96/128  +1: 133/176  +2: 180/213  +3: 242/236
+     with no table at all, fed against photo: dE 8.54, L* -7.9, contrast 0.80, chroma 0.79, hue +3.0 (|4.7|)
+  neg/dcraw    exposure +0.64 EV  today [45.4, 59.9, 101.2, 155.0, 188.1]  photo [16.9, 27.6, 60.7, 104.7, 132.7]  clipped 2.48 % / 1.27 %  exposure that matches the median -0.86 EV
+     scene stops -> code today / photo: -3: 33/10  -2: 50/20  -1: 70/36  +0: 99/58  +1: 137/90  +2: 186/130  +3: 242/189
+     with no table at all, fed against photo: dE 14.33, L* +17.0, contrast 1.10, chroma 1.12, hue +2.6 (|5.2|)
+  neg/apple    exposure +0.64 EV  today [43.8, 57.9, 98.5, 149.5, 183.0]  photo [28.9, 46.2, 104.6, 169.4, 202.0]  clipped 1.64 % / 1.33 %  exposure that matches the median +0.82 EV
+     scene stops -> code today / photo: -3: 32/16  -2: 48/34  -1: 68/60  +0: 96/101  +1: 133/151  +2: 180/201  +3: 242/237
+     with no table at all, fed against photo: dE 5.71, L* -1.0, contrast 0.81, chroma 1.00, hue +4.3 (|6.1|)
+  slide/canon  exposure +1.00 EV  today [50.1, 65.8, 110.8, 167.4, 204.5]  photo [36.1, 60.4, 130.4, 190.2, 213.7]  clipped 2.42 % / 10.9 %  exposure that matches the median +1.50 EV
+     scene stops -> code today / photo: -3: 37/20  -2: 55/44  -1: 77/80  +0: 108/128  +1: 149/176  +2: 201/213  +3: 251/236
+     with no table at all, fed against photo: dE 6.07, L* -3.0, contrast 0.85, chroma 0.84, hue +3.0 (|4.7|)
+  slide/dcraw  exposure +1.00 EV  today [51.9, 67.9, 113.7, 173.4, 209.8]  photo [16.9, 27.6, 60.7, 104.7, 132.7]  clipped 3.18 % / 1.27 %  exposure that matches the median -0.86 EV
+     scene stops -> code today / photo: -3: 38/10  -2: 57/20  -1: 80/36  +0: 111/58  +1: 154/90  +2: 207/130  +3: 250/189
+     with no table at all, fed against photo: dE 18.46, L* +22.1, contrast 1.16, chroma 1.19, hue +2.5 (|5.2|)
+  slide/apple  exposure +1.00 EV  today [50.1, 65.8, 110.8, 167.4, 204.5]  photo [28.9, 46.2, 104.6, 169.4, 202.0]  clipped 2.42 % / 1.33 %  exposure that matches the median +0.82 EV
+     scene stops -> code today / photo: -3: 37/16  -2: 55/34  -1: 77/60  +0: 108/101  +1: 149/151  +2: 201/201  +3: 251/237
+     with no table at all, fed against photo: dE 5.10, L* +4.0, contrast 0.85, chroma 1.07, hue +4.2 (|6.1|)
+
+A against B (canon): dE2000 mean, p95; L* A-B; contrast A/B; chroma A/B; hue A-B deg, |hue|
+  neg   n=21  de_mean   7.82  de_p95  15.16  dL  -7.37  contrast   0.83  chroma   0.87  hue   3.38  hue_abs   6.35   (dE mean from 7.1 to 9.3)
+  slide n=15  de_mean   5.63  de_p95  10.60  dL  -2.82  contrast   0.86  chroma   0.90  hue   4.81  hue_abs   6.77   (dE mean from 5.2 to 6.4)
+  xpro  n= 3  de_mean   5.40  de_p95  11.33  dL  -3.04  contrast   0.86  chroma   1.04  hue   1.70  hue_abs   6.01   (dE mean from 4.8 to 5.9)
+  bw    n=20  de_mean   9.03  de_p95  19.84  dL -11.04  contrast   0.80   (dE mean from 6.2 to 11.9)
+
+A against B (canon_matched): dE2000 mean, p95; L* A-B; contrast A/B; chroma A/B; hue A-B deg, |hue|
+  neg   n=21  de_mean   5.62  de_p95  10.82  dL   4.78  contrast   0.88  chroma   0.87  hue   1.07  hue_abs   5.12   (dE mean from 4.7 to 6.2)
+  slide n=15  de_mean   5.19  de_p95   9.06  dL   4.52  contrast   0.91  chroma   0.90  hue   1.27  hue_abs   5.19   (dE mean from 4.8 to 5.9)
+  xpro  n= 3  de_mean   5.04  de_p95   9.75  dL   4.25  contrast   0.91  chroma   0.96  hue   0.53  hue_abs   5.99   (dE mean from 4.4 to 5.9)
+  bw    n=20  de_mean   3.75  de_p95   8.52  dL   4.28  contrast   0.89   (dE mean from 3.1 to 4.5)
+
+A against B (dcraw): dE2000 mean, p95; L* A-B; contrast A/B; chroma A/B; hue A-B deg, |hue|
+  neg   n=21  de_mean  14.61  de_p95  21.54  dL  17.16  contrast   1.09  chroma   1.12  hue   2.03  hue_abs   7.07   (dE mean from 12.6 to 15.6)
+  slide n=15  de_mean  18.53  de_p95  27.09  dL  21.91  contrast   1.19  chroma   1.19  hue   2.16  hue_abs   6.32   (dE mean from 16.9 to 20.1)
+  xpro  n= 3  de_mean  20.52  de_p95  30.00  dL  22.57  contrast   1.25  chroma   1.06  hue   4.85  hue_abs  16.70   (dE mean from 17.4 to 24.3)
+  bw    n=20  de_mean  12.08  de_p95  19.66  dL  15.08  contrast   1.13   (dE mean from 10.6 to 13.9)
+
+A against B (dcraw_matched): dE2000 mean, p95; L* A-B; contrast A/B; chroma A/B; hue A-B deg, |hue|
+  neg   n=21  de_mean   3.53  de_p95   7.11  dL  -1.12  contrast   0.83  chroma   0.88  hue   1.58  hue_abs   4.62   (dE mean from 3.1 to 3.9)
+  slide n=15  de_mean   3.31  de_p95   7.28  dL  -1.11  contrast   0.82  chroma   0.85  hue   0.63  hue_abs   3.70   (dE mean from 3.1 to 3.7)
+  xpro  n= 3  de_mean   3.39  de_p95   7.02  dL  -1.18  contrast   0.81  chroma   0.95  hue  -1.09  hue_abs   4.44   (dE mean from 2.7 to 4.0)
+  bw    n=20  de_mean   2.88  de_p95   6.93  dL  -1.45  contrast   0.81   (dE mean from 2.0 to 4.1)
+
+A against B (apple): dE2000 mean, p95; L* A-B; contrast A/B; chroma A/B; hue A-B deg, |hue|
+  neg   n=21  de_mean   5.28  de_p95   8.38  dL  -0.55  contrast   0.82  chroma   1.03  hue   3.43  hue_abs   6.58   (dE mean from 4.9 to 5.9)
+  slide n=15  de_mean   4.74  de_p95   8.42  dL   3.80  contrast   0.86  chroma   1.07  hue   3.40  hue_abs   5.84   (dE mean from 4.3 to 5.4)
+  xpro  n= 3  de_mean   4.74  de_p95   8.92  dL   3.60  contrast   0.86  chroma   1.10  hue   2.09  hue_abs   6.43   (dE mean from 4.1 to 5.4)
+  bw    n=20  de_mean   5.11  de_p95  10.82  dL  -3.84  contrast   0.81   (dE mean from 3.7 to 7.5)
+
+A against B (apple_matched): dE2000 mean, p95; L* A-B; contrast A/B; chroma A/B; hue A-B deg, |hue|
+  neg   n=21  de_mean   4.96  de_p95   8.52  dL   1.94  contrast   0.83  chroma   1.04  hue   3.33  hue_abs   6.50   (dE mean from 4.2 to 5.6)
+  slide n=15  de_mean   4.76  de_p95   7.61  dL   1.38  contrast   0.84  chroma   1.05  hue   3.65  hue_abs   5.94   (dE mean from 4.5 to 5.4)
+  xpro  n= 3  de_mean   4.78  de_p95   7.91  dL   1.10  contrast   0.84  chroma   1.12  hue   2.15  hue_abs   6.28   (dE mean from 4.2 to 5.3)
+  bw    n=20  de_mean   3.47  de_p95   6.03  dL   1.58  contrast   0.85   (dE mean from 2.7 to 4.8)
+
+A against B (canon~apple): dE2000 mean, p95; L* A-B; contrast A/B; chroma A/B; hue A-B deg, |hue|
+  neg   n=21  de_mean   6.21  de_p95  13.11  dL   6.82  contrast   0.99  chroma   1.18  hue   0.07  hue_abs   4.06   (dE mean from 5.6 to 6.6)
+  slide n=15  de_mean   6.00  de_p95  12.15  dL   6.62  contrast   1.00  chroma   1.20  hue  -1.47  hue_abs   4.78   (dE mean from 5.6 to 6.7)
+  xpro  n= 3  de_mean   6.03  de_p95  13.11  dL   6.64  contrast   1.00  chroma   1.06  hue   0.47  hue_abs   5.16   (dE mean from 5.5 to 6.8)
+  bw    n=20  de_mean   5.53  de_p95  13.25  dL   7.20  contrast   1.01   (dE mean from 5.0 to 6.1)
+
+A against B (canon~dcraw_asshot): dE2000 mean, p95; L* A-B; contrast A/B; chroma A/B; hue A-B deg, |hue|
+  neg   n=21  de_mean  18.52  de_p95  32.78  dL  21.93  contrast   1.27  chroma   1.18  hue  -3.97  hue_abs   7.17   (dE mean from 16.6 to 20.6)
+  slide n=15  de_mean  18.79  de_p95  32.05  dL  22.05  contrast   1.33  chroma   1.25  hue  -6.80  hue_abs   8.35   (dE mean from 17.1 to 20.5)
+  xpro  n= 3  de_mean  20.30  de_p95  34.50  dL  22.76  contrast   1.37  chroma   1.03  hue  -0.09  hue_abs  17.32   (dE mean from 17.5 to 23.2)
+  bw    n=20  de_mean  18.52  de_p95  34.52  dL  23.32  contrast   1.33   (dE mean from 15.9 to 23.2)
+
+A against B (apple~dcraw_asshot): dE2000 mean, p95; L* A-B; contrast A/B; chroma A/B; hue A-B deg, |hue|
+  neg   n=21  de_mean  13.20  de_p95  23.58  dL  15.10  contrast   1.28  chroma   1.00  hue  -4.09  hue_abs   7.46   (dE mean from 11.9 to 15.0)
+  slide n=15  de_mean  13.61  de_p95  24.29  dL  15.43  contrast   1.33  chroma   1.04  hue  -5.45  hue_abs   7.10   (dE mean from 12.7 to 15.0)
+  xpro  n= 3  de_mean  14.82  de_p95  27.00  dL  16.12  contrast   1.37  chroma   0.97  hue  -0.37  hue_abs  14.43   (dE mean from 12.6 to 16.9)
+  bw    n=20  de_mean  12.96  de_p95  26.04  dL  16.12  contrast   1.32   (dE mean from 10.8 to 17.1)
+
+named film stocks, A against B (canon | dcraw | apple): dE mean, L* A-B, contrast, chroma, hue
+  Kodak Portra 160             7.4   -6.7  0.84  0.81  -1.5 |  14.8  +18.1  0.98  1.11  +1.3 |   5.2   +0.5  0.81  0.99  +1.7
+  Fujifilm Pro 400H            7.4   -6.4  0.84  0.83  +4.2 |  14.4  +17.2  1.01  1.08  -0.9 |   5.3   +0.3  0.82  1.02  +3.9
+  Fujifilm Superia 200         7.3   -6.7  0.84  0.88  +3.0 |  14.3  +17.2  1.04  1.05  +2.2 |   5.3   -0.1  0.82  1.03  +3.1
+  Fujifilm Velvia 100          6.4   -3.4  0.86  0.98  +8.2 |  20.1  +23.7  1.24  1.17  +6.1 |   5.4   +3.8  0.87  1.09  +3.4
+  Fujifilm Provia 100F         6.0   -3.3  0.85  0.85  +5.9 |  18.4  +21.4  1.24  1.23  +3.4 |   4.6   +3.3  0.86  1.07  +4.4
+  Kodak Kodachrome 64          5.4   -2.2  0.85  0.97  +6.6 |  18.6  +22.2  1.07  1.19  -0.3 |   4.9   +4.5  0.84  1.09  +0.8
+  Kodak Elite 100 X-Pro        5.9   -3.4  0.88  1.05  -1.2 |  24.3  +24.9  1.31  1.15 +26.0 |   5.4   +3.9  0.88  1.20  +3.8
+  Kodak T-MAX 400              9.1  -11.2  0.80     -     - |  12.0  +15.0  1.12     -     - |   5.1   -3.6  0.80     -     -
+  Ilford Delta 400             9.0  -10.9  0.78     -     - |  11.5  +14.0  1.15     -     - |   5.0   -3.8  0.80     -     -
+
+A here against the camera code's own print (with its vignette; the print also has halation, grain and JPEG):
+  portra160    dE mean 3.40, median 2.74, L* +0.14; in 8 x 8 blocks (grain averaged away) dE mean 0.77
+  pro400h      dE mean 3.38, median 2.70, L* +0.12; in 8 x 8 blocks (grain averaged away) dE mean 0.72
+  velvia100    dE mean 4.13, median 3.32, L* +0.29; in 8 x 8 blocks (grain averaged away) dE mean 0.80
+  kodachrome64 dE mean 2.83, median 2.28, L* +0.28; in 8 x 8 blocks (grain averaged away) dE mean 0.67
+  tmax400      dE mean 0.67, median 0.47, L* +0.19; in 8 x 8 blocks (grain averaged away) dE mean 0.21

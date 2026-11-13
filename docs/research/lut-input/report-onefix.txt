@@ -1,0 +1,29 @@
+curve from canon: linear 0.02 0.05 0.09 0.18 0.36 0.72 -> code 45 100 136 183 250 255
+curve from apple: linear 0.02 0.05 0.09 0.18 0.36 0.72 -> code 35 75 114 165 214 245
+no film, the fed picture against the photo: curve canon vs photo canon: dE 4.26; curve canon vs photo apple: dE 7.05; curve apple vs photo canon: dE 6.74; curve apple vs photo apple: dE 3.09
+
+against the photo route: dE2000 mean (lowest to highest film stock), L* diff, contrast, chroma
+  neg   photo canon fed today        dE  7.82 (7.1 to 9.3)  L*  -7.4  contrast 0.83  chroma 0.87  hue 6.3
+  neg   photo canon fed curve canon  dE  3.80 (3.5 to 4.3)  L*  -0.2  contrast 1.01  chroma 1.00  hue 6.6
+  neg   photo canon fed curve apple  dE  6.46 (5.9 to 6.9)  L*  -6.8  contrast 1.01  chroma 0.90  hue 4.8
+  neg   photo apple fed today        dE  5.28 (4.9 to 5.9)  L*  -0.5  contrast 0.82  chroma 1.03  hue 6.6
+  neg   photo apple fed curve canon  dE  6.80 (6.1 to 7.4)  L*  +6.6  contrast 1.00  chroma 1.18  hue 7.2
+  neg   photo apple fed curve apple  dE  2.70 (2.0 to 3.1)  L*  -0.0  contrast 1.00  chroma 1.06  hue 5.1
+  slide photo canon fed today        dE  5.63 (5.2 to 6.4)  L*  -2.8  contrast 0.86  chroma 0.90  hue 6.8
+  slide photo canon fed curve canon  dE  3.70 (3.3 to 4.6)  L*  -0.2  contrast 1.01  chroma 1.00  hue 6.8
+  slide photo canon fed curve apple  dE  6.26 (5.8 to 7.0)  L*  -6.6  contrast 1.00  chroma 0.89  hue 5.3
+  slide photo apple fed today        dE  4.74 (4.3 to 5.4)  L*  +3.8  contrast 0.86  chroma 1.07  hue 5.8
+  slide photo apple fed curve canon  dE  6.44 (6.1 to 7.4)  L*  +6.4  contrast 1.01  chroma 1.20  hue 6.2
+  slide photo apple fed curve apple  dE  2.55 (2.2 to 3.4)  L*  -0.0  contrast 1.00  chroma 1.06  hue 4.3
+  xpro  photo canon fed today        dE  5.40 (4.8 to 5.9)  L*  -3.0  contrast 0.86  chroma 1.04  hue 6.0
+  xpro  photo canon fed curve canon  dE  2.92 (2.1 to 3.5)  L*  -0.2  contrast 1.01  chroma 0.99  hue 5.3
+  xpro  photo canon fed curve apple  dE  6.27 (5.6 to 7.2)  L*  -6.6  contrast 1.00  chroma 0.97  hue 5.9
+  xpro  photo apple fed today        dE  4.74 (4.1 to 5.4)  L*  +3.6  contrast 0.86  chroma 1.10  hue 6.4
+  xpro  photo apple fed curve canon  dE  6.17 (5.4 to 6.7)  L*  +6.4  contrast 1.01  chroma 1.05  hue 6.6
+  xpro  photo apple fed curve apple  dE  1.79 (1.0 to 2.5)  L*  +0.0  contrast 1.00  chroma 1.02  hue 3.8
+  bw    photo canon fed today        dE  9.03 (6.2 to 11.9)  L* -11.0  contrast 0.80
+  bw    photo canon fed curve canon  dE  1.58 (1.2 to 2.3)  L*  -0.3  contrast 1.00
+  bw    photo canon fed curve apple  dE  5.61 (5.0 to 6.2)  L*  -7.2  contrast 0.99
+  bw    photo apple fed today        dE  5.11 (3.7 to 7.5)  L*  -3.8  contrast 0.81
+  bw    photo apple fed curve canon  dE  5.24 (4.7 to 5.8)  L*  +6.9  contrast 1.01
+  bw    photo apple fed curve apple  dE  0.62 (0.5 to 1.6)  L*  -0.0  contrast 1.00
