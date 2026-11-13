@@ -14,8 +14,9 @@ on: scene-linear sRGB, 4096 = 1.0, made by `fos_dev.c` itself. These are the too
 
 ## Adding a photograph
 
-A landscape CR2 from a camera `fos_dev.c` knows. Build for that camera (`-DCONFIG_6D` and so on; none is
-the EOS M), from `ml-dev/filmos/sim` after `make` there (the film list is read from `out/`):
+A CR2 from a camera `fos_dev.c` knows, shot level or upright. Build for that camera (`-DCONFIG_650D`,
+`-DCONFIG_6D` and so on; none is the EOS M), from `ml-dev/filmos/sim` after `make` there (the film list is
+read from `out/`):
 
 ```sh
 F=..            # ml-dev/filmos
@@ -34,8 +35,13 @@ add a line to `scenes.json`:
 {"id": "photo", "name": "…", "from": "…", "big": {"file": "photo-m.png", "size": [1728, 1152], "label": "Medium"}}
 ```
 
-The page needs no change. A Medium print is about 6 MB as a PNG (a Large one, 2592 × 1728, about 15 MB:
-too much to load for each scene).
+`scenedump` prints the sizes. A frame shot upright says `portrait 1 picture_x0 200 picture_w 320`: its
+picture is the middle of the screen's print and its Medium print is 1152 × 1728, so its line also has
+`"pic": [200, 320]` and `"size": [1152, 1728]`.
+
+The page needs no change. A Medium print is about 5 to 6 MB as a PNG (a Large one, 2592 × 1728, about
+15 MB: too much to load for each scene). The photographs themselves are not in this repository: only the
+tools.
 
 ## Why two sizes
 
@@ -54,6 +60,7 @@ saved as `page.html`, `printdump` built the same way, and its prints, the dumps 
 node check.js films.json page.html
 ```
 
-On 13 Nov 2026, for Portra 400, CineStill 800T, Velvia 50, HP5 and Ektar 100: the Medium print differed
-from the camera's in at most 58 of 5,971,968 values, by one level; the screen's print in at most 9 of
-1,036,800. (The page works the exposure out in double precision, the camera in single.)
+`check.js` names the frames it checks (`CASES`): one from an EOS M, one from a 650D shot level and one shot
+upright. On 13 Nov 2026, with Portra 400, CineStill 800T, Velvia 50, HP5 and Ektar 100: the Medium print
+differed from the camera's in at most 58 of 5,971,968 values, by one level; the screen's print in at most
+9 of 1,036,800. (The page works the exposure out in double precision, the camera in single.)
