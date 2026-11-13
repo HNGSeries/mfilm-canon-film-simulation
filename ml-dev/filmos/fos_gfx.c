@@ -749,6 +749,7 @@ void fos_tri(struct fos_canvas *cv, int cx, int cy, int size, int dir, fcol c, i
 #define FONT_DEF(n) struct fos_font fos_font_##n;
 FOS_FONTS(FONT_DEF)
 #define FONT_SLOT(n) &fos_font_##n,
+struct fos_font fos_font_xs_fine, fos_font_sm_fine, fos_font_mdb_fine;
 static struct fos_font *const font_slots[] = { FOS_FONTS(FONT_SLOT) };
 #define NFONTS ((int) (sizeof(font_slots) / sizeof(font_slots[0])))
 static int fonts_ready;
@@ -786,6 +787,17 @@ int fos_fonts_load(const uint8_t *b, int size)
         for (int c = 0; c < 256; c++)
             if (f->lut[c] != 0xFF && f->lut[c] >= nglyphs) { memset(f, 0, sizeof(*f)); return 0; }
     }
+    fos_font_xs_fine = fos_font_xs;
+    fos_font_sm_fine = fos_font_sm;
+    fos_font_mdb_fine = fos_font_mdb;
+#ifdef FOS_BIGUI
+    /* one step up for every small font (FOS_BIGUI in fos_gfx.h) */
+    struct fos_font md = fos_font_md, mdb = fos_font_mdb;
+    fos_font_xs = mdb;
+    fos_font_sm = md;
+    fos_font_md = fos_font_lg;
+    fos_font_mdb = fos_font_lg;
+#endif
     fonts_ready = 1;
     return 1;
 }
@@ -910,6 +922,37 @@ int fos_text(struct fos_canvas *cv, const struct fos_font *f, int x, int y, cons
         prev = ch;
     }
     return ((pen + 8) >> 4) - x;
+}
+
+int fos_text_fit(struct fos_canvas *cv, const struct fos_font *f, int x, int y, const char *s, fcol c, int alpha, int track, int maxw)
+{
+    if (fos_text_w(f, s, track) <= maxw) return fos_text(cv, f, x, y, s, c, alpha, track);
+    /* cut at a word if one ends in the last third, then the ellipsis */
+    char b[160];
+    int n = 0;
+    while (s[n] && n < (int) sizeof(b) - 2) n++;
+    int ell = fos_text_w(f, T_ELLIPSIS, track);
+    while (n > 0)
+    {
+        memcpy(b, s, (size_t) n);
+        b[n] = 0;
+        if (fos_text_w(f, b, track) + ell <= maxw) break;
+        n--;
+    }
+    int cut = n;
+    while (cut > n * 2 / 3 && s[cut] != ' ') cut--;
+    if (s[cut] == ' ') n = cut;
+    while (n > 0 && (s[n - 1] == ' ' || (uint8_t) s[n - 1] == 0x80)) n--;    /* no space or middle dot before it */
+    memcpy(b, s, (size_t) n);
+    memcpy(b + n, T_ELLIPSIS, 2);
+    return fos_text(cv, f, x, y, b, c, alpha, track);
+}
+
+int fos_text_cfit(struct fos_canvas *cv, const struct fos_font *f, int cx, int y, const char *s, fcol c, int alpha, int track, int maxw)
+{
+    int w = fos_text_w(f, s, track);
+    if (w > maxw) w = maxw;
+    return fos_text_fit(cv, f, cx - w / 2, y, s, c, alpha, track, maxw);
 }
 
 int fos_text_c(struct fos_canvas *cv, const struct fos_font *f, int cx, int y, const char *s, fcol c, int alpha, int track)

@@ -364,7 +364,7 @@ void ui_sheet3(float s, const char *title, const char *body, const char *yes, co
     x += fos_text(cv, &fos_font_md, x, base, yes, C_ACCENT, OPAQUE, 0) + 28;
     if (alt)
     {
-        x += ui_keycap(x, base, "INFO") + 8;
+        x += ui_keycap(x, base, FOS_KEY_INFO) + 8;
         x += fos_text(cv, &fos_font_md, x, base, alt, C_TEXT, OPAQUE, 0) + 28;
     }
     x += ui_keycap(x, base, "MENU") + 8;

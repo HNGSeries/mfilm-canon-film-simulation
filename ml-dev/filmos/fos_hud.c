@@ -596,7 +596,7 @@ void fos_hud_plate_rows(uint8_t *buf, int pitch, int y0, int rows, const struct 
         text_led(&fos_font_mdb, 28, 420, "WIND ON", h->blink, 24);
 
     /* the way back to the film OS */
-    const char *hint = "TRASH  Home     PLAY  Prints";
+    const char *hint = FOS_KEY_TRASH "  Home     PLAY  Prints";
     int hw = fos_text_w(&fos_font_xs, hint, 24);
     text_gray(&fos_font_xs, W - 28 - hw, H - 22, hint, 36, 24);
     band(vr, vp, 0, H, p);

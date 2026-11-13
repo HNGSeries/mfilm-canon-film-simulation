@@ -21,6 +21,11 @@ out/FOSFILMS.BIN: ../tools/genfilms.py ../tools/catalog.py ../../films/films.py 
 	mkdir -p out
 	python3 ../tools/genfilms.py $@ --tables out/lut
 
+# the same with the big UI of a low resolution screen (the 1100D's): make out/sim-big
+out/sim-big: $(SRC) ../*.h out/FOSFONT.BIN out/FOSFILMS.BIN
+	mkdir -p out
+	$(CC) $(CFLAGS) -DFOS_BIGUI -DFOS_KEY_DISP -o $@ $(SRC) -lm
+
 clean:
 	rm -rf out
 
