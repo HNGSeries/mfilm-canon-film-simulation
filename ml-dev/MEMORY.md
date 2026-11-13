@@ -28,7 +28,7 @@ autoexec.bin takes at boot is then Magic Lantern and the three hooks, whatever t
 | 550D | 573,440 | 589,568 | a module since 0.1.5 (16 KB to spare) |
 | 600D | 538,624 | 589,824 | a module since 0.1.5 |
 | 60D | 561,664 | unknown | built in until 0.1.6 |
-| 1100D | 493,824 | 524,032 | a module since 0.1.5; no tester yet |
+| 1100D | 493,824 | 524,032 | a module since 0.1.5; starts on a tester's 1100D (#81) |
 | 500D | 556,032 | unknown | built in until 0.1.6 |
 | 50D | 538,112 | unknown | built in until 0.1.6 |
 | 5D Mark II (lean) | 520,960 | 705,792 starts | built in until 0.1.6 |
