@@ -18,7 +18,7 @@ python3 ml-dev/films/measure.py look         # every film stock that has a refer
 
 `look` develops the paired shot's Canon frames with the darkroom's own code built for a computer and the
 film stock's table, and holds the chart's patches against the locked scan's. For the frames that decide
-(the chart at −1, +1 and +3 stops) it prints colour and tone, each as a mean and a worst patch, and says
+(the chart at −1, +0.5 and +1.5 stops) it prints colour and tone, each as a mean and a worst patch, and says
 whether they are within the pass marks. The other chart frames are printed apart and decide nothing. The
 pass marks are provisional until a roll has been scanned twice.
 
@@ -27,7 +27,8 @@ pass marks are provisional until a roll has been scanned twice.
   over all 24 patches.
 - A patch that is blown or black in either picture is left out and counted. So is a patch the Canon's
   sensor clipped, though the darkroom does not print it white: three stops over, a Canon has lost every
-  patch lighter than mid grey, and the film has not.
+  patch lighter than mid grey, and the film has not. That is why the frames that decide stop at +1.5, and
+  the chart at +3 and +4 is printed as "highlights" and decides nothing.
 - **The scanner's exposure is held.** It is set once, so that the mid-grey patch of the chart frame at box
   speed is as light as in the locked scan, and kept for every frame, as the lab kept its own. The
   darkroom's automatic exposure, which is what people get, is held against the automatic scan where the
@@ -49,7 +50,9 @@ python3 ml-dev/films/measure.py read ml-dev/references/<name>/record.txt locked=
 
 writes `locked.txt` beside the record, and `look` then uses it. The made-up paired shot has no files: its
 frames and scans are drawn each time (`ml-dev/films/madeup.py`), and its film stock's table is the made-up
-film, so the darkroom has to land on the "scan". That is what CI runs today.
+film, so the darkroom has to land on the "scan". A made-up film has no glow round its highlights and no
+grain, so the darkroom prints it with neither; a real film stock is measured with both on. That is what CI
+runs today.
 
 ## Comparing any two sets of pictures
 

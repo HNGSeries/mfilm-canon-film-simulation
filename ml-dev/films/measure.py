@@ -24,8 +24,10 @@ files (Canon RAW frames, scans) are not in git: the record names where they
 are published and each one's checksum, and look fetches them into --files
 and stops at one that is not the file the record names. A scan's patches can
 be kept in the repository instead (read), and are then used in its place. A
-made-up paired shot's files are drawn (madeup.py), and its film stock's
-table is the made-up film. look fails if a film stock whose record claims it
+made-up paired shot's files are drawn (madeup.py), its film stock's table is
+the made-up film, and the darkroom prints it with no glow round the
+highlights and no grain, which a made-up film does not have: a real film
+stock is measured with both on. look fails if a film stock whose record claims it
 as measured ("measured: yes") is outside a pass mark; the others are only
 reported.
 
@@ -107,9 +109,10 @@ PRINT = (720, 480)                      # the darkroom's print (FOS_PRINT_W, FOS
 SIM = HERE.parent / "filmos/sim/out"    # where the simulator's Makefile builds devtest, mkcr2, the film list and the tables
 REFERENCES = HERE.parent / "references"
 
-# what a frame is used for (#111). The first four show the chart and are read
+# what a frame is used for (#111). The first five show the chart and are read
 BUILT, DECIDES, REPORTED, DRIFT = "built from", "held back, decides", "held back, reported", "drift"
-CHART_USES = [DECIDES, REPORTED, BUILT, DRIFT]
+HIGH = "highlights"                     # the chart far over: the film holds it, a Canon has clipped most of it
+CHART_USES = [DECIDES, REPORTED, BUILT, HIGH, DRIFT]
 USES = CHART_USES + ["grain", "by eye", "bare film"]
 FIELDS = ["paired shot", "film stock", "film format", "film expiry", "film batch", "film storage", "film camera", "film lens",
           "canon camera", "canon lens", "light", "second light", "date", "chart", "chart age",
@@ -631,8 +634,9 @@ def fetch_files(record, folder, sets):
 class Darkroom:
     """The darkroom's own code built for a computer (filmos/sim: devtest), printing with one film stock."""
 
-    def __init__(self, key, devtest=None, films=None, tables=None):
-        self.key = key
+    def __init__(self, key, devtest=None, films=None, tables=None, bare=False):
+        """bare: the film stock's table alone, with no glow round the highlights and no grain (a made-up film has neither)."""
+        self.key, self.bare = key, bare
         self.devtest, self.films, self.tables = (Path(p).resolve() for p in (
             devtest or SIM / "devtest", films or SIM / "FOSFILMS.BIN", tables or SIM / "tables"))
         for path, make in ((self.devtest, "out/devtest"), (self.films, "out/FOSFILMS.BIN"), (self.tables, "out/tables/TABLES.txt")):
@@ -651,8 +655,11 @@ class Darkroom:
         os.symlink(Path(raw).resolve(), tmp / "f.CR2")
         env = dict(os.environ, FOS_FILMS=str(self.films), FOS_LUT_DIR="T", FOS_JPEG="p.jpg", FOS_DUMP_CUT="cut.u8")
         env.pop("FOS_EV", None)
+        env.pop("FOS_BARE", None)
         if ev is not None:
             env["FOS_EV"] = "%.4f" % ev
+        if self.bare:
+            env["FOS_BARE"] = "1"
         r = subprocess.run([str(self.devtest), "-f", self.key, "f.CR2", "o.fop"], cwd=tmp, env=env, capture_output=True, text=True)
         if r.returncode or not (tmp / "p.jpg").exists():
             raise Bad(f"the darkroom did not develop {raw} with {self.key}: {(r.stderr or r.stdout).strip().splitlines()[-1:]}")
@@ -704,7 +711,7 @@ class Look:
         else:
             fetch_files(record, files, [s for s in sets if s not in kept])
         scans = {s: load_readings(kept[s]) if s in kept else read_set(record, s, files / s) for s in sets[1:]}
-        dark = Darkroom(record.fields["film stock"], devtest, films, tables)
+        dark = Darkroom(record.fields["film stock"], devtest, films, tables, bare=record.made_up)
         raws = {f.n: picture_of(files / "canon", f.n, RAW) for f in record.charts()}
         raws = {n: p for n, p in raws.items() if p}
 
@@ -745,7 +752,7 @@ class Look:
         else:
             out.append(f"  {r.film['name']}: not measured yet ({state}, and not claimed)")
         if r.made_up:
-            out.append("  (a made-up paired shot: this says the command works, and nothing about the film)")
+            out.append("  (a made-up paired shot, printed with no glow and no grain: this says the command works, and nothing about the film)")
         return "\n".join(out)
 
 
