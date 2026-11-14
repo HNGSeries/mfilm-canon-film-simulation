@@ -2701,6 +2701,22 @@ static int dev_step(struct fos_dev *d, int budget_ms)
                     fos_port_free(d->buf); d->buf = 0;
                     d->rgb = fos_port_alloc(N * 3);
                     if (!d->rgb) return fail_mem(d, N * 3);
+#ifdef FOS_DEV_TEST
+                    /* FOS_BARE: the film stock's table and nothing else of its
+                     * look: no glow round the highlights and no grain. For the
+                     * measuring command's made-up film, which has neither, so
+                     * the darkroom can land on its "scan" (films/madeup.py). A
+                     * real film stock is measured with both on. (Here, once
+                     * the table is in: it is found by the look's own numbers.) */
+                    if (getenv("FOS_BARE"))
+                    {
+                        static struct fos_look bare;
+                        bare = *d->look;
+                        bare.halation = 0;
+                        bare.grain = 0;
+                        d->look = &bare;
+                    }
+#endif
                     if (d->look->halation > 0)
                     {
                         d->glow = fos_port_alloc(GW * GH * 4);

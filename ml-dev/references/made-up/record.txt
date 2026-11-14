@@ -28,7 +28,7 @@ canon lens: none, made up     # best the same lens as on the film camera
 
 # the light and the chart
 light: made up, as direct sun on a clear day       # the main light. A tungsten film stock: one tungsten-halogen lamp
-second light: made up, as open shade under blue sky  # for frames 12 to 14. A tungsten film stock: direct sun
+second light: made up, as open shade under blue sky  # for frames 14 to 16. A tungsten film stock: direct sun
 date: 2026-11-14 12:00
 chart: ColorChecker Classic, 24 patches, drawn from its published sRGB values
 chart age: none, made up      # a real one: when the chart was bought
@@ -61,37 +61,45 @@ measured: no
 #   built from            the look is built from it
 #   held back, decides    kept out of building the look; these decide whether the film stock is measured
 #   held back, reported   kept out of building; measured and printed, decides nothing
+#   highlights            the chart three and four stops over. The film still holds it; a Canon has
+#                         clipped most of it, so it is printed and decides nothing
 #   drift                 the chart again at the end of the roll, to see that nothing changed
 #   grain                 a grey card, for grain when it has a method
 #   by eye                a scene, looked at
 #   bare film             the lens cap on
 #
-# The first four show the chart and are the ones the measuring command reads.
+# The first five show the chart and are the ones the measuring command reads.
+#
+# The bracket is in half stops near the top because a Canon's sensor clips
+# about three stops over mid grey: at +2 it has lost 9 of the chart's 24
+# patches, at +3 19 of them (made-up frames, #128). So the look is built
+# from -3, -2, 0, +1 and +2 and judged on -1, +0.5 and +1.5, between them.
+# Both cameras have to set shutter speeds in half stops.
 
-frame 1:  chart, main light | 0  | 1/800  | built from      # the lab sets its scan on this frame's grey patch and holds it
-frame 2:  chart, main light | -3 | 1/6400 | built from
-frame 3:  chart, main light | -2 | 1/3200 | built from
-frame 4:  chart, main light | -1 | 1/1600 | held back, decides
-frame 5:  chart, main light | +1 | 1/400  | held back, decides
-frame 6:  chart, main light | +2 | 1/200  | built from
-frame 7:  chart, main light | +3 | 1/100  | held back, decides
-frame 8:  chart, main light | +4 | 1/50   | built from
-frame 9:  grey card, out of focus, main light | -2 | 1/3200 | grain
-frame 10: grey card, out of focus, main light | 0  | 1/800  | grain
-frame 11: grey card, out of focus, main light | +2 | 1/200  | grain
-frame 12: chart, open shade | -1 | 1/200 | held back, reported
-frame 13: chart, open shade | 0  | 1/100 | held back, reported
-frame 14: chart, open shade | +1 | 1/50  | held back, reported
-frame 15: own hand and forearm | 0 | | by eye
-frame 16: green leaves in sun | 0 | | by eye
-frame 17: blue sky with white cloud | 0 | | by eye
-frame 18: red, orange and yellow things | 0 | | by eye
-frame 19: deep shade and sun in one frame | 0 | | by eye
-frame 20: a white wall in sun | 0 | | by eye
-frame 21: a street | 0 | | by eye
-frame 22: a scene all in shade | 0 | | by eye
+frame 1:  chart, main light | 0    | 1/750  | built from      # the lab sets its scan on this frame's grey patch and holds it
+frame 2:  chart, main light | -3   | 1/6000 | built from
+frame 3:  chart, main light | -2   | 1/3000 | built from
+frame 4:  chart, main light | -1   | 1/1500 | held back, decides
+frame 5:  chart, main light | +0.5 | 1/500  | held back, decides
+frame 6:  chart, main light | +1   | 1/350  | built from
+frame 7:  chart, main light | +1.5 | 1/250  | held back, decides
+frame 8:  chart, main light | +2   | 1/180  | built from
+frame 9:  chart, main light | +3   | 1/90   | highlights
+frame 10: chart, main light | +4   | 1/45   | highlights
+frame 11: grey card, out of focus, main light | -2 | 1/3000 | grain
+frame 12: grey card, out of focus, main light | 0  | 1/750  | grain
+frame 13: grey card, out of focus, main light | +2 | 1/180  | grain
+frame 14: chart, open shade | -1 | 1/180 | held back, reported
+frame 15: chart, open shade | 0  | 1/90  | held back, reported
+frame 16: chart, open shade | +1 | 1/45  | held back, reported
+frame 17: own hand and forearm | 0 | | by eye
+frame 18: green leaves in sun | 0 | | by eye
+frame 19: blue sky with white cloud | 0 | | by eye
+frame 20: red, orange and yellow things | 0 | | by eye
+frame 21: deep shade and sun in one frame | 0 | | by eye
+frame 22: a white wall in sun | 0 | | by eye
 frame 23: lens cap on | | | bare film
-frame 24: chart, main light | 0 | 1/800 | drift
+frame 24: chart, main light | 0 | 1/750 | drift
 
 # Where the chart is, in each set of pictures of these frames:
 #
@@ -118,7 +126,7 @@ chart in canon, frame 7: 0.3710,0.3790 0.6360,0.3815 0.6340,0.6215 0.3690,0.6190
 
 chart in locked: 0.3520,0.3720 0.6410,0.3910 0.6300,0.6340 0.3600,0.6120
 chart in locked, frame 4: 0.3480,0.3800 0.6370,0.3840 0.6330,0.6310 0.3530,0.6240
-chart in locked, frame 13: 0.3600,0.3650 0.6500,0.3800 0.6380,0.6260 0.3660,0.6050
+chart in locked, frame 15: 0.3600,0.3650 0.6500,0.3800 0.6380,0.6260 0.3660,0.6050
 
 chart in automatic: 0.3550,0.3700 0.6440,0.3880 0.6330,0.6320 0.3630,0.6100
 

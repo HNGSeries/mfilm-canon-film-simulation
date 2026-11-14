@@ -114,10 +114,10 @@ def main():
     check(np.allclose(measure.lab(measure.lab_to_lin(lab)), lab, atol=1e-9), "CIELAB and back")
 
     # ---- the record
-    by_use = {use: [f.ev for f in record.charts(use)] for use in (BUILT, DECIDES, REPORTED)}
-    check(len(record.frames) == 24 and by_use[DECIDES] == [-1, 1, 3] and sorted(by_use[BUILT]) == [-3, -2, 0, 2, 4]
-          and by_use[REPORTED] == [-1, 0, 1],
-          "the made-up record: 24 frames, built from −3 −2 0 +2 +4, decided by −1 +1 +3, open shade reported")
+    by_use = {use: [f.ev for f in record.charts(use)] for use in (BUILT, DECIDES, REPORTED, measure.HIGH)}
+    check(len(record.frames) == 24 and by_use[DECIDES] == [-1, 0.5, 1.5] and sorted(by_use[BUILT]) == [-3, -2, 0, 1, 2]
+          and by_use[REPORTED] == [-1, 0, 1] and by_use[measure.HIGH] == [3, 4],
+          "the made-up record: 24 frames, built from −3 −2 0 +1 +2, decided by −1 +0.5 +1.5, open shade and +3 +4 reported")
     check(record.made_up and record.fields["measured"] == "no" and not record.tone_only
           and all(record.corners(s, f.n).shape == (4, 2) for s in ("canon", "locked", "automatic") for f in record.charts()),
           "it is made up, claims nothing, and says where the chart is in every chart frame of its three sets")
@@ -134,7 +134,7 @@ def main():
     refused("a chart whose points cross", lambda: Record(changed("chart in canon: 0.3675,0.3800 0.6325,0.3800 0.6325,0.6200 0.3675,0.6200",
                                                                    "chart in canon: 0.3675,0.3800 0.6325,0.3800 0.3675,0.6200 0.6325,0.6200")),
             "go round")
-    refused("a chart in a frame that shows none", lambda: Record(changed("chart in canon, frame 7:", "chart in canon, frame 9:")), "frame 9")
+    refused("a chart in a frame that shows none", lambda: Record(changed("chart in canon, frame 7:", "chart in canon, frame 11:")), "frame 11")
     refused("a field that is no field", lambda: Record(changed("lab: none", "laboratory: none")), "laboratory")
     refused("a film stock that is not on the shelf", lambda: Record(changed("film stock: gold200", "film stock: gold2000")).tone_only,
             "gold2000")
@@ -159,8 +159,9 @@ def main():
     g = worked.decides
     check(worked.within is False and g.colour.mean > measure.PASS["colour"] and g.tone.mean > measure.PASS["tone"],
           f"the made-up film is not a plain print: colour {g.colour.mean:.2f}, tone {g.tone.mean:.2f}, outside the pass marks")
-    check(g.blown > 0 and g.colour.n == g.patches - g.blown - g.black and g.tone.n < 18,
-          f"{g.blown} blown and {g.black} black of its {g.patches} deciding patches are left out of the numbers and counted")
+    g = worked.groups[measure.HIGH]
+    check(g.blown > 0 and g.colour.n == g.patches - g.blown - g.black and g.tone.n < 12,
+          f"{g.blown} blown and {g.black} black of the {g.patches} patches at +3 and +4 are left out of the numbers and counted")
 
     # ---- against itself
     for name in ("canon", "locked"):
@@ -199,7 +200,7 @@ def main():
 
     # ---- only the deciding frames decide
     wild = drawn("wild", soft[::-1])        # every patch another patch's colour
-    for use, n, decides in ((REPORTED, 13, False), (BUILT, 6, False), (DECIDES, 5, True)):
+    for use, n, decides in ((REPORTED, 15, False), (BUILT, 6, False), (DECIDES, 5, True)):
         other = tmp / "other"
         shutil.rmtree(other, ignore_errors=True)
         shutil.copytree(base, other)

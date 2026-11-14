@@ -41,8 +41,9 @@ import madeup  # noqa: E402
 import measure  # noqa: E402
 from measure import BUILT, DECIDES, MID_GREY, Bad, Distance, Look, Reading, Record  # noqa: E402
 
-CLOSE = 0.75        # how far the darkroom's numbers may be from the ones worked out: it prints at 8 bits, through a
-                    # table of 33 points a side, with the film stock's grain, glow and vignette on, as people get it
+CLOSE = 0.5         # how far the darkroom's numbers may be from the ones worked out: it prints at 8 bits, through a
+                    # table of 33 points a side, with the film stock's vignette on
+GLOW = 3.0          # a patch has to move by this much when the film stock's glow and grain are on, or they are not off
 
 fail = 0
 
@@ -85,6 +86,15 @@ def main():
           f"the scanner's exposure is set on frame {look.at.n}'s mid-grey patch: {look.held:+.2f} stops "
           "(the made-up sensor puts mid grey 0.57 stops under the table's)")
 
+    worst = look.distance.decides.colour.worst
+    lit = measure.Darkroom(key, tables=madeup.table(record, tmp / "lit"))
+    n = record.charts(DECIDES)[-1].n
+    glow = measure.de2000(lit.develop(files / "canon" / ("%02d.CR2" % n), record.corners("canon", n), look.held)[0].lab,
+                          look.canon[n].lab, lightness=False)
+    check(worst < GLOW < float(glow.max()),
+          f"a made-up film has no glow and no grain, and is printed with neither: with {key}'s own on, the chart at "
+          f"{record.frames[n].ev:+g} moves by up to {glow.max():.1f} ({measure.PATCHES[int(glow.argmax())]}); without, the worst patch is {worst:.1f} away")
+
     # ---- devtest holds an exposure given from outside
     def develop(n, ev=None):
         env = dict(os.environ, FOS_FILMS=str(measure.SIM / "FOSFILMS.BIN"), FOS_MIX="1")
@@ -97,22 +107,22 @@ def main():
         own = float(re.search(r"scanner: key [\d.]+, (-?[\d.]+) EV", r.stderr).group(1))
         return int(re.search(r"film: \w+, mul (\d+)", r.stderr).group(1)), own, "scanner: held" in r.stderr
 
-    dark, light = develop(2), develop(6)                    # the chart at −3 and at +2
+    dark, light = develop(2), develop(8)                    # the chart at −3 and at +2
     offset = record.film["ev"]
     check(not dark[2] and not light[2] and dark[1] > light[1] + 3
           and all(abs(m - 4096 * 2 ** (own + offset)) < 8 for m, own, _ in (dark, light)),
           f"with no exposure given the scanner picks its own for each frame, as before: {dark[1]:+.2f} and {light[1]:+.2f} stops")
-    dark, light = develop(2, 1.25), develop(6, 1.25)
+    dark, light = develop(2, 1.25), develop(8, 1.25)
     check(dark[2] and light[2] and dark[0] == light[0] == int(4096 * 2 ** 1.25 + 0.5),
           f"given 1.25 stops it holds them for both frames: the picture times {dark[0] / 4096:.3f}")
 
     # ---- what the sensor clipped
     cut = {f.ev: int(look.canon[f.n].cut.sum()) for f in record.charts() if "main light" in f.shows}
     printed = max(float(look.canon[f.n].coded[look.canon[f.n].cut].max()) for f in record.charts() if look.canon[f.n].cut.any())
-    check(all(cut[e] == 0 for e in (-3, -2, -1, 0)) and 0 < cut[1] < cut[2] < cut[3] < cut[4] and cut[4] >= 22 and printed < measure.BLOWN
-          and g.blown >= cut[1] + cut[3],
-          f"patches the sensor clipped are left out as blown: {cut[1]}, {cut[2]}, {cut[3]} and {cut[4]} of 24 at +1 to +4, none at 0 "
-          f"and under, though the lightest of them is printed at {printed:.2f}, not white")
+    check(all(cut[e] == 0 for e in (-3, -2, -1, 0)) and cut[0.5] <= cut[1] <= cut[1.5] < cut[2] < cut[3] < cut[4] and cut[1] > 0
+          and cut[4] >= 22 and printed < measure.BLOWN and g.blown >= cut[0.5] + cut[1.5],
+          f"patches the sensor clipped are left out as blown: {cut[0.5]}, {cut[1]}, {cut[1.5]}, {cut[2]}, {cut[3]} and {cut[4]} of 24 "
+          f"at +0.5, +1, +1.5, +2, +3 and +4, none at 0 and under, though the lightest of them is printed at {printed:.2f}, not white")
 
     # ---- another look of the same shape: the distance worked out
     other = copy.deepcopy(madeup.LOOK)
@@ -182,8 +192,10 @@ def main():
         return Record(changed(name, ("made up: yes", "# made up: yes"), ("measured: no", "measured: no\n" + lines + more)))
 
     r = Look(real("real"), shot, tables=own)
-    check(len(names) == 36 and numbers(r.distance.decides) == numbers(look.distance.decides),
-          f"a record that names its {len(names)} files and their checksums: the same numbers from the same files")
+    base = numbers(r.distance.decides)
+    check(len(names) == 3 * len(record.charts()) and r.distance.decides.colour.worst > GLOW > look.distance.decides.colour.worst,
+          f"a record that is not made up and names its {len(names)} files and their checksums is measured from them, with the "
+          f"film stock's glow and grain on (the worst patch: {r.distance.decides.colour.worst:.1f})")
     with open(shot / "locked/05.tif", "ab") as f:
         f.write(b"\0")
     refused("a scan that is not the file the record names", lambda: Look(real("real"), shot, tables=own), "locked/05.tif", "sha256")
@@ -193,7 +205,7 @@ def main():
     (shot / "canon/04.CR2").rename(published / "canon-04.CR2")
     refused("a file that is missing, with nowhere to fetch it from", lambda: Look(real("real"), shot, tables=own), "canon/04.CR2", "files at")
     r = Look(real("real", f"files at: {published.as_uri()}\n"), shot, tables=own)
-    check((shot / "canon/04.CR2").exists() and numbers(r.distance.decides) == numbers(look.distance.decides),
+    check((shot / "canon/04.CR2").exists() and numbers(r.distance.decides) == base,
           "a missing frame is fetched from where the record says the files are published, and checked")
     (published / "canon-04.CR2").write_bytes(b"not the frame")
     (shot / "canon/04.CR2").unlink()
@@ -211,7 +223,7 @@ def main():
           f"read writes a scan's patches beside the record ({read.stdout.strip()[-40:]}), and they read back the same")
     shutil.rmtree(shot / "locked")
     r = Look(Record(kept.path), shot, tables=own)
-    check(max(abs(a - b) for a, b in zip(numbers(r.distance.decides), numbers(look.distance.decides))) < 0.01,
+    check(max(abs(a - b) for a, b in zip(numbers(r.distance.decides), base)) < 0.01,
           "with the patches kept, the scan's pictures are not needed: the same numbers without them")
 
     shutil.rmtree(tmp, ignore_errors=True)
