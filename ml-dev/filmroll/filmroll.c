@@ -65,21 +65,21 @@ struct film
 static const struct film films[] =
 {
     { "portra400", "KODAK", "Portra 400", "COLOR NEG  C-41", "Soft warm skin, gentle highlights",
-      COLOR_ORANGE, COLOR_BLACK, 400, 400, PS_STANDARD, -1, -1, 1, 2, 5500, 0, 1 },
+      COLOR_ORANGE, COLOR_BLACK, 400, 400, PS_STANDARD, -1, -1, 1, 2, 5500, 0, 0 },
     { "cinestill800t", "CINESTILL", "800T", "COLOR NEG  C-41", "Tungsten cine film, night goes blue",
       COLOR_RED, COLOR_WHITE, 800, 800, PS_STANDARD, 1, 1, -1, 2, 3200, 0, 0 },
     { "ektar100", "KODAK", "Ektar 100", "COLOR NEG  C-41", "Punchy colour, ultra fine grain",
-      COLOR_DARK_RED, COLOR_WHITE, 100, 100, PS_LANDSCAPE, 1, 2, 0, 3, 5200, 0, 0 },
+      COLOR_DARK_RED, COLOR_WHITE, 100, 100, PS_LANDSCAPE, 1, 2, 0, 3, 5500, 0, 0 },
     { "gold200", "KODAK", "Gold 200", "COLOR NEG  C-41", "Golden hour, all day long",
-      COLOR_YELLOW, COLOR_BLACK, 200, 200, PS_STANDARD, 1, 1, 2, 2, 5600, 0, 2 },
+      COLOR_YELLOW, COLOR_BLACK, 200, 200, PS_STANDARD, 1, 1, 2, 2, 5500, 0, 0 },
     { "superia400", "FUJIFILM", "Superia 400", "COLOR NEG  C-41", "Green shadows, everyday snaps",
-      COLOR_GREEN2, COLOR_WHITE, 400, 400, PS_STANDARD, 1, 1, 0, 2, 5200, 1, 0 },
+      COLOR_GREEN2, COLOR_WHITE, 400, 400, PS_STANDARD, 1, 1, 0, 2, 5500, 0, 0 },
     { "velvia50", "FUJIFILM", "Velvia 50", "SLIDE  E-6", "Vivid slide film, hard contrast",
-      COLOR_MAGENTA, COLOR_WHITE, 50, 100, PS_LANDSCAPE, 3, 4, 0, 3, 5200, 0, 0 },
+      COLOR_MAGENTA, COLOR_WHITE, 50, 100, PS_LANDSCAPE, 3, 4, 0, 3, 5500, 0, 0 },
     { "hp5", "ILFORD", "HP5 Plus", "B&W", "Classic B&W, forgiving latitude",
-      COLOR_ALMOST_BLACK, COLOR_WHITE, 400, 400, PS_MONO, 1, 0, 0, 2, 5200, 0, 0 },
+      COLOR_ALMOST_BLACK, COLOR_WHITE, 400, 400, PS_MONO, 1, 0, 0, 2, 5500, 0, 0 },
     { "trix400", "KODAK", "Tri-X 400", "B&W", "Gritty contrast, street classic",
-      COLOR_DARK_ORANGE_MOD, COLOR_WHITE, 400, 400, PS_MONO, 3, 0, 0, 2, 5200, 0, 0 },
+      COLOR_DARK_ORANGE_MOD, COLOR_WHITE, 400, 400, PS_MONO, 3, 0, 0, 2, 5500, 0, 0 },
 };
 #define NUM_FILMS ((int) COUNT(films))
 
