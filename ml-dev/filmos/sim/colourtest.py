@@ -49,45 +49,12 @@ import rawpy
 from PIL import Image
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[1] / "films"))
+from measure import de2000, lab  # noqa: E402  (linear sRGB to CIELAB, and dE2000: the measuring command's)
 W, H = 720, 480                         # FOS_PRINT_W, FOS_PRINT_H
 # stops; mean dE2000; a blown pixel's colours, as a share of the clip; a chart in two lights, 1.0 = white
 LIMITS = {"ev": 0.02, "de_mean": 1.0, "blown": 0.02, "light": 0.01}
-M_XYZ = np.array([[0.4124564, 0.3575761, 0.1804375], [0.2126729, 0.7151522, 0.0721750],
-                  [0.0193339, 0.1191920, 0.9503041]])                       # fos_dev.c RGB_XYZ
 LUMA = np.array([871, 2929, 296]) / 4096                                    # stage_key()'s
-
-
-def lab(lin):
-    """Scene-linear sRGB (clipped to 0..1) -> CIELAB, D65."""
-    xyz = np.clip(lin, 0, 1) @ M_XYZ.T / M_XYZ.sum(1)
-    f = np.where(xyz > 216 / 24389, np.cbrt(xyz), (24389 / 27 * xyz + 16) / 116)
-    return np.stack([116 * f[..., 1] - 16, 500 * (f[..., 0] - f[..., 1]), 200 * (f[..., 1] - f[..., 2])], -1)
-
-
-def de2000(l1, l2):
-    L1, a1, b1 = l1[..., 0], l1[..., 1], l1[..., 2]
-    L2, a2, b2 = l2[..., 0], l2[..., 1], l2[..., 2]
-    cb = (np.hypot(a1, b1) + np.hypot(a2, b2)) / 2
-    g = 0.5 * (1 - np.sqrt(cb ** 7 / (cb ** 7 + 25.0 ** 7)))
-    a1, a2 = (1 + g) * a1, (1 + g) * a2
-    c1, c2 = np.hypot(a1, b1), np.hypot(a2, b2)
-    h1, h2 = np.degrees(np.arctan2(b1, a1)) % 360, np.degrees(np.arctan2(b2, a2)) % 360
-    dl, dc = L2 - L1, c2 - c1
-    dh = h2 - h1
-    dh = np.where(dh > 180, dh - 360, np.where(dh < -180, dh + 360, dh))
-    dh = np.where(c1 * c2 == 0, 0, dh)
-    dH = 2 * np.sqrt(c1 * c2) * np.sin(np.radians(dh) / 2)
-    lm, cm = (L1 + L2) / 2, (c1 + c2) / 2
-    hs = h1 + h2
-    hm = np.where(np.abs(h1 - h2) > 180, np.where(hs < 360, hs + 360, hs - 360), hs) / 2
-    hm = np.where(c1 * c2 == 0, hs, hm)
-    t = (1 - 0.17 * np.cos(np.radians(hm - 30)) + 0.24 * np.cos(np.radians(2 * hm))
-         + 0.32 * np.cos(np.radians(3 * hm + 6)) - 0.20 * np.cos(np.radians(4 * hm - 63)))
-    sl = 1 + 0.015 * (lm - 50) ** 2 / np.sqrt(20 + (lm - 50) ** 2)
-    sc, sh = 1 + 0.045 * cm, 1 + 0.015 * cm * t
-    rt = (-2 * np.sqrt(cm ** 7 / (cm ** 7 + 25.0 ** 7))
-          * np.sin(np.radians(60 * np.exp(-((hm - 275) / 25) ** 2))))
-    return np.sqrt((dl / sl) ** 2 + (dc / sc) ** 2 + (dH / sh) ** 2 + rt * (dc / sc) * (dH / sh))
 
 
 class Developed:

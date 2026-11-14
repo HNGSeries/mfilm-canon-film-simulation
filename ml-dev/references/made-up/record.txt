@@ -1,0 +1,118 @@
+# The record of a paired shot: what was shot, how, and what each frame is.
+#
+# This one is made up. No film was shot: films/madeup.py renders its pictures,
+# so the measuring command can be tested before the first roll exists (#121).
+# It is also the example of the format: a real record has the same lines.
+#
+# The format. One file per paired shot, references/<name>/record.txt. A line
+# is "field: value". Everything after a "#" at the start of a line or after
+# a space is a comment. Every field below has to be there with something
+# written for it, except "made up" and "measured". How a paired shot is made
+# is decided in #111.
+
+paired shot: made-up
+made up: yes                  # left out of a real record. A made-up paired shot never makes a film stock measured
+film stock: gold200           # the film stock as films/films.py names it
+
+# the film
+film format: 135, 24 exposures
+film expiry: none, made up    # a real one: the date on the box, 2027-06
+film batch: none, made up     # the number on the box
+film storage: none, made up   # where it was kept until it was shot: fridge, shelf
+film camera: none, made up    # the body: manual exposure, an electronically timed shutter
+film lens: none, made up
+
+# the Canon
+canon camera: none, made up   # the camera, with a roll of this film stock loaded, shooting RAW
+canon lens: none, made up     # best the same lens as on the film camera
+
+# the light and the chart
+light: made up, as direct sun on a clear day       # the main light. A tungsten film stock: one tungsten-halogen lamp
+second light: made up, as open shade under blue sky  # for frames 12 to 14. A tungsten film stock: direct sun
+date: 2026-11-14 12:00
+chart: ColorChecker Classic, 24 patches, drawn from its published sRGB values
+chart age: none, made up      # a real one: when the chart was bought
+
+# the lab
+lab: none, made up            # the maintainer's own is written as "the maintainer's lab"
+process: none, made up        # C-41, E-6, or for black-and-white the developer, dilution and time
+scanner: none, made up        # the machine: Noritsu HS-1800
+scanner settings: none, made up  # the locked scan: corrections off, the values set on frame 1's grey patch, sharpening, size
+originals: none, made up      # who keeps the negatives and the full-size scans
+
+# who
+shot by: nobody (films/madeup.py)
+consent: not needed, made up  # someone other than the maintainer: the text in #111, and the issue it was written in
+
+# whether the film stock is claimed as measured against this paired shot. "yes"
+# is written when it first passes, and never for a made-up one
+measured: no
+
+# The frames, as #111 lists them, the same for every film stock:
+#
+#   frame N: what it shows | exposure | shutter speed | what it is used for
+#
+# Exposure is in stops from 0, where the Canon's spot meter reads the chart's
+# mid-grey patch as normal; it is empty for a frame that has none. What a
+# frame is used for is one of:
+#
+#   built from            the look is built from it
+#   held back, decides    kept out of building the look; these decide whether the film stock is measured
+#   held back, reported   kept out of building; measured and printed, decides nothing
+#   drift                 the chart again at the end of the roll, to see that nothing changed
+#   grain                 a grey card, for grain when it has a method
+#   by eye                a scene, looked at
+#   bare film             the lens cap on
+#
+# The first four show the chart and are the ones the measuring command reads.
+
+frame 1:  chart, main light | 0  | 1/800  | built from      # the lab sets its scan on this frame's grey patch and holds it
+frame 2:  chart, main light | -3 | 1/6400 | built from
+frame 3:  chart, main light | -2 | 1/3200 | built from
+frame 4:  chart, main light | -1 | 1/1600 | held back, decides
+frame 5:  chart, main light | +1 | 1/400  | held back, decides
+frame 6:  chart, main light | +2 | 1/200  | built from
+frame 7:  chart, main light | +3 | 1/100  | held back, decides
+frame 8:  chart, main light | +4 | 1/50   | built from
+frame 9:  grey card, out of focus, main light | -2 | 1/3200 | grain
+frame 10: grey card, out of focus, main light | 0  | 1/800  | grain
+frame 11: grey card, out of focus, main light | +2 | 1/200  | grain
+frame 12: chart, open shade | -1 | 1/200 | held back, reported
+frame 13: chart, open shade | 0  | 1/100 | held back, reported
+frame 14: chart, open shade | +1 | 1/50  | held back, reported
+frame 15: own hand and forearm | 0 | | by eye
+frame 16: green leaves in sun | 0 | | by eye
+frame 17: blue sky with white cloud | 0 | | by eye
+frame 18: red, orange and yellow things | 0 | | by eye
+frame 19: deep shade and sun in one frame | 0 | | by eye
+frame 20: a white wall in sun | 0 | | by eye
+frame 21: a street | 0 | | by eye
+frame 22: a scene all in shade | 0 | | by eye
+frame 23: lens cap on | | | bare film
+frame 24: chart, main light | 0 | 1/800 | drift
+
+# Where the chart is, in each set of pictures of these frames:
+#
+#   chart in SET: x,y x,y x,y x,y              in every frame of the set
+#   chart in SET, frame N: x,y x,y x,y x,y     in that frame, where it differs
+#
+# The four points are the centres of the chart's four corner patches, in this
+# order: dark skin, bluish green, black, white. That is top left, top right,
+# bottom right, bottom left with the chart the right way up; a picture that
+# is turned or mirrored needs nothing more than the points in that order.
+# Each is a fraction of the picture, across from its left edge and then down
+# from its top, so it holds for the picture at any size. The picture is the
+# file as its pixels are stored: a turn that is only written in the file's
+# tags is not applied.
+#
+# A set is a kind of picture of the frames: "canon" is the Canon frames as a
+# developer prints them (the darkroom and Darkrooms print the whole frame, so
+# they share it), "locked" the locked scan. An automatic scan, or a scan on
+# another machine, is another set with its own lines.
+
+chart in canon: 0.3675,0.3800 0.6325,0.3800 0.6325,0.6200 0.3675,0.6200
+chart in canon, frame 7: 0.3710,0.3790 0.6360,0.3815 0.6340,0.6215 0.3690,0.6190
+
+chart in locked: 0.3520,0.3720 0.6410,0.3910 0.6300,0.6340 0.3600,0.6120
+chart in locked, frame 4: 0.3480,0.3800 0.6370,0.3840 0.6330,0.6310 0.3530,0.6240
+chart in locked, frame 13: 0.3600,0.3650 0.6500,0.3800 0.6380,0.6260 0.3660,0.6050
