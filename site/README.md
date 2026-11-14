@@ -22,7 +22,10 @@ python3 -m http.server -d site 8000
 ```
 
 then open http://localhost:8000. Building needs clang, lld, `wasi-libc`,
-`libclang-rt-18-dev-wasm32` and `binaryen` (Ubuntu packages).
+`libclang-rt-18-dev-wasm32` and `binaryen` (Ubuntu packages), and numpy for
+the films' colour tables. It fetches the Film-Luts LUTs once
+(`ml-dev/films/getluts.py`, about 40 MB); `MFILM_PLAIN=1` builds without them,
+for a try on a computer that can't, with those films' colour mixed from their look.
 
 ## What to replace
 
@@ -49,6 +52,10 @@ then open http://localhost:8000. Building needs clang, lld, `wasi-libc`,
   Asyncify, so the film OS's own loop runs as on the camera.
 - `js/wasi.js` is the memory card: an in-memory file system behind the WASI
   calls of `mfilm.wasm` and `mkcr2.wasm`. Everything shot is lost on reload.
+- `fos/tables/LOOKnn.LUT` are the films' colour tables, the same bytes as in a
+  camera's `ML/DARKROOM` (`ml-dev/filmos/tools/gentables.py`). The darkroom
+  makes none itself, so `js/camera.js` puts a film's table on the card when a
+  roll of it is loaded, and developing waits for it on a slow connection.
 - `js/liveview.js` is what the sensor sees, and the photo each frame is made from.
 - `js/download.js` is the download: camera, pay what you want (US$0–99). Over $0 it asks the Darkrooms
   licence server (`/v1/donate`) for a Stripe Checkout page of that amount; Stripe comes back with `?thanks=1`.

@@ -16,6 +16,18 @@ CFLAGS="--target=wasm32-wasi --sysroot=$SYSROOT -O2 -std=gnu99 -Wall -Wno-unused
 # the fonts and the films, as the camera finds them on its card (sim's Makefile)
 make -C ../sim out/FOSFONT.BIN out/FOSFILMS.BIN >/dev/null
 cp ../sim/out/FOSFONT.BIN ../sim/out/FOSFILMS.BIN "$OUT/"
+# every film's colour table, as a camera's card has them in ML/DARKROOM: the darkroom makes none
+# itself and stops with "no colour table" without one (#124), so the page's card needs them too.
+# camera.js puts a film's table on the card when a roll of it is loaded. The same bytes as in a
+# camera's zip, with the notices that go with them (THIRD_PARTY.md).
+# MFILM_PLAIN=1: on a computer that can't fetch the Film-Luts LUTs (films/getluts.py), those films
+# get the table of their look. Never for the page that is published.
+make -C ../sim out/devtest >/dev/null
+[ -n "${MFILM_PLAIN:-}" ] || [ -d ../../films/luts/filmluts ] || python3 ../../films/getluts.py
+rm -rf "$OUT/tables"
+python3 ../tools/gentables.py "$OUT/tables" --films ../sim/out/FOSFILMS.BIN --devtest ../sim/out/devtest ${MFILM_PLAIN:+--plain}
+cp ../../../LICENSE "$OUT/tables/LICENSE.txt"
+cp ../../../THIRD_PARTY.md "$OUT/tables/THIRD_PARTY.txt"
 # the page's cameras and films, from cameras.txt and FILMS.md as the README's are
 python3 sitedata.py "$OUT"
 
