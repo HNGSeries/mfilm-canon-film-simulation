@@ -4,6 +4,8 @@
  *   mkcr2 out.CR2 [--scene chart|street] [--small|--half] [--clrs 2|4] [--slices N,W,LAST] [--fold]
  *                 [--sensor W,H,LEFT,TOP]   another camera's sensor (LibRaw's identify.cpp table)
  *                 [--portrait] [--ev 0] [--raw out.u16]
+ *                 [--white 13900]           the raw value blown samples stop at (a Canon's
+ *                                           changes with ISO: sim/colourtest.py, #114)
  *                 [--image photo.pfm]       a photo instead of a made-up scene: linear sRGB,
  *                                           0.18 = mid grey (Portable Float Map, 3 channels)
  *
@@ -27,6 +29,7 @@ static int RAW_W = 5280, RAW_H = 3528;          /* the whole sensor read out */
 static int CROP_L = 84, CROP_T = 64, CROP_W = 5184, CROP_H = 3456;   /* the picture */
 #define BLACK 2048
 #define WHITE 13600
+static int clip_at = WHITE + 300;               /* --white: where the samples clip */
 
 /* XYZ -> camera, EOS M (LibRaw colordata, same as the 650D) */
 static const double xyz_cam[3][3] = {
@@ -233,7 +236,7 @@ static void expose(int portrait, double ev)
                 val = e + sqrt(e + 1) * 0.6 * gauss();
             }
             double dn = BLACK + val + 6 * gauss();      /* read noise; borders: optical black */
-            raw[(size_t) y * RAW_W + x] = (uint16_t) (dn < 0 ? 0 : dn > 16383 ? 16383 : dn > WHITE + 300 ? WHITE + 300 : dn);
+            raw[(size_t) y * RAW_W + x] = (uint16_t) (dn < 0 ? 0 : dn > clip_at ? clip_at : dn);
         }
 }
 
@@ -444,7 +447,7 @@ int main(int argc, char **argv)
     if (argc < 2)
     {
         fprintf(stderr, "usage: mkcr2 out.CR2 [--scene chart|street] [--small|--half] [--clrs 2|4] "
-                        "[--slices N,W,LAST] [--portrait] [--ev x] [--raw out.u16] [--seed n] [--image photo.pfm]\n");
+                        "[--slices N,W,LAST] [--portrait] [--ev x] [--raw out.u16] [--seed n] [--image photo.pfm] [--white n]\n");
         return 1;
     }
     int clrs = 2, portrait = 0, slices[3] = { 2, 1760, 1760 };
@@ -480,6 +483,11 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i], "--ev") && i + 1 < argc) ev = atof(argv[++i]);
         else if (!strcmp(argv[i], "--raw") && i + 1 < argc) raw_out = argv[++i];
         else if (!strcmp(argv[i], "--seed") && i + 1 < argc) seed = (unsigned) atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--white") && i + 1 < argc)
+        {
+            clip_at = atoi(argv[++i]);
+            if (clip_at < BLACK + 1024 || clip_at > 16383) { fprintf(stderr, "--white: %d to 16383\n", BLACK + 1024); return 1; }
+        }
         else if (!strcmp(argv[i], "--scene") && i + 1 < argc) scene_kind = !strcmp(argv[++i], "street");
         else if (!strcmp(argv[i], "--image") && i + 1 < argc) { if (!load_pfm(argv[++i])) return 1; }
     }

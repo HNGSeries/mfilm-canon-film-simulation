@@ -387,6 +387,10 @@ struct fos_dev
     int64_t black_sum;
     long black_n;
     int black16;                        /* black level, 1/16 raw units */
+#define WBINS 1024
+    uint32_t *whist;                    /* the brightest samples, counted: WBINS bins for each colour (white_clip) */
+    int wbase, wshift;                  /* a bin's first raw value: wbase + (bin << wshift) */
+    int clip;                           /* where this frame's samples clip, 4096 = WHITE_LEVEL */
     int pre[3];                         /* daylight balance and white level, raw/16 -> 1/4096, << 14 */
     int mat[3][3];                      /* camera -> linear sRGB, 1/4096 */
     int mul[3];                         /* exposure and film balance, 1/4096 */
@@ -497,7 +501,10 @@ static const float XYZ_CAM[3][3] = { { 0.6602f, -0.0841f, -0.0939f }, { -0.4472f
 #endif
 static const float RGB_XYZ[3][3] = { { 0.4124564f, 0.3575761f, 0.1804375f }, { 0.2126729f, 0.7151522f, 0.0721750f },
                                      { 0.0193339f, 0.1191920f, 0.9503041f } };
-/* raw value of a full pixel (LibRaw's maximum); the EOS M's measured 13600 */
+/* raw value of a full pixel (LibRaw's maximum); the EOS M's measured 13600.
+ * This is the scale: what a frame's samples are divided by. Where a frame
+ * clips is read from the frame itself (white_clip()), because that moves
+ * with the ISO and this does not. */
 #if defined(CONFIG_6D)
 #define WHITE_LEVEL 15490
 #elif defined(CONFIG_70D)
@@ -861,6 +868,12 @@ static int setup_maps(struct fos_dev *d)
     d->sums = fos_port_alloc(FOS_PRINT_W * FOS_PRINT_H * 3 * 4);
     if (!d->sums) return fail_mem(d, FOS_PRINT_W * FOS_PRINT_H * 3 * 4);
     memset(d->sums, 0, FOS_PRINT_W * FOS_PRINT_H * 3 * 4);
+    /* the top half of the raw range in WBINS bins (8 raw values each at 14
+     * bits); without the memory for it the frame clips at WHITE_LEVEL */
+    d->wbase = 1 << (d->bits - 1);
+    d->wshift = d->bits > 11 ? d->bits - 11 : 0;
+    d->whist = fos_port_alloc(3 * WBINS * 4);
+    if (d->whist) memset(d->whist, 0, 3 * WBINS * 4);
     /* the bigger print, the size asked for or the next one down that the
      * camera has the memory for; none of them, and the screen's print alone */
     for (int size = d->want_big; size > FOS_SIZE_S && !d->big; size--)
@@ -1330,6 +1343,79 @@ static __attribute__((noinline)) void big_row(struct fos_dev *d, const uint16_t 
     }
 }
 
+/* ---- where the frame clips
+ *
+ * WHITE_LEVEL is one number for a camera, and a Canon's samples stop at a
+ * different raw value from one ISO to another (a 100D: 13583 at ISO 100,
+ * about 15304 at ISO 400). Where it is too high, a blown pixel's green stops
+ * short of white while red and blue, which the balance multiplies, are cut
+ * off at it: pink highlights. Where it is too low, highlights are cut off
+ * that the sensor still held. (#114, measured for #98.)
+ *
+ * WHITE_LEVEL stays the scale: metering puts a grey at the same raw value at
+ * every ISO, so a frame is as bright as it was exposed whatever is in it.
+ * What comes from the frame is where it clips: blown samples pile up within
+ * a few raw values of each other, which nothing unclipped does (noise at
+ * that level is a hundred times wider), so the brightest samples are counted
+ * as they are decoded and the pile found. */
+
+/* samples v..ve of a row into the counts of their colours, h0 the first one's */
+static __attribute__((noinline)) void white_row(const uint16_t *v, const uint16_t *ve, uint32_t *h0, uint32_t *h1,
+                                                int base, int shift)
+{
+    for (; v < ve; v++)
+    {
+        int k = *v - base;
+        if (k >= 0 && (k >>= shift) < WBINS) h0[k]++;
+        uint32_t *t = h0; h0 = h1; h1 = t;
+    }
+}
+
+/* One colour's counts: the bin its blown samples pile up in, or -1; *top the
+ * highest bin that isn't a stray sample or two, -1 if there is none. A pile
+ * is the top four bins (32 raw values at 14 bits) holding WPILE samples or
+ * more, and twice what the eight bins under them hold: a sky that is only
+ * bright thins out towards its top, a blown one ends in a wall. */
+#define WPILE 16
+static int white_pile(const uint32_t *h, int *top)
+{
+    int t = WBINS - 1;
+    while (t >= 0 && h[t] < 3) t--;
+    *top = t;
+    if (t < 0) return -1;
+    uint32_t pile = 0, under = 0;
+    for (int b = t; b > t - 4 && b >= 0; b--) pile += h[b];
+    for (int b = t - 4; b > t - 12 && b >= 0; b--) under += h[b];
+    if (pile < WPILE || pile < 2 * under) return -1;
+    /* the middle of the pile: half its samples are at or above it */
+    uint32_t acc = 0;
+    int b = t;
+    while (b > t - 3 && b > 0 && (acc += h[b]) * 2 < pile) b--;
+    return b;
+}
+
+/* Where the frame clips, 4096 = WHITE_LEVEL. The lowest pile of the three
+ * colours, so that a blown pixel has all three at the clip and is neutral.
+ * With no pile nothing is blown: then WHITE_LEVEL, or the brightest samples
+ * if they are above it, since they are plainly not clipped. */
+static int white_clip(const struct fos_dev *d, float black)
+{
+    if (!d->whist) return 4096;
+    int pile = -1, top = -1;
+    for (int c = 0; c < 3; c++)
+    {
+        int t, p = white_pile(d->whist + WBINS * c, &t);
+        if (p >= 0 && (pile < 0 || p < pile)) pile = p;
+        if (t > top) top = t;
+    }
+    int bin = pile >= 0 ? pile : top + 1;           /* top + 1: above every sample of the top bin */
+    if (bin < 0) return 4096;
+    int clip = (int) (((float) (d->wbase + (bin << d->wshift)) - black) * 4096 / ((float) WHITE_LEVEL - black) + 0.5f);
+    if (pile < 0 && clip < 4096) clip = 4096;
+    /* a frame can't clip far from where its camera does: beyond this the counts are not to be believed */
+    return clip < 2048 || clip > 6144 ? 4096 : clip;
+}
+
 /* count samples to where they fall in the print, slice by slice, top to
  * bottom: a print pixel's run of samples along a raw row is summed in
  * registers, even and odd columns (two colours of the mosaic) apart, and
@@ -1366,6 +1452,10 @@ static __attribute__((noinline)) void scatter(struct fos_dev *d, const uint16_t 
                  * (row_phase), the even columns' colour then the odd ones' */
                 const uint16_t *at = src - x0;
                 if (d->big) big_row(d, at, pa, pb, sy);
+                /* two rows in sixteen, one of each kind: enough to find where the frame clips */
+                if ((sy & 15) < 2 && d->whist)
+                    white_row(at + pa, at + pb, d->whist + WBINS * (((sy ^ rphase) & 1) + (pa & 1)),
+                              d->whist + WBINS * (((sy ^ rphase) & 1) + (~pa & 1)), d->wbase, d->wshift);
                 uint32_t *row = sums + ro + ((sy ^ rphase) & 1);
                 /* the segments it touches, and those it has whole (a row
                  * of the picture is in two of Canon's slices) */
@@ -1430,7 +1520,8 @@ static void decode(struct fos_dev *d, long n)
 static uint32_t recip[NMAX];
 
 /* scene-linear sRGB of print pixel i (4096 = 1.0), clipped as the lab's
- * RAW converter does, times d->mul; 0 where the picture isn't */
+ * RAW converter does, at where this frame's samples clip (d->clip), times
+ * d->mul; 0 where the picture isn't */
 FOS_INLINE void pixel_linear(const struct fos_dev *d, int x, int y, int lin[3])
 {
     int i = y * FOS_PRINT_W + x;
@@ -1445,12 +1536,12 @@ FOS_INLINE void pixel_linear(const struct fos_dev *d, int x, int y, int lin[3])
         /* the mean (sums <= 16383 n, so this fits), less black, balanced */
         int m = n[c] < NMAX ? (int) (d->sums[3 * i + c] * recip[n[c]] >> 12) - d->black16 : 0;
         int v = m > 0 ? (int) (((int64_t) m * d->pre[c]) >> 14) : 0;
-        cam[c] = v < 0 ? 0 : v > 4096 ? 4096 : v;
+        cam[c] = v < 0 ? 0 : v > d->clip ? d->clip : v;
     }
     for (int c = 0; c < 3; c++)
     {
         int v = (d->mat[c][0] * cam[0] + d->mat[c][1] * cam[1] + d->mat[c][2] * cam[2]) >> 12;
-        v = v < 0 ? 0 : v > 4096 ? 4096 : v;
+        v = v < 0 ? 0 : v > d->clip ? d->clip : v;
         v = (v * d->mul[c]) >> 12;
         lin[c] = v > 65535 ? 65535 : v;
     }
@@ -1491,6 +1582,7 @@ static void setup_colour(struct fos_dev *d)
     float black = d->black_n ? (float) d->black_sum / (float) d->black_n : 2048;
     if (black < 0 || black > WHITE_LEVEL / 2) black = 2048;     /* a damaged file */
     d->black16 = (int) (black * 16 + 0.5f);
+    d->clip = white_clip(d, black);
     /* raw/16 above black -> 4096 at the white level, balanced, << 14 */
     for (int c = 0; c < 3; c++)
     {
@@ -1772,6 +1864,7 @@ struct fos_dev *fos_dev_start(const char *cr2, const char *print, int film, int 
     struct fos_dev *d = fos_port_alloc(sizeof(struct fos_dev));
     if (!d) return 0;
     memset(d, 0, sizeof(*d));
+    d->clip = 4096;
     snprintf(d->cr2, sizeof(d->cr2), "%s", cr2);
     snprintf(d->print, sizeof(d->print), "%s", print);
     snprintf(d->when, sizeof(d->when), "%s", when ? when : "");
@@ -1816,7 +1909,7 @@ void fos_dev_free(struct fos_dev *d)
     fos_port_free(d->buf); fos_port_free(d->rowoff); fos_port_free(d->seg_of);
     fos_port_free(d->seg_x0); fos_port_free(d->seg_off); fos_port_free(d->seg_desc); fos_port_free(d->desc_off); fos_port_free(d->seg_piece);
     fos_port_free(d->rowob); fos_port_free(d->colob); fos_port_free(d->ne_r); fos_port_free(d->ne_c);
-    fos_port_free(d->sums); fos_port_free(d->glow); fos_port_free(d->rgb);
+    fos_port_free(d->sums); fos_port_free(d->glow); fos_port_free(d->rgb); fos_port_free(d->whist);
     fos_port_free(d->hist); fos_port_free(d->inv); fos_port_free(d->err_rows); fos_port_free(d->idx);
     /* stopped in the middle of the big print: what there is of its files is closed */
     if (d->bjpeg) fos_jpeg_end(d->bjpeg);
@@ -1920,7 +2013,7 @@ static void stage_key(struct fos_dev *d)
                 }
             fclose(f);
         }
-        fprintf(stderr, "dump: black %d/16, white %d, pre %d %d %d\n", d->black16, WHITE_LEVEL, d->pre[0], d->pre[1], d->pre[2]);
+        fprintf(stderr, "dump: black %d/16, white %d, clip %d, pre %d %d %d\n", d->black16, WHITE_LEVEL, d->clip, d->pre[0], d->pre[1], d->pre[2]);
     }
 #endif
     if (!d->look->slide)
@@ -1935,7 +2028,8 @@ static void stage_key(struct fos_dev *d)
                 int lin[3];
                 if (d->rows_axis_x && (x < d->ox0 || x >= d->ox0 + d->ow)) continue;
                 pixel_linear(d, x, y, lin);
-                hist[(871 * lin[0] + 2929 * lin[1] + 296 * lin[2]) >> 12]++;
+                int l = (871 * lin[0] + 2929 * lin[1] + 296 * lin[2]) >> 12;
+                hist[l > 4096 ? 4096 : l]++;         /* (a frame can clip above WHITE_LEVEL) */
                 n++;
             }
         float acc = 0;
@@ -1970,15 +2064,15 @@ static void stage_key(struct fos_dev *d)
 static __attribute__((noinline)) void expose_cam(const struct fos_dev *d, const uint32_t *sm, uint16_t *cam, int n,
                                                  int a, int b, const uint16_t *ra, const uint16_t *rb)
 {
-    const int black = d->black16, p0 = d->pre[0], p1 = d->pre[1], p2 = d->pre[2];
+    const int black = d->black16, p0 = d->pre[0], p1 = d->pre[1], p2 = d->pre[2], clip = d->clip;
     for (const uint16_t *e = ra + n; ra < e; ra++, rb++, sm += 3, cam += 3)
     {
         int n0 = a * *ra, n1 = a * *rb + b * *ra, n2 = b * *rb;
         int c0 = 0, c1 = 0, c2 = 0;
         /* (sums <= 16383 n, so this fits) */
-        if (n0 < NMAX) { int m = (int) (sm[0] * recip[n0] >> 12) - black; if (m > 0) { c0 = (m * p0) >> 14; if (c0 > 4096) c0 = 4096; } }
-        if (n1 < NMAX) { int m = (int) (sm[1] * recip[n1] >> 12) - black; if (m > 0) { c1 = (m * p1) >> 14; if (c1 > 4096) c1 = 4096; } }
-        if (n2 < NMAX) { int m = (int) (sm[2] * recip[n2] >> 12) - black; if (m > 0) { c2 = (m * p2) >> 14; if (c2 > 4096) c2 = 4096; } }
+        if (n0 < NMAX) { int m = (int) (sm[0] * recip[n0] >> 12) - black; if (m > 0) { c0 = (m * p0) >> 14; if (c0 > clip) c0 = clip; } }
+        if (n1 < NMAX) { int m = (int) (sm[1] * recip[n1] >> 12) - black; if (m > 0) { c1 = (m * p1) >> 14; if (c1 > clip) c1 = clip; } }
+        if (n2 < NMAX) { int m = (int) (sm[2] * recip[n2] >> 12) - black; if (m > 0) { c2 = (m * p2) >> 14; if (c2 > clip) c2 = clip; } }
         cam[0] = (uint16_t) c0; cam[1] = (uint16_t) c1; cam[2] = (uint16_t) c2;
     }
 }
@@ -1992,16 +2086,16 @@ static __attribute__((noinline)) void expose_lin(const struct fos_dev *d, const 
     const int m10 = d->mat[1][0], m11 = d->mat[1][1], m12 = d->mat[1][2];
     const int m20 = d->mat[2][0], m21 = d->mat[2][1], m22 = d->mat[2][2];
     const int u0 = d->mul[0], u1 = d->mul[1], u2 = d->mul[2];
-    const int thr = (int) (d->look->hal_thr * 4096);
+    const int thr = (int) (d->look->hal_thr * 4096), clip = d->clip;
     for (const uint16_t *e = cam + 3 * n; cam < e; cam += 3, o += 3, x++)
     {
         int c0 = cam[0], c1 = cam[1], c2 = cam[2];
         int r = (m00 * c0 + m01 * c1 + m02 * c2) >> 12;
         int gg = (m10 * c0 + m11 * c1 + m12 * c2) >> 12;
         int bb = (m20 * c0 + m21 * c1 + m22 * c2) >> 12;
-        r = r < 0 ? 0 : r > 4096 ? 4096 : r;
-        gg = gg < 0 ? 0 : gg > 4096 ? 4096 : gg;
-        bb = bb < 0 ? 0 : bb > 4096 ? 4096 : bb;
+        r = r < 0 ? 0 : r > clip ? clip : r;
+        gg = gg < 0 ? 0 : gg > clip ? clip : gg;
+        bb = bb < 0 ? 0 : bb > clip ? clip : bb;
         r = (r * u0) >> 12; gg = (gg * u1) >> 12; bb = (bb * u2) >> 12;
         if (r > 65535) r = 65535;
         if (gg > 65535) gg = 65535;

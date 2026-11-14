@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
 """The darkroom's picture before the film stock, against a RAW developer's.
 
-    make out/devtest && python3 colourtest.py [--raw frame.CR2] [--devtest out/devtest]
+    make out/devtest out/mkcr2 && python3 colourtest.py [--raw frame.CR2] [--devtest out/devtest] [--mkcr2 out/mkcr2]
 
 Develops the frame with the camera's own code (devtest, FOS_DUMP_LIN: the
 picture where stage_key() begins, before the scanner's exposure and any film
-stock) and with LibRaw at the same white level and the same daylight
-balance: sRGB primaries, no tone curve, no automatic brightness, highlights
-clipped. Fails if the two are not the same picture.
+stock) and with LibRaw at the same daylight balance: sRGB primaries, no tone
+curve, no automatic brightness, highlights clipped. Fails if the two are not
+the same picture, or if the darkroom's blown highlights are not neutral.
+
+The darkroom scales a frame by its camera's white level and clips it where
+that frame's own samples clip (white_clip() in fos_dev.c, #114). LibRaw is
+given the frame's clip as its white level and its picture is put back on
+the darkroom's scale, so the two clip at the same raw value.
+
+Whether the darkroom finds the clip is tested on made-up frames (mkcr2
+--white): a chart three stops over, its samples clipping below the camera's
+white level, where a blown patch used to come out pink, and above it, where
+highlights used to be cut off early.
 
 The limits are in LIMITS below. The two pictures are compared as 8 x 8 block
 means: the darkroom puts each raw sample whole into one print pixel and a
@@ -33,7 +43,7 @@ from PIL import Image
 
 HERE = Path(__file__).resolve().parent
 W, H = 720, 480                         # FOS_PRINT_W, FOS_PRINT_H
-LIMITS = {"ev": 0.02, "de_mean": 1.0}   # brightness in stops, mean dE2000
+LIMITS = {"ev": 0.02, "de_mean": 1.0, "blown": 0.02}   # stops; mean dE2000; a blown pixel's colours, as a share of the clip
 M_XYZ = np.array([[0.4124564, 0.3575761, 0.1804375], [0.2126729, 0.7151522, 0.0721750],
                   [0.0193339, 0.1191920, 0.9503041]])                       # fos_dev.c RGB_XYZ
 LUMA = np.array([871, 2929, 296]) / 4096                                    # stage_key()'s
@@ -73,8 +83,9 @@ def de2000(l1, l2):
 
 
 def darkroom(devtest, cr2):
-    """The darkroom's picture (H x W x 3, 1.0 = white) and the black and white
-    levels it scaled the frame by."""
+    """The darkroom's picture (H x W x 3, 1.0 = the camera's white level), the
+    black and white levels it scaled the frame by, and where it clipped it
+    (on the picture's scale)."""
     with tempfile.TemporaryDirectory() as tmp:
         # beside a link to the frame: the darkroom keeps paths short, as on a card
         os.symlink(Path(cr2).resolve(), os.path.join(tmp, "frame.CR2"))
@@ -84,12 +95,12 @@ def darkroom(devtest, cr2):
         if r.returncode or not os.path.exists(dump):
             sys.exit(f"FAIL  devtest did not develop {cr2}:\n{r.stderr.strip()}")
         pic = np.fromfile(dump, np.int32).reshape(H, W, 3) / 4096.0
-    m = re.search(r"dump: black (\d+)/16, white (\d+)", r.stderr)
+    m = re.search(r"dump: black (\d+)/16, white (\d+), clip (\d+)", r.stderr)
     if not m:
         sys.exit("FAIL  devtest wrote no 'dump:' line (built without FOS_DEV_TEST?)")
     if re.search(r"orientation [5-8]", r.stderr):
         sys.exit("FAIL  a portrait frame: the test lays the two pictures over each other and needs a landscape one")
-    return pic, int(m.group(1)) / 16, int(m.group(2))
+    return pic, int(m.group(1)) / 16, int(m.group(2)), int(m.group(3)) / 4096
 
 
 def shrink(img):
@@ -98,26 +109,50 @@ def shrink(img):
                      for c in range(3)], -1).astype(np.float64)
 
 
-def libraw(cr2, black, white):
-    """LibRaw's linear sRGB of the camera's crop, at the darkroom's white level."""
+def libraw(cr2, black, white, clip):
+    """LibRaw's linear sRGB of the camera's crop, clipped where the darkroom
+    clips and on the darkroom's scale."""
     with rawpy.imread(str(cr2)) as raw:
         z = raw.sizes
         img = raw.postprocess(gamma=(1, 1), no_auto_bright=True, output_bps=16, use_camera_wb=False, use_auto_wb=False,
                               output_color=rawpy.ColorSpace.sRGB, highlight_mode=rawpy.HighlightMode.Clip, user_flip=0,
-                              user_sat=int(round(white - black)))            # user_sat counts from black
+                              user_sat=int(round((white - black) * clip)))   # user_sat counts from black
         x0, y0 = z.crop_left_margin - z.left_margin, z.crop_top_margin - z.top_margin
-        return shrink(img[y0:y0 + z.crop_height, x0:x0 + z.crop_width] / 65535.0)
+        return shrink(img[y0:y0 + z.crop_height, x0:x0 + z.crop_width] / 65535.0) * clip
 
 
 def blocks(a):
     return a.reshape(H // 8, 8, W // 8, 8, 3).mean((1, 3))
 
 
-def compare(a, b):
+def made_up(devtest, mkcr2, white):
+    """A made-up frame whose samples clip at the raw value white: where the
+    darkroom clipped it, where it should have, how many print pixels are
+    blown through and through, and how far the worst of them is from the
+    clip in any colour (as a share of the clip)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        cr2 = os.path.join(tmp, "blown.CR2")
+        r = subprocess.run([str(Path(mkcr2).resolve()), cr2, "--half", "--scene", "chart", "--ev", "3", "--white", str(white)],
+                           capture_output=True, text=True)
+        if r.returncode:
+            sys.exit(f"FAIL  mkcr2 did not make a frame:\n{r.stderr.strip()}")
+        pic, black, level, clip = darkroom(devtest, cr2)
+        with rawpy.imread(cr2) as raw:
+            z = raw.sizes
+            at = raw.raw_image[z.crop_top_margin:z.crop_top_margin + z.crop_height,
+                               z.crop_left_margin:z.crop_left_margin + z.crop_width] >= white
+        share = np.asarray(Image.fromarray(at.astype(np.float32), "F").resize((W, H), Image.BOX))
+    blown = share > 0.999
+    worst = float(np.abs(pic[blown] - clip).max() / clip) if blown.any() else 0.0
+    return clip, (white - black) / (level - black), int(blown.sum()), worst
+
+
+def compare(a, b, clip=1.0):
     """a against b: stops between their brightness (over blocks well inside
     both pictures' range), and dE2000 over every block."""
     a, b = blocks(a), blocks(b)
-    ok = (a.max(-1) < 0.9) & (b.max(-1) < 0.9) & (a.min(-1) > 0.005) & (b.min(-1) > 0.005) & (b @ LUMA > 0.02)
+    top = 0.9 * min(clip, 1.0)
+    ok = (a.max(-1) < top) & (b.max(-1) < top) & (a.min(-1) > 0.005) & (b.min(-1) > 0.005) & (b @ LUMA > 0.02)
     if ok.sum() < 200:
         sys.exit(f"FAIL  only {int(ok.sum())} blocks are inside both pictures' range: not a frame to test with")
     de = de2000(lab(a), lab(b))
@@ -129,16 +164,24 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--raw", default=HERE.parents[1] / "films/sample/SAMPLE.CR2")
     ap.add_argument("--devtest", default=HERE / "out/devtest")
+    ap.add_argument("--mkcr2", default=HERE / "out/mkcr2")
     a = ap.parse_args()
-    pic, black, white = darkroom(a.devtest, a.raw)
-    got = compare(pic, libraw(a.raw, black, white))
+    pic, black, white, clip = darkroom(a.devtest, a.raw)
+    got = compare(pic, libraw(a.raw, black, white, clip), clip)
     fail = 0
     for what, key, unit in (("brightness", "ev", "EV"), ("colour", "de_mean", "mean dE2000")):
         bad = abs(got[key]) > LIMITS[key]
         fail |= bad
         value = f"{got[key]:+.3f}" if key == "ev" else f"{got[key]:.2f}"
         print(f"{'FAIL ' if bad else 'ok   '} {what} against LibRaw: {value} {unit} (limit {LIMITS[key]})")
-    print(f"      95 % of the print within dE2000 {got['de_p95']:.2f}; white level {white}, black {black:.1f}")
+    print(f"      95 % of the print within dE2000 {got['de_p95']:.2f}; white level {white}, black {black:.1f}, "
+          f"this frame clips at {black + (white - black) * clip:.0f}")
+    for white, was in ((12000, "used to come out pink"), (15300, "used to be cut off early")):
+        clip, want, n, worst = made_up(a.devtest, a.mkcr2, white)
+        bad = abs(clip / want - 1) > 0.005 or n < 100 or worst > LIMITS["blown"]
+        fail |= bad
+        print(f"{'FAIL ' if bad else 'ok   '} a made-up frame clipping at {white} ({was}): the darkroom clips it at "
+              f"{clip:.3f} (should: {want:.3f}), {n} blown pixels within {worst:.3f} of neutral (limit {LIMITS['blown']})")
     sys.exit(1 if fail else 0)
 
 

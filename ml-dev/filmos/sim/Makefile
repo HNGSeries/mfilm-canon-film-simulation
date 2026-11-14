@@ -35,6 +35,11 @@ out/devtest: $(DEV) ../*.h out/FOSFILMS.BIN
 	mkdir -p out
 	$(CC) $(CFLAGS) -DFOS_DEV_TEST -o $@ $(DEV) -lm
 
+# test CR2 files (mkcard.sh builds its own; colourtest.py wants this one)
+out/mkcr2: tools/mkcr2.c
+	mkdir -p out
+	$(CC) -O2 -o $@ tools/mkcr2.c -lm
+
 # the same, loading words off their boundary the way the camera's ARM does (rotated):
 # a print that differs from out/devtest's has a read the camera gets wrong (lines, #6)
 out/devtest-arm: $(DEV) ../*.h out/FOSFILMS.BIN
