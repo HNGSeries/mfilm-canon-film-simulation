@@ -345,7 +345,8 @@ static void dark_row(int i, int y)
     if (is_waiting(r)) mark_dot(x + 12, y + DK_ROW / 2, marked[i]);
     else ui_icon(r->in_camera ? ICON_FILM : ICON_PRINTS, x + 12, y + DK_ROW / 2, sel ? C_TEXT2 : C_TEXT3, OPAQUE);
     char b[96];
-    fos_text(cv, &fos_font_mdb, x + 42, y + 27, fos_films[r->film].name, sel ? C_TEXT : C_TEXT2, OPAQUE, 0);
+    /* a film that has left the shelf: by the name its log has, not as the film it would fall back to */
+    fos_text(cv, &fos_font_mdb, x + 42, y + 27, r->gone[0] ? r->gone : fos_films[r->film].name, sel ? C_TEXT : C_TEXT2, OPAQUE, 0);
     const char *when = r->last[0] ? r->last : r->loaded;
     snprintf(b, sizeof(b), "Roll %03d " T_DOT " %d frame%s " T_DOT " %s", r->number, r->shot, r->shot == 1 ? "" : "s", short_date(when));
     fos_text(cv, &fos_font_sm, x + 42, y + 48, b, C_TEXT3, OPAQUE, 0);
@@ -493,6 +494,7 @@ static int nqueue, qi;
 static char dcim_dir[128];              /* the roll's JPEG folder, or "" */
 static int nframes, fi, roll_ready;
 static int cur_roll, cur_film, cur_frame;
+static const char *cur_gone;            /* the roll's film, if it has left the shelf: its frames are not developed */
 static struct fos_dev *dev;
 static int frame_t0;
 static int total_frames, done_frames, failed_frames, rolls_done;
@@ -586,6 +588,7 @@ static void next_job()
             cur_roll = queue[qi];
             int ri = roll_index(cur_roll);
             cur_film = ri >= 0 ? rolls[ri].film : 0;
+            cur_gone = ri >= 0 && rolls[ri].gone[0] ? rolls[ri].gone : 0;
             nframes = fos_lab_frames(cur_roll, dm->frames, FOS_MAX_FRAMES);
             {
                 char msg[96];
@@ -630,6 +633,18 @@ static void next_job()
             }
             /* developed before (and, by this version, written to DCIM too) */
             if (file_exists(path) && (!jpeg[0] || f->missing || file_exists(jpeg))) continue;
+            if (cur_gone)
+            {
+                /* shot on a film that has left the shelf: not developed as some other film. The RAWs stay. */
+                char msg[120];
+                snprintf(msg, sizeof(msg), "darkroom: roll %03d frame %d: its film (%s) is not on the shelf any more", cur_roll,
+                         f->no, cur_gone);
+                fos_port_log(msg);
+                snprintf(last_error, sizeof(last_error), "%.15s has left the shelf " T_MDASH " the RAWs are still on the card", cur_gone);
+                failed_frames++;
+                done_frames++;
+                continue;
+            }
             if (f->missing)
             {
                 char msg[120];

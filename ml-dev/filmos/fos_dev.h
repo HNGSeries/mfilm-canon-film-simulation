@@ -167,6 +167,8 @@ struct fos_lab_roll
 {
     int number;
     int film;                   /* index into fos_films */
+    char gone[16];              /* the film its log names, when that film is not on the shelf any more:
+                                 * it is listed under that name and not developed as another film */
     int exposures;
     int shot;                   /* frames in its logs */
     int developed;              /* frames with a print */

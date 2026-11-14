@@ -1,4 +1,4 @@
-# One photo, 72 films
+# One photo, 68 films
 
 The same RAW from a Canon EOS M, developed by M-Film with every film it knows (half resolution here,
 downsized for the page). Colour from [Film-Luts](https://github.com/YahiaAngelo/Film-Luts) where the film has a LUT, from
@@ -45,9 +45,8 @@ M-Film's own model otherwise; grain, halation and softness are modelled per film
 <tr><td width="33%"><a href="docs/films/ir400.jpg"><img src="docs/films/ir400.jpg" alt="Rollei Infrared 400"></a><br><b>Rollei Infrared 400</b><br><sub>ISO 400 · B&W · Infrared touch, glowing foliage</sub></td></tr>
 </table>
 
-## Cinema · 6
+## Cinema · 2
 
 <table>
-<tr><td width="33%"><a href="docs/films/cinestill800t.jpg"><img src="docs/films/cinestill800t.jpg" alt="CineStill 800T"></a><br><b>CineStill 800T</b><br><sub>ISO 800 · C-41 · Tungsten cine film, night goes blue</sub></td><td width="33%"><a href="docs/films/cinestill400t.jpg"><img src="docs/films/cinestill400t.jpg" alt="CineStill 400T"></a><br><b>CineStill 400T</b><br><sub>ISO 400 · C-41 · Cine film, cool shadows, red halos</sub></td><td width="33%"><a href="docs/films/kodak2383.jpg"><img src="docs/films/kodak2383.jpg" alt="Kodak Vision 2383"></a><br><b>Kodak Vision 2383</b><br><sub>ISO 200 · ECP · Cinema print: teal shadows</sub></td></tr>
-<tr><td width="33%"><a href="docs/films/kodak2393.jpg"><img src="docs/films/kodak2393.jpg" alt="Kodak Vision 2393"></a><br><b>Kodak Vision 2393</b><br><sub>ISO 200 · ECP · Cinema print, richer blacks</sub></td><td width="33%"><a href="docs/films/fuji3510.jpg"><img src="docs/films/fuji3510.jpg" alt="Fujifilm Eterna 3510"></a><br><b>Fujifilm Eterna 3510</b><br><sub>ISO 200 · ECP · Fuji print film, soft colour</sub></td><td width="33%"><a href="docs/films/fuji3513.jpg"><img src="docs/films/fuji3513.jpg" alt="Fujifilm Eterna 3513"></a><br><b>Fujifilm Eterna 3513</b><br><sub>ISO 200 · ECP · Fuji print for digital masters</sub></td></tr>
+<tr><td width="33%"><a href="docs/films/cinestill800t.jpg"><img src="docs/films/cinestill800t.jpg" alt="CineStill 800T"></a><br><b>CineStill 800T</b><br><sub>ISO 800 · C-41 · Tungsten cine film, night goes blue</sub></td><td width="33%"><a href="docs/films/cinestill400t.jpg"><img src="docs/films/cinestill400t.jpg" alt="CineStill 400T"></a><br><b>CineStill 400T</b><br><sub>ISO 400 · C-41 · Cine film, cool shadows, red halos</sub></td></tr>
 </table>

@@ -40,15 +40,15 @@
 การเข้าและออกจากเมนูเปลี่ยนหน้าทันที ไม่มีการเลื่อนซ้าย-ขวา ส่วนการเปลี่ยนระหว่างชั้นวาง ห้องมืด และหน้า Prints
 เป็นเฟดสั้น ๆ 320 ms ปิดได้ที่ Settings > Advanced > Page fade (ปิดแล้วทุกหน้าเปลี่ยนทันที และไม่ต้องจองหน่วยความจำ 345 KB ของเฟด)
 
-### ฟิล์ม 72 ตัว บน 4 ชั้น
+### ฟิล์ม 68 ตัว บน 4 ชั้น
 - ชั้นวางแยกตามชนิด: COLOUR (เนกาทีฟสี), SLIDE (สไลด์และ cross-process), B&W, CINE
-  (CineStill และฟิล์มพิมพ์ภาพยนตร์) ▲ ▼ เปลี่ยนชั้น กลักของชั้นใหม่จะหล่นลงมา
+  (CineStill) ▲ ▼ เปลี่ยนชั้น กลักของชั้นใหม่จะหล่นลงมา
 - ชั้น **RECENT** อยู่บนสุด: ฟิล์ม 4 ตัวที่ใส่ล่าสุด ตัวล่าสุดอยู่หน้าสุด ชั้นวางเปิดที่ชั้นนี้เสมอเมื่อเคยใส่ฟิล์มมาแล้ว
   จะใส่ฟิล์มเดิมอีกม้วนจึงกด SET ครั้งเดียว
 - 8 ตัวแรก (Portra 400, CineStill 800T, Ektar 100, Gold 200, Superia 400, Velvia 50, HP5, Tri-X)
-  สีมาจากโมเดลฟิล์มของ M-Film (`ml-dev/films/films.py`) อีก 63 ตัวมาจาก LUT ของ [Film-Luts](https://github.com/YahiaAngelo/Film-Luts)
-  (Portra 160/800/NC/VC/UC, Pro 400H, Kodachrome, Ektachrome, Provia, Acros, T-MAX, Delta,
-  Vision 2383 ฯลฯ) และ CineStill 400T จาก LUT ส่วนตัว (`ml-dev/films/luts/cinestill400t.slog3.cube`)
+  สีมาจากโมเดลฟิล์มของ M-Film (`ml-dev/films/films.py`) อีก 59 ตัวมาจาก LUT ของ [Film-Luts](https://github.com/YahiaAngelo/Film-Luts)
+  (Portra 160/800/NC/VC/UC, Pro 400H, Kodachrome, Ektachrome, Provia, Acros, T-MAX, Delta ฯลฯ)
+  และ CineStill 400T จาก LUT ส่วนตัว (`ml-dev/films/luts/cinestill400t.slog3.cube`)
 - ข้อมูลฟิล์มเหล่านี้อยู่ในไฟล์ `ML/DATA/FOSFILMS.BIN` บนการ์ด (ไม่ได้อยู่ใน autoexec.bin
   ที่ต้องเล็ก) ฉลากกลักวาดจากส่วนประกอบตามยี่ห้อ (`ml-dev/filmos/tools/catalog.py`)
 - ตารางสีของทุกฟิล์ม (`ML/DARKROOM/LOOKnn.LUT`) อบมาจาก LUT ตอน build
@@ -274,7 +274,7 @@ make out/devtest && ./out/devtest -f portra400 IMG_0001.CR2 out.BMP out.ppm   # 
 ## ฟิล์ม (`ml-dev/films/`)
 ค่าฟิล์มที่ทั้งกล้องและ Darkrooms ใช้ build กล้องจะอ่านจากที่นี่
 - `films.py` ค่าของฟิล์มแต่ละตัว ตั้งด้วยสายตา ยังไม่ได้วัดเทียบกับฟิล์มจริง
-- `filmluts.py` ฟิล์ม 63 ตัวที่สีมาจาก Film-Luts, `getluts.py` ดาวน์โหลด LUT เหล่านั้นไว้ที่
+- `filmluts.py` ฟิล์ม 59 ตัวที่สีมาจาก Film-Luts, `getluts.py` ดาวน์โหลด LUT เหล่านั้นไว้ที่
   `luts/filmluts/` (ไม่ได้เก็บใน git) ตอน build กล้องจะอบเป็นตารางสีลงการ์ด
 - `lut.py` อ่านและใช้ไฟล์ `.cube` (`python lut.py info ไฟล์.cube` ดูว่าใน LUT มีอะไร)
 - CineStill 400T ใช้ LUT ส่วนตัว: วางไว้ที่ `luts/cinestill400t.slog3.cube`
