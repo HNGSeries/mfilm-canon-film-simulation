@@ -200,8 +200,10 @@ DSLR ถ่ายผ่านช่องมองกระจก ไม่ม�
 
 **[ดูฟิล์มทั้ง 68 แบบ บนรูปเดียวกัน →](FILMS.md)**
 
-สีของฟิล์ม 59 แบบมาจากชุด [Film-Luts](https://github.com/YahiaAngelo/Film-Luts) ที่เหลือมาจากโมเดลฟิล์มของ M-Film เอง
-([`ml-dev/films/films.py`](ml-dev/films/films.py))
+สีของฟิล์ม 59 แบบมาจากตารางจำลองฟิล์มของ [Pat David](https://patdavid.net) ซึ่งเผยแพร่ภายใต้
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) โดยเอามาจาก G'MIC ผ่านชุด [Film-Luts](https://github.com/YahiaAngelo/Film-Luts)
+ที่เหลือมาจากโมเดลฟิล์มของ M-Film เอง ([`ml-dev/films/films.py`](ml-dev/films/films.py)) ตารางพวกนี้เป็นลุคที่ทำด้วยตา
+ไม่ใช่ค่าที่วัดจากฟิล์มจริง: [THIRD_PARTY.md](THIRD_PARTY.md#the-film-colour-tables-cc-by-sa-40)
 
 ---
 
@@ -333,5 +335,5 @@ Microsoft ครั้งแรกจึงมีคำเตือน
 M-Film สร้างโดย **HNGSeries** ต่อยอดจาก [Magic Lantern](https://www.magiclantern.fm/)
 
 repo นี้ใช้ GPL-2.0 ([LICENSE](LICENSE)) เพราะส่วนในกล้องต่อยอดจาก Magic Lantern
-Darkrooms (โปรแกรมบนคอม) เป็นโปรแกรมแยก ปิดซอร์ส ใช้สัญญาอนุญาตของตัวเอง ฟอนต์, LUT ของฟิล์ม และส่วนอื่นๆ:
-[THIRD_PARTY.md](THIRD_PARTY.md) ไม่มีส่วนเกี่ยวข้องกับ Canon, Kodak, Fujifilm หรือผู้ผลิตฟิล์มรายใด
+Darkrooms (โปรแกรมบนคอม) เป็นโปรแกรมแยก ปิดซอร์ส ใช้สัญญาอนุญาตของตัวเอง ตารางสีของฟิล์ม 59 แบบดัดแปลงจากของ
+Pat David และเป็น CC BY-SA 4.0 ไม่ใช่ GPL-2.0 ตารางเหล่านี้ ฟอนต์ และส่วนอื่นๆ: [THIRD_PARTY.md](THIRD_PARTY.md) ไม่มีส่วนเกี่ยวข้องกับ Canon, Kodak, Fujifilm หรือผู้ผลิตฟิล์มรายใด
