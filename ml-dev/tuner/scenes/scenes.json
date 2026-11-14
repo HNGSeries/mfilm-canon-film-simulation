@@ -1,0 +1,9 @@
+[
+ {"id": "street", "name": "ถนนยามเย็น", "from": "Canon EOS M · SAMPLE.CR2", "big": {"file": "street-m.png", "size": [1728, 1152], "label": "Medium"}},
+ {"id": "man", "name": "คนเสื้อขาว", "from": "Canon EOS 650D · _MG_0031.CR2", "big": {"file": "man-m.png", "size": [1728, 1152], "label": "Medium"}},
+ {"id": "yellow", "name": "คนเสื้อเหลือง", "from": "Canon EOS 650D · _MG_0080.CR2", "pic": [200, 320], "big": {"file": "yellow-m.png", "size": [1152, 1728], "label": "Medium"}},
+ {"id": "dog", "name": "หมาบนสนามหญ้า", "from": "Canon EOS 650D · _MG_0120.CR2", "big": {"file": "dog-m.png", "size": [1728, 1152], "label": "Medium"}},
+ {"id": "sky", "name": "ท้องฟ้ากับเมฆ", "from": "Canon EOS 650D · _MG_0172.CR2", "pic": [200, 320], "big": {"file": "sky-m.png", "size": [1152, 1728], "label": "Medium"}},
+ {"id": "chart", "name": "แผ่นสี · ภาพวาด"},
+ {"id": "sun", "name": "แสงจ้า · ภาพวาด"}
+]

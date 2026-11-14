@@ -26,6 +26,7 @@ export class Camera extends EventTarget {
     this.lut = new Uint32Array(256);
     this.live = liveview;
     this.card = new Card();
+    this.tables = new Map();    // the colour tables asked for: LOOKnn.LUT -> a promise, done once it is on the card
     this.dirty = false;
     this.ui = false;
     this.busy = false;
@@ -47,7 +48,7 @@ export class Camera extends EventTarget {
 
     // the card's root (sim/port_files.c reads FOS_CARD)
     const wasi = new Wasi(this.card, { env: { FOS_CARD: '/card/' }, onOut: (s) => this.log(s) });
-    let rewinding = false, wake = null;
+    let rewinding = false, wake = null, hold = null;
     const cam = this;
     const web = {
       sleep(ms, presented) {
@@ -71,7 +72,11 @@ export class Camera extends EventTarget {
         u8.set(b, buf); u8[buf + b.length] = 0;
       },
       event(what, a, b) {
+        if (what === 0) cam.table(a);                   // a roll is loaded: its film's colour table
         if (what === 4) cam.busy = !!a;
+        // developing starts: not before the tables asked for are on the card (a slow connection),
+        // but not for ever either: without one the darkroom says which film has no table
+        if (what === 4 && a) hold = Promise.race([Promise.all(cam.tables.values()), sleep(10000)]);
         cam.dispatchEvent(new CustomEvent(EVENT[what] || 'event', { detail: { a, b } }));
       },
     };
@@ -99,6 +104,7 @@ export class Camera extends EventTarget {
       while (this.ex.asyncify_get_state() === 1) {
         this.ex.asyncify_stop_unwind();
         await wake;
+        if (hold) { await hold; hold = null; }
         rewinding = true;
         this.ex.asyncify_start_rewind(this.asyncPtr);
         this.ex.web_main();
@@ -112,6 +118,21 @@ export class Camera extends EventTarget {
     let end = ptr;
     while (u8[end]) end++;
     return new TextDecoder().decode(u8.subarray(ptr, end));
+  }
+
+  // A film's colour table onto the card, where the darkroom looks for it (ML/DARKROOM/LOOKnn.LUT,
+  // nn the film's place on the shelf): the darkroom makes none itself, and a frame whose film has
+  // none fails with "no colour table". About 100 KB a film, so only the films that are loaded.
+  // A table that couldn't be fetched is asked for again the next time.
+  table(film) {
+    const name = `LOOK${String(film).padStart(2, '0')}.LUT`;
+    if (!this.tables.has(name)) {
+      this.tables.set(name, fetch(new URL(`tables/${name}`, BASE))
+        .then((r) => { if (!r.ok) throw new Error(`${name}: ${r.status}`); return r.arrayBuffer(); })
+        .then((b) => { this.card.write(`card/ML/DARKROOM/${name}`, new Uint8Array(b)); })
+        .catch((e) => { this.tables.delete(name); console.error('no colour table:', e); }));
+    }
+    return this.tables.get(name);
   }
 
   loadPalette() {
