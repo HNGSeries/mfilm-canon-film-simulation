@@ -335,7 +335,8 @@ static void scan_header(void *ctx, const char *k, const char *v)
     {
         int i = film_index(v);
         r->film = i < 0 ? 0 : i;
-        if (i < 0) fos_copy(r->gone, sizeof(r->gone), v, (int) sizeof(r->gone) - 1);
+        /* (snprintf, not fos_copy: the camera's build takes a call it won't inline as an error) */
+        if (i < 0) snprintf(r->gone, sizeof(r->gone), "%s", v);
         else r->gone[0] = 0;
     }
     else if (!strcmp(k, "exposures")) r->exposures = atoi(v);
