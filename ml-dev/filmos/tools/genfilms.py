@@ -28,7 +28,7 @@ from films import FILMS, short_name  # noqa: E402
 from catalog import DESC, LABELS      # noqa: E402
 
 HUES = ["red", "orange", "yellow", "green", "cyan", "blue", "magenta"]
-GROUP = {"neg": 0, "slide": 1, "xpro": 1, "bw": 2, "cine": 3, "print": 3}
+GROUP = {"neg": 0, "slide": 1, "xpro": 1, "bw": 2, "cine": 3}
 PS_STANDARD, PS_LANDSCAPE, PS_MONO = 0x81, 0x83, 0x86
 GRID = 33
 LOOK_MODEL = 1                          # as fos_dev.c
@@ -78,17 +78,17 @@ def record(key):
     f = FILMS[key]
     kind = f["kind"]
     brand, name = f["name"].split(" ", 1)
-    process = {"neg": "C-41", "slide": "E-6", "xpro": "X-PRO", "bw": "B&W", "cine": "C-41", "print": "ECP"}[kind]
+    process = {"neg": "C-41", "slide": "E-6", "xpro": "X-PRO", "bw": "B&W", "cine": "C-41"}[kind]
     if key.startswith("kodachrome"):
         process = "K-14"
     if key in ("xp2", "bw400cn"):
         process = "C-41"
     iso = f["iso"]
     style = {"neg": (PS_STANDARD, 0, 0, 0), "slide": (PS_LANDSCAPE, 2, 2, 0), "xpro": (PS_LANDSCAPE, 3, 3, 0),
-             "bw": (PS_MONO, 1, 0, 0), "cine": (PS_STANDARD, 1, 1, -1), "print": (PS_STANDARD, 1, -1, 0)}[kind]
+             "bw": (PS_MONO, 1, 0, 0), "cine": (PS_STANDARD, 1, 1, -1)}[kind]
     grain = 1 if iso <= 64 else 2 if iso <= 160 else 3 if iso <= 400 else 4 if iso <= 800 else 5
-    punch = {"neg": 2, "slide": 4, "xpro": 5, "bw": 3, "cine": 3, "print": 3}[kind]
-    colour = {"neg": 3, "slide": 4, "xpro": 5, "bw": 0, "cine": 3, "print": 3}[kind]
+    punch = {"neg": 2, "slide": 4, "xpro": 5, "bw": 3, "cine": 3}[kind]
+    colour = {"neg": 3, "slide": 4, "xpro": 5, "bw": 0, "cine": 3}[kind]
     lab = LABELS[key]
     return REC.pack(cstr(key, 16), cstr(brand.upper(), 16), cstr(name, 24), cstr(process, 8),
                     cstr(DESC[key], 48), cstr(short_name(key), 24),

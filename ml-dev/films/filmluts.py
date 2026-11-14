@@ -6,7 +6,11 @@ brand, name, box speed, and kind:
 
   neg     colour negative, C-41        slide   colour reversal, E-6 / K-14
   xpro    cross-processed              bw      black and white
-  print   motion-picture print stock (the look of a cinema print)
+
+The collection's four cinema print stocks (Kodak 2383 and 2393, Fuji 3510
+and 3513) are not here any more: their tables have no stated licence, they
+expect a log film scan and not a photo, and nobody loads a print film in a
+camera, so they could never be measured against the real thing (#110, #126).
 
 films.py turns them into lab films: the colour from the LUT, the rest
 (scanner exposure, halation, grain, softness) from the kind and speed.
@@ -81,11 +85,6 @@ STOCKS = [
     ("retro100", "bw/rollei_retro_100_tonal", "Rollei", "Retro 100 Tonal", 100, "bw"),
     ("ortho25", "bw/rollei_ortho_25", "Rollei", "Ortho 25", 25, "bw"),
     ("ir400", "bw/rollei_ir_400", "Rollei", "Infrared 400", 400, "bw"),
-    # cinema print stocks
-    ("kodak2383", "print/kodak_2383_constlmap", "Kodak", "Vision 2383", 200, "print"),
-    ("kodak2393", "print/kodak_2393_constlmap", "Kodak", "Vision 2393", 200, "print"),
-    ("fuji3510", "print/fuji_3510_constlmap", "Fujifilm", "Eterna 3510", 200, "print"),
-    ("fuji3513", "print/fuji_3513_constlmap", "Fujifilm", "Eterna 3513", 200, "print"),
 ]
 
 
@@ -96,8 +95,6 @@ def grain_for(iso, kind):
     amount = 0.006 + 0.0045 * steps
     if kind == "slide":
         amount *= 0.7
-    if kind == "print":
-        amount = 0.008
     return round(amount, 4), round(0.7 + 0.11 * steps, 2)
 
 
@@ -118,8 +115,6 @@ def film(key, path, brand, name, iso, kind):
     if kind == "bw":
         f.update(mono=(0.30, 0.59, 0.11), contrast=(0.19,), pivot=(0.0,), black=(0.03,), white=(0.96,),
                  halation=0.4)
-    if kind == "print":
-        f.update(halation=0.5, soft=0.5)
     return f
 
 

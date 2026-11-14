@@ -2,7 +2,7 @@
 """The website's data, from the files the README is made from, so the two never disagree:
 
   cameras.json   ml-dev/cameras.txt: every camera, its firmware, status and notes (English, Thai)
-  films.json     FILMS.md: the 72 films on their four shelves, with each one's photo
+  films.json     FILMS.md: the films on their four shelves, with each one's photo
   films/*.jpg    docs/films: the same RAW developed with each film
   app/*.jpg      docs/images/app-*.jpg: Darkrooms
 

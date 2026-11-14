@@ -1,7 +1,7 @@
 # Third-party software
 
 - **Magic Lantern** (GPL-2.0): the camera side builds on it. https://magiclantern.fm
-- **Film-Luts** by Yahia Angelo (MIT License, below): the colour LUTs of 63 film stocks. The `.cube` files are
+- **Film-Luts** by Yahia Angelo (MIT License, below): the colour LUTs of 59 film stocks. The `.cube` files are
   *not* in this repository: the camera build (`ml-dev/films/getluts.py`) and Darkrooms download them from
   https://github.com/YahiaAngelo/Film-Luts. The camera's card files are made from them, though: the colour
   tables in `ML/DARKROOM` and the sample photos in `ML/SAMPLES`, so the notice below comes with them.

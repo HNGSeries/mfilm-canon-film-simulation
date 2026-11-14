@@ -6,6 +6,8 @@
 #                              taller than wide = shot on its side), in turn, instead of test scenes
 #   FULL="10 11" ./mkcard.sh   those rolls' frames at the EOS M's full 18 MP, not half size each way: for
 #                              the darkroom's bigger prints and the zoom at the sizes a camera makes
+#   CARD=out/cardx ./mkcard.sh --gone
+#                              instead, a roll shot on a film that is not on the shelf any more, and one that is
 #   CARD=out/cardp ./mkcard.sh --problems
 #                              instead, the rolls the darkroom has to find or explain (cardtest.sh):
 #                              shot as JPEG, Adobe RGB with a file deleted, across the IMG_9999 wrap;
@@ -85,6 +87,11 @@ if [ "${1:-}" = "--problems" ]; then
     roll 7 ektar100  12 4 "2026-10-02 09:00" adobe
     rm "$DIR/_MG_0506.CR2"                                  # frame 2: deleted on the camera
     wrap_roll 8 gold200 "2026-10-03 09:00"
+elif [ "${1:-}" = "--gone" ]; then
+    # a roll shot on a film that has since left the shelf (the cinema print films, #126), and one that hasn't
+    file=600
+    roll 4 kodak2383 12 2 "2026-09-29 09:00"
+    roll 5 portra400 12 2 "2026-09-30 09:00"
 else
     roll 9  ektar100       12 12 "2026-10-12 08:30"
     roll 10 portra400      12 12 "2026-10-18 10:05"

@@ -7,7 +7,7 @@
 **Your Canon, shot like film.**
 
 A film camera's interface for Canon cameras that run Magic Lantern.<br>
-Load a roll from a shelf of 72 film stocks, shoot without looking at the screen, then develop the roll: in the camera, or on your computer with **Darkrooms**.<br>
+Load a roll from a shelf of 68 film stocks, shoot without looking at the screen, then develop the roll: in the camera, or on your computer with **Darkrooms**.<br>
 The camera side is free and open, for everyone.
 
 [![Download](https://img.shields.io/badge/Download-eca834?style=for-the-badge)](../../releases/latest)
@@ -15,9 +15,9 @@ The camera side is free and open, for everyone.
 
 [![License GPL-2.0](https://img.shields.io/badge/license-GPL--2.0-3b352f)](LICENSE)
 [![Cameras](https://img.shields.io/badge/cameras-9%20work%20%C2%B7%205%20with%20a%20problem%20%C2%B7%202%20in%20testing-3b352f)](#cameras)
-[![Films](https://img.shields.io/badge/films-72-3b352f)](FILMS.md)
+[![Films](https://img.shields.io/badge/films-68-3b352f)](FILMS.md)
 
-**English** · [ภาษาไทย](README.th.md) · [Films](#72-films) · [Cameras](#cameras) · [Darkrooms](#develop-on-your-computer-darkrooms) · [Take it further](PORTING.md)
+**English** · [ภาษาไทย](README.th.md) · [Films](#68-films) · [Cameras](#cameras) · [Darkrooms](#develop-on-your-computer-darkrooms) · [Take it further](PORTING.md)
 
 <br>
 
@@ -98,6 +98,11 @@ the frame will get: with a slow film, or an adapted lens stopped down, it can be
   when it was shot. Loading a roll sets it to the light the film is made for: 5500 K, or 3200 K for a tungsten
   film. Change it by hand and the print follows. Daylight pictures come out cooler than they used to: the old
   fixed balance was too warm.
+- **Four films have left the shelf:** the cinema print films Kodak Vision 2383 and 2393 and Fujifilm Eterna 3510
+  and 3513. Their colour tables came with no licence, they were made for a film scan and not for a photo, and a
+  print film is never loaded in a camera, so they could not be checked against the real thing. A roll already
+  shot on one is listed in the darkroom under its name and is not developed as some other film; its RAWs stay
+  on the card. If one of them is loaded when you update, rewind it first.
 - **Date stamp** (*Settings → Date stamp*): the day in the corner of each print, in orange, like a compact's data back.
 - **The battery** beside the clock on every page and in the viewfinder: in percent on the 60D, 6D, 70D,
   5D Mark II and 5D Mark III, whose battery reports it; as an icon with three levels on the others, where
@@ -173,9 +178,9 @@ It goes off when you put your eye to the viewfinder, and LiveView brings the vie
 
 ---
 
-## 72 films
+## 68 films
 
-Colour negative, slide, black and white, and cinema film, on four shelves. Each film has its own colour,
+Colour negative, slide, black and white, and cine film, on four shelves. Each film has its own colour,
 grain, halation and softness; rolls come in 36, 24 or 12 frames.
 
 <!-- samples: one photo per film in docs/samples/<film>.jpg (3:2) -->
@@ -192,14 +197,14 @@ grain, halation and softness; rolls come in 36, 24 or 12 frames.
 </tr>
 <tr>
 <td><img src="docs/samples/cinestill800t.jpg" alt="CineStill 800T"><br><b>CineStill 800T</b><br><sub>Tungsten cine film, night goes blue</sub></td>
-<td><img src="docs/samples/kodak2383.jpg" alt="Kodak Vision 2383"><br><b>Kodak Vision 2383</b><br><sub>Cinema print: teal shadows</sub></td>
+<td><img src="docs/films/pro400h.jpg" alt="Fujifilm Pro 400H"><br><b>Fujifilm Pro 400H</b><br><sub>Airy pastels, fourth colour layer</sub></td>
 <td><img src="docs/samples/trix400.jpg" alt="Kodak Tri-X 400"><br><b>Kodak Tri-X 400</b><br><sub>Gritty contrast, street classic</sub></td>
 </tr>
 </table>
 
-**[All 72 films, on the same photo →](FILMS.md)**
+**[All 68 films, on the same photo →](FILMS.md)**
 
-Colour for 63 of them comes from the [Film-Luts](https://github.com/YahiaAngelo/Film-Luts) collection; the rest
+Colour for 59 of them comes from the [Film-Luts](https://github.com/YahiaAngelo/Film-Luts) collection; the rest
 from M-Film's own film models ([`ml-dev/films/films.py`](ml-dev/films/films.py)).
 
 ---

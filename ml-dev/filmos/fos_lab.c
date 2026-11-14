@@ -204,11 +204,13 @@ int fos_lab_prepare(int roll)
     return fos_port_mkdir(path);
 }
 
+/* the film's place on the shelf; -1 if it isn't on it (a film that has left
+ * the shelf since the roll was shot) */
 static int film_index(const char *key)
 {
     for (int i = 0; i < fos_nfilms; i++)
         if (!strcmp(fos_films[i].key, key)) return i;
-    return 0;
+    return -1;
 }
 
 /* ---------------------------------------------------------------- reading logs */
@@ -329,7 +331,14 @@ struct scan { struct fos_lab_roll *rolls; int n, max; struct fos_lab_roll *cur; 
 static void scan_header(void *ctx, const char *k, const char *v)
 {
     struct fos_lab_roll *r = ((struct scan *) ctx)->cur;
-    if (!strcmp(k, "film")) r->film = film_index(v);
+    if (!strcmp(k, "film"))
+    {
+        int i = film_index(v);
+        r->film = i < 0 ? 0 : i;
+        /* (snprintf, not fos_copy: the camera's build takes a call it won't inline as an error) */
+        if (i < 0) snprintf(r->gone, sizeof(r->gone), "%s", v);
+        else r->gone[0] = 0;
+    }
     else if (!strcmp(k, "exposures")) r->exposures = atoi(v);
     else if (!strcmp(k, "loaded") && (!r->loaded[0] || strncmp(v, r->loaded, 16) < 0))
         fos_copy(r->loaded, sizeof(r->loaded), v, 16);

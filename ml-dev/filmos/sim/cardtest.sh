@@ -135,4 +135,21 @@ grep -qF "darkroom: JPEGs in out/cardg/DCIM/Oct1002 Ektar100 2" out/cardtest-gap
 grep -qE "roll 007 frame [0-9]+ developed" out/cardtest-gap.log \
     && { echo "FAIL  A gap in the day's names: frames developed again"; fail=1; } || echo "ok    A gap in the day's names: nothing developed again"
 
+# A roll shot on a film that has since left the shelf (the cinema print films,
+# #126): it is listed by the name in its log and not developed as some other
+# film; its RAWs stay; the roll beside it develops
+CARD=out/cardx ./mkcard.sh --gone >/dev/null
+rm -rf out/frames/gone
+FOS_CARD=out/cardx/ ./out/sim scenes/darkroom_problems.txt out/frames/gone > out/cardtest-gone.log 2>&1
+cat out/cardtest-gone.log >> "$log"
+grep -qF "roll 004 frame 1: its film (kodak2383) is not on the shelf any more" out/cardtest-gone.log \
+    && echo "ok    A film that left the shelf: the frame says so" || { echo "FAIL  A film that left the shelf: nothing said"; fail=1; }
+if grep -qE "roll 004 frame [0-9]+ developed" out/cardtest-gone.log || ls out/cardx/ML/DARKROOM/R004/F*.BMP >/dev/null 2>&1; then
+    echo "FAIL  A film that left the shelf: developed as another film"; fail=1
+else echo "ok    A film that left the shelf: not developed as another film"; fi
+n=$(find out/cardx/DCIM -name 'IMG_060[12].CR2' | wc -l | tr -d ' ')
+[ "$n" = 2 ] && echo "ok    A film that left the shelf: its RAWs are still there" || { echo "FAIL  A film that left the shelf: $n of its 2 RAWs left"; fail=1; }
+grep -qE "roll 005 frame 2 developed" out/cardtest-gone.log \
+    && echo "ok    A film that left the shelf: the roll beside it develops" || { echo "FAIL  A film that left the shelf: roll 005 did not develop"; fail=1; }
+
 [ $fail = 0 ] && echo "cardtest: all passed" || { echo "cardtest: failed (log: sim/$log)"; exit 1; }
