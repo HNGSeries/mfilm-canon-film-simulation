@@ -32,8 +32,10 @@ jobs:
   # frames that clip below and above the camera's white level (ml-dev/filmos/sim/colourtest.py). And
   # the films' colour tables: every film has one, and a film without one fails and says so (tabletest.sh);
   # and the tone the Film-Luts tables are fed has the contrast of the camera's own JPEG (tonetest.py).
-  # Last, the compare half of the measuring command: chart patches in two sets of pictures, on a
-  # paired shot that is drawn because none has been shot (ml-dev/films/measuretest.py)
+  # Last, the measuring command on a paired shot that is drawn because none has been shot: chart
+  # patches in two sets of pictures (ml-dev/films/measuretest.py), and the darkroom developing the
+  # paired shot's RAW frames with a held scanner exposure (looktest.py). Then the command itself, on
+  # every film stock that has a reference: it fails if one claimed as measured is outside a pass mark
   darkroom:
     runs-on: ubuntu-24.04
     name: darkroom (simulator)
@@ -57,7 +59,9 @@ jobs:
       - name: A picture in the docs for every film on the shelf
         run: python ml-dev/films/pictures.py --list
       - name: The measuring command on a made-up paired shot
-        run: python ml-dev/films/measuretest.py
+        run: python ml-dev/films/measuretest.py && python ml-dev/films/looktest.py
+      - name: Every film stock that has a reference, against it
+        run: python ml-dev/films/measure.py look
 
   camera:
     strategy:
