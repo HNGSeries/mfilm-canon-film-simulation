@@ -21,6 +21,7 @@
 #include <string.h>
 
 #ifdef FOS_DEV_TEST
+#include <stdlib.h>
 void fos_dev_test_sample(int x, int y, int v);
 #endif
 
@@ -1900,6 +1901,28 @@ static void stage_key(struct fos_dev *d)
 {
     const int W = FOS_PRINT_W, H = FOS_PRINT_H;
     float ev = 1.0f;
+#ifdef FOS_DEV_TEST
+    /* FOS_DUMP_LIN: the picture as it stands here, before the scanner and
+     * the film, for sim/colourtest.py to set beside a RAW developer's:
+     * three ints a pixel, scene-linear sRGB, 4096 = 1.0. The line that goes
+     * with it says what the frame was scaled by. */
+    if (getenv("FOS_DUMP_LIN"))
+    {
+        FILE *f = fopen(getenv("FOS_DUMP_LIN"), "wb");
+        if (f)
+        {
+            for (int y = 0; y < H; y++)
+                for (int x = 0; x < W; x++)
+                {
+                    int lin[3];
+                    pixel_linear(d, x, y, lin);
+                    fwrite(lin, sizeof(int), 3, f);
+                }
+            fclose(f);
+        }
+        fprintf(stderr, "dump: black %d/16, white %d, pre %d %d %d\n", d->black16, WHITE_LEVEL, d->pre[0], d->pre[1], d->pre[2]);
+    }
+#endif
     if (!d->look->slide)
     {
         /* counted in a histogram so the logs are few */

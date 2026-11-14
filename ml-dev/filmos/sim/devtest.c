@@ -7,6 +7,8 @@
  * out.ppm is the print as the screen would show it.
  * FOS_SIZE=1|2 the bigger print as the JPEG (FOS_JPEG), FOS_ZOOM its zoom
  * file, FOS_STAMP=1 the date on it, FOS_MEM_KB a camera short of memory.
+ * FOS_DUMP_LIN=file the picture before the scanner and the film, scene-linear
+ * sRGB (colourtest.py compares it with LibRaw's).
  */
 
 #include <stdio.h>
@@ -24,7 +26,12 @@ int fos_port_ms()
 }
 /* FOS_MEM_KB: a camera with that much memory to give at a time, to see the
  * darkroom make the print size it has room for */
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#define malloc_usable_size malloc_size
+#else
 #include <malloc.h>
+#endif
 static long mem_used;
 void *fos_port_alloc(int size)
 {
