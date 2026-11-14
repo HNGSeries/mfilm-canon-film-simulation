@@ -30,7 +30,8 @@ jobs:
   # that can't take long folder names (ml-dev/filmos/sim/cardtest.sh). Then colour: the sample RAW
   # as the darkroom has it before the film stock, against LibRaw's, and blown highlights on made-up
   # frames that clip below and above the camera's white level (ml-dev/filmos/sim/colourtest.py). And
-  # the films' colour tables: every film has one, and a film without one fails and says so (tabletest.sh)
+  # the films' colour tables: every film has one, and a film without one fails and says so (tabletest.sh);
+  # and the tone the Film-Luts tables are fed has the contrast of the camera's own JPEG (tonetest.py)
   darkroom:
     runs-on: ubuntu-24.04
     name: darkroom (simulator)
@@ -49,6 +50,8 @@ jobs:
         run: python ml-dev/filmos/sim/colourtest.py
       - name: The films' colour tables
         run: bash ml-dev/filmos/sim/tabletest.sh
+      - name: What the Film-Luts tables are fed
+        run: python ml-dev/filmos/sim/tonetest.py
 
   camera:
     strategy:

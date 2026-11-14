@@ -17,6 +17,11 @@ pass --lut-space:
     rec709  the Rec.709 camera curve, highlights rolled off
     srgb    the sRGB display curve, highlights rolled off (LUTs made on
             ordinary photos, e.g. exported from Lightroom or Photoshop)
+    photo   a finished photo: the tone curve of a camera's own JPEG (Canon's
+            Standard picture style), which has darker shadows and more
+            contrast than the plain sRGB curve, with mid grey where sRGB
+            has it. For LUTs made by eye on finished photos, as the
+            Film-Luts ones were (photocurve.py)
     linear  scene linear, only for LUTs that bring their own shaper
 
 The output of every LUT is taken as an sRGB / Rec.709 display image.
@@ -29,7 +34,7 @@ from pathlib import Path
 import numpy as np
 
 LUT_DIR = Path(__file__).parent / "luts"
-SPACES = ("logc3", "slog3", "slog3sg3", "cineon", "rec709", "srgb", "linear")
+SPACES = ("logc3", "slog3", "slog3sg3", "cineon", "rec709", "srgb", "photo", "linear")
 
 # ---------------------------------------------------------------- encodings
 
@@ -63,6 +68,35 @@ LOGC_D, LOGC_E, LOGC_F = 0.385537, 5.367655, 0.092809
 CIN_BLACK = 10 ** ((95 - 685) * 0.002 / 0.6)
 
 KNEE = 0.8      # display curves: highlights above this roll off towards 1
+
+# "photo": display = 1 / (1 + exp(-(c0 + a s + b s^2 + c s^3))), s = stops from PHOTO_PIVOT, c0 set so
+# that the curve is the sRGB one at the pivot. The pivot is where the darkroom's scanner puts a
+# frame's average (the key in stage_key(), fos_dev.c), so a film keeps its brightness and gains
+# contrast. a, b, c: fitted to Canon's Standard picture style by photocurve.py (#125).
+PHOTO_PIVOT = 0.11
+PHOTO_FIT = (0.7155, 0.0256, 0.0104)
+
+
+def _photo_poly(s):
+    y = 1.055 * PHOTO_PIVOT ** (1 / 2.4) - 0.055
+    return np.log(y / (1 - y)) + PHOTO_FIT[0] * s + PHOTO_FIT[1] * s ** 2 + PHOTO_FIT[2] * s ** 3
+
+
+def _photo(x):
+    x = np.asarray(x, np.float64)
+    s = np.log2(np.maximum(x, 1e-12) / PHOTO_PIVOT)
+    return np.where(x > 0, 1 / (1 + np.exp(-_photo_poly(s))), 0).astype(np.float32)
+
+
+@functools.lru_cache(maxsize=None)
+def _photo_table():
+    s = np.linspace(-24, 12, 7201)                       # (the curve rises everywhere: a + 2 b s + 3 c s^2 > 0)
+    return 1 / (1 + np.exp(-_photo_poly(s))), PHOTO_PIVOT * 2.0 ** s
+
+
+def _photo_inv(v):
+    y, x = _photo_table()
+    return np.interp(np.asarray(v, np.float64), y, x, left=0.0).astype(np.float32)
 
 
 def _rolloff(x):
@@ -111,6 +145,8 @@ def encode(lin, space):
     if space == "srgb":
         x = _rolloff(lin)
         return np.where(x <= 0.0031308, 12.92 * x, 1.055 * np.power(x, 1 / 2.4) - 0.055)
+    if space == "photo":
+        return _photo(lin)
     if space == "linear":
         return lin
     raise ValueError(f"unknown LUT input space '{space}' (one of {', '.join(SPACES)})")
@@ -135,6 +171,8 @@ def decode(v, space):
     if space == "srgb":
         x = np.where(v <= 0.04045, v / 12.92, np.power(np.maximum(v + 0.055, 0) / 1.055, 2.4))
         return _rolloff_inv(x)
+    if space == "photo":
+        return _photo_inv(v)
     if space == "linear":
         return v
     raise ValueError(f"unknown LUT input space '{space}' (one of {', '.join(SPACES)})")

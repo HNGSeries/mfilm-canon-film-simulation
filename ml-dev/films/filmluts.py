@@ -14,7 +14,8 @@ camera, so they could never be measured against the real thing (#110, #126).
 
 films.py turns them into lab films: the colour from the LUT, the rest
 (scanner exposure, halation, grain, softness) from the kind and speed.
-The LUTs take ordinary sRGB pictures as input.
+The LUTs take ordinary finished photos as input, so they are given a
+finished photo's tone curve and not the plain sRGB one (lut.py, "photo").
 """
 
 REPO = "https://github.com/YahiaAngelo/Film-Luts"
@@ -102,7 +103,8 @@ def film(key, path, brand, name, iso, kind):
     amount, size = grain_for(iso, kind)
     f = dict(
         name=f"{brand} {name}", iso=iso, kind=kind, balance=5500,
-        lut=f"{DIR}/{path}.cube", lut_space="srgb",
+        # "photo": the tables were made by eye on finished photos, so they are fed one (lut.py, #125)
+        lut=f"{DIR}/{path}.cube", lut_space="photo",
         # the film's own colour when the LUT isn't there: a plain print
         ev=0.2 if kind == "neg" else 0.0, sat=1.0,
         contrast=(0.18, 0.18, 0.18), pivot=(0.0, 0.0, 0.0),

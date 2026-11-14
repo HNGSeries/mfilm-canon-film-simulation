@@ -36,8 +36,8 @@ fos_port_roll, get, set, action, clock, lens_*, photo, ...       camera state
 Two implementations exist: the camera's (`ml-dev/fork/src/filmroll.c`) and the simulator's
 (`ml-dev/filmos/sim/`, runs on a PC and writes PNGs: `make -C ml-dev/filmos/sim`; its `cardtest.sh`
 checks the darkroom on rolls it has to find or explain, its `colourtest.py` checks the darkroom's
-picture before the film stock against LibRaw's, and its `tabletest.sh` checks that every film has a
-colour table; all run in CI). A new camera
+picture before the film stock against LibRaw's, its `tabletest.sh` checks that every film has a
+colour table, and its `tonetest.py` checks the tone the Film-Luts tables are fed; all run in CI). A new camera
 needs a new `filmroll.c`-like file; the screens stay as they are. Things to check per camera:
 
 - **Screen.** 720 × 480 is Magic Lantern's bitmap size on every camera it supports, so layouts carry

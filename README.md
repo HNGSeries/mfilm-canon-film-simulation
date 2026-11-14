@@ -98,6 +98,10 @@ the frame will get: with a slow film, or an adapted lens stopped down, it can be
   when it was shot. Loading a roll sets it to the light the film is made for: 5500 K, or 3200 K for a tungsten
   film. Change it by hand and the print follows. Daylight pictures come out cooler than they used to: the old
   fixed balance was too warm.
+- **The 59 films whose colour comes from Film-Luts have more contrast and darker shadows.** Their tables were
+  made by eye on finished photos, and the darkroom was giving them a flatter picture than any camera's own
+  JPEG: about 88 % of its contrast. They now get the tone of a finished photo (Canon's Standard picture
+  style), with the middle tones where they were. The eight films with M-Film's own model have not changed.
 - **Four films have left the shelf:** the cinema print films Kodak Vision 2383 and 2393 and Fujifilm Eterna 3510
   and 3513. Their colour tables came with no licence, they were made for a film scan and not for a photo, and a
   print film is never loaded in a camera, so they could not be checked against the real thing. A roll already
