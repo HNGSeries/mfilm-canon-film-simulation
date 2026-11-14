@@ -197,9 +197,9 @@ python3 "$F/tools/genfilms.py" "$OUT/ML/data/FOSFILMS.BIN"
 # the donation links in donate.txt as QR codes
 python3 "$F/tools/genqr.py" "$HERE/donate.txt" "$OUT/ML/data/FOSQR.BIN"
 
-# every film's colour table, so the darkroom never spends its first
-# develop of a film mixing one (the camera checks they match its looks):
-# mixed from the look, then baked from the film's LUT where it has one
+# every film's colour table: the camera makes none itself, and stops with
+# "no colour table" if one is missing or is not for its look. Mixed from
+# the look, or baked from the film's LUT where it has one
 # (films/getluts.py fetches the Film-Luts ones; your own go in films/luts/)
 [ -d "$HERE/films/luts/filmluts" ] || python3 "$HERE/films/getluts.py"
 gcc -O2 -std=gnu99 -DFOS_DEV_TEST -I"$F" -o "$HOME/ml/devtest" "$F"/sim/devtest.c "$F"/sim/port_files.c \
@@ -207,9 +207,12 @@ gcc -O2 -std=gnu99 -DFOS_DEV_TEST -I"$F" -o "$HOME/ml/devtest" "$F"/sim/devtest.
 # devtest runs inside the card's ML/ with short paths: the darkroom keeps its
 # paths in 128 bytes, as on the camera, and with the full ones of a checkout
 # deep in the disk the tables and samples went somewhere else without a word
+# tools/gentables.py is the one place tables are made: it fails if a film is left without one, or if
+# the Film-Luts LUTs were not fetched. The list of them (file, film, source, SHA-256) goes beside the
+# builds, not on the card: the same tables are published for the desktop darkroom (#124).
 mkdir -p "$OUT/ML/DARKROOM"
-(cd "$OUT/ML" && FOS_FILMS=data/FOSFILMS.BIN "$HOME/ml/devtest" -T DARKROOM)
-python3 "$F/tools/genfilms.py" "$OUT/ML/data/FOSFILMS.BIN" --tables "$OUT/ML/DARKROOM"
+python3 "$F/tools/gentables.py" "$OUT/ML/DARKROOM" --films "$OUT/ML/data/FOSFILMS.BIN" --devtest "$HOME/ml/devtest" \
+    --index "$HERE/out/TABLES.txt"
 
 # the shelf's samples (PLAY on the shelf): one photo developed with every
 # film, with the tables above, as the camera's darkroom would. The prints

@@ -98,11 +98,11 @@ n=$(grep -c "lab: can't remove" "$log" || true)
 # exFAT card, #65): the prints go in SEP0906-style folders, and no empty
 # long-named one is left, however often the rolls are developed (6 and 7
 # are developed again: they have frames that can't be)
-long_dirs() { find "$1/DCIM" -mindepth 1 -maxdepth 1 -type d -name '* *' | wc -l; }
+long_dirs() { find "$1/DCIM" -mindepth 1 -maxdepth 1 -type d -name '* *' | wc -l | tr -d ' '; }    # (BSD wc pads)
 CARD=out/cardl ./mkcard.sh --problems >/dev/null
 for i in 1 2; do FOS_CARD=out/cardl/ FOS_LONG_DIRS_EMPTY=1 ./out/sim scenes/darkroom_problems.txt - >> "$log" 2>&1; done
 expect "Long names fail: short folder"      "darkroom: JPEGs in out/cardl/DCIM/OCT1003"
-n=$(find out/cardl/DCIM/OCT1003 -name '*.JPG' | wc -l)
+n=$(find out/cardl/DCIM/OCT1003 -name '*.JPG' | wc -l | tr -d ' ')
 [ "$n" = 4 ] && echo "ok    Long names fail: 4 JPEGs in OCT1003" || { echo "FAIL  Long names fail: $n JPEGs in OCT1003"; fail=1; }
 n=$(long_dirs out/cardl)
 [ "$n" = 0 ] && echo "ok    Long names fail: no empty long folders" || { echo "FAIL  Long names fail: $n long folders left"; fail=1; }

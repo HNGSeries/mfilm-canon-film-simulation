@@ -103,7 +103,8 @@ def darkroom(devtest, cr2, film=None):
         # beside a link to the frame: the darkroom keeps paths short, as on a card
         os.symlink(Path(cr2).resolve(), os.path.join(tmp, "frame.CR2"))
         r = subprocess.run([str(Path(devtest).resolve())] + (["-f", film] if film else []) + ["frame.CR2", "o.fop"], cwd=tmp,
-                           capture_output=True, text=True, env=dict(os.environ, FOS_DUMP_LIN="lin.i32"))
+                           capture_output=True, text=True,
+                           env=dict(os.environ, FOS_DUMP_LIN="lin.i32", FOS_MIX="1"))   # FOS_MIX: no table directory here
         dump = os.path.join(tmp, "lin.i32")
         if r.returncode or not os.path.exists(dump):
             sys.exit(f"FAIL  devtest did not develop {cr2}:\n{r.stderr.strip()}")

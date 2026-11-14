@@ -17,7 +17,10 @@ cd "$(dirname "$0")"
 mkdir -p out
 gcc -O2 -o out/mkcr2 tools/mkcr2.c -lm
 CARD=${CARD:-out/card}
-rm -rf "$CARD" && mkdir -p "$CARD/DCIM/100CANON" "$CARD/ML"
+rm -rf "$CARD" && mkdir -p "$CARD/DCIM/100CANON" "$CARD/ML/DARKROOM"
+# every film's colour table, as the zip puts them on a real card: the darkroom makes none (#124)
+make -s out/tables/TABLES.txt >/dev/null
+cp out/tables/LOOK*.LUT "$CARD/ML/DARKROOM/"
 DIR="$CARD/DCIM/100CANON"
 file=100
 photos=()

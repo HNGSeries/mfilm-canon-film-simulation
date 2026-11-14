@@ -29,7 +29,8 @@ jobs:
   # Adobe RGB with a file deleted, across the IMG_9999 wrap; then Delete roll on them, and a card
   # that can't take long folder names (ml-dev/filmos/sim/cardtest.sh). Then colour: the sample RAW
   # as the darkroom has it before the film stock, against LibRaw's, and blown highlights on made-up
-  # frames that clip below and above the camera's white level (ml-dev/filmos/sim/colourtest.py)
+  # frames that clip below and above the camera's white level (ml-dev/filmos/sim/colourtest.py). And
+  # the films' colour tables: every film has one, and a film without one fails and says so (tabletest.sh)
   darkroom:
     runs-on: ubuntu-24.04
     name: darkroom (simulator)
@@ -41,11 +42,13 @@ jobs:
       - name: Python for the film tables
         run: python -m pip install -q numpy scipy pillow rawpy
       - name: Build the simulator
-        run: make -C ml-dev/filmos/sim out/sim out/devtest out/mkcr2
+        run: make -C ml-dev/filmos/sim out/sim out/devtest out/mkcr2 out/tables/TABLES.txt
       - name: Develop the problem rolls
         run: bash ml-dev/filmos/sim/cardtest.sh
       - name: The darkroom's colour against LibRaw
         run: python ml-dev/filmos/sim/colourtest.py
+      - name: The films' colour tables
+        run: bash ml-dev/filmos/sim/tabletest.sh
 
   camera:
     strategy:
@@ -85,6 +88,24 @@ jobs:
         with:
           name: M-Film-camera-${{ matrix.platform }}
           path: M-Film-camera-${{ matrix.platform }}.zip
+          if-no-files-found: error
+      # every film's colour table and the list of them (file, film, source, SHA-256), for the desktop
+      # darkroom: the same bytes as in every zip's ML/DARKROOM, so both develop with the same tables.
+      # Made once, from the EOS M's build: the tables don't depend on the camera.
+      - name: The films' colour tables, on their own
+        if: ${{ matrix.platform == 'EOSM.202' }}
+        run: |
+          mkdir tables
+          cp ml-dev/out/fork/ML/DARKROOM/LOOK*.LUT ml-dev/out/TABLES.txt tables/
+          cp LICENSE tables/LICENSE.txt
+          cp THIRD_PARTY.md tables/THIRD_PARTY.txt
+          (cd tables && sha256sum LOOK*.LUT > SHA256SUMS && zip -qr "$GITHUB_WORKSPACE/M-Film-tables.zip" .)
+          ls -la M-Film-tables.zip
+      - uses: actions/upload-artifact@v4
+        if: ${{ matrix.platform == 'EOSM.202' }}
+        with:
+          name: M-Film-tables
+          path: M-Film-tables.zip
           if-no-files-found: error
 
   # builds for testers, not for releases. Their artifacts are named test-..., which the release leaves out.
@@ -141,7 +162,7 @@ jobs:
           [ "$tag" = "$want" ] || { echo "tag $tag but VERSION says $want: change one of them"; exit 1; }
       - uses: actions/download-artifact@v4
         with:
-          pattern: M-Film-camera-*      # not the test-... builds
+          pattern: M-Film-*             # the cameras' zips and the tables; not the test-... builds
           path: zips
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
@@ -158,3 +179,7 @@ jobs:
             each camera, and what's still wrong, is in the README's camera table: see TESTING.md before you put it
             on a camera nobody has tried yet. Every zip has the in-camera darkroom. The film OS is a module on
             every camera (ML/modules/filmos.mo, loaded after boot): one zip a camera.
+
+            **The films' colour tables** (`M-Film-tables.zip`): every film's table as the cameras' zips carry them
+            in ML/DARKROOM, with a list of them and their checksums. The desktop darkroom reads the same files,
+            so both give the same colour. You don't need this zip for a camera.
