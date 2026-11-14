@@ -109,7 +109,9 @@ struct fos_dev;
 
 /* where the film tables are kept between sessions (NULL: not kept) */
 void fos_dev_cache(const char *dir);
-/* build film's table into the cache now (the build makes the card's copies) */
+/* mix film's table from its look, into memory and the cache. Only in the
+ * build's own program (FOS_DEV_TEST): the camera reads the tables the build
+ * made and makes none (tools/gentables.py, #124) */
 int fos_dev_table(int film);
 /* also write the frame in full colour as a JPEG at path (before the first step) */
 void fos_dev_jpeg(struct fos_dev *d, const char *path);

@@ -29,13 +29,6 @@ static int u16le(const uint8_t *p) { return p[0] | p[1] << 8; }
 static unsigned u32le(const uint8_t *p) { return p[0] | p[1] << 8 | p[2] << 16 | (unsigned) p[3] << 24; }
 static void put32(uint8_t *p, uint32_t v) { p[0] = (uint8_t) v; p[1] = (uint8_t) (v >> 8); p[2] = (uint8_t) (v >> 16); p[3] = (uint8_t) (v >> 24); }
 
-/* ---------------------------------------------------------------- the film model */
-
-static const float LUMA[3] = { 0.2126f, 0.7152f, 0.0722f };
-static const float REF[7][3] = {        /* red orange yellow green cyan blue magenta */
-    { 1, 0, 0 }, { 1, 0.5f, 0 }, { 1, 1, 0 }, { 0, 1, 0 }, { 0, 1, 1 }, { 0, 0, 1 }, { 1, 0, 1 } };
-#define PI_F 3.14159265f
-
 const struct fos_look *fos_look_of(const char *key)
 {
     for (int i = 0; i < fos_nlooks; i++)
@@ -44,6 +37,16 @@ const struct fos_look *fos_look_of(const char *key)
         if (!strcmp(fos_more_looks[i].key, key)) return &fos_more_looks[i];
     return &fos_looks[0];
 }
+
+#ifdef FOS_DEV_TEST
+/* ---------------------------------------------------------------- the film model
+ * Only the build runs it, to mix a film's table from its look
+ * (fos_dev_table, devtest -T). The camera reads the tables: #124. */
+
+static const float LUMA[3] = { 0.2126f, 0.7152f, 0.0722f };
+static const float REF[7][3] = {        /* red orange yellow green cyan blue magenta */
+    { 1, 0, 0 }, { 1, 0.5f, 0 }, { 1, 1, 0 }, { 0, 1, 0 }, { 0, 1, 1 }, { 0, 0, 1 }, { 1, 0, 1 } };
+#define PI_F 3.14159265f
 
 static float dot3(const float a[3], const float b[3])
 {
@@ -124,12 +127,15 @@ void fos_film_color(const struct fos_look *f, const float in[3], float out[3])
     if (f->nhues) shift_hues(f, out);
 }
 
+#endif  /* FOS_DEV_TEST: the film model */
+
 /* ---------------------------------------------------------------- the film's table */
 
 /* The film's colour as a 3D table over Cineon log code (the density of a
  * film scan): the same thing `lut.py export` writes, and as close to the
- * lab's model. Building it takes the camera a few seconds, so it is kept
- * in memory and on the card. */
+ * lab's model. The camera does not make it. The build makes every film's
+ * (tools/gentables.py), the card carries them in ML/DARKROOM, and the same
+ * files go to the desktop darkroom, so the two give the same colour. */
 #define GRID 33
 #define NGRID (GRID * GRID * GRID)
 #define LOOK_MODEL 1                    /* bump when fos_film_color changes */
@@ -157,11 +163,13 @@ void fos_dev_release()
     lut_film = -1;
 }
 
+#ifdef FOS_DEV_TEST
 static float cineon_decode(float v)
 {
     float x = powf(10, (v * 1023 - 685) / 300);
     return (x - CIN_BLACK) / (1 - CIN_BLACK);
 }
+#endif
 
 static int cineon_encode(float lin)
 {
@@ -223,6 +231,19 @@ static int lut_load(const struct fos_look *f, int film)
     return ok;
 }
 
+/* the film's table from the card into memory; 0 when the card has none
+ * for this look */
+static __attribute__((noinline)) int table_load(const struct fos_look *f, int film)
+{
+    if (lut_film == film && lut_built >= NGRID) return 1;
+    lut_film = film;
+    lut_built = lut_load(f, film) ? NGRID : 0;
+    if (lut_built >= NGRID) return 1;
+    lut_film = -1;
+    return 0;
+}
+
+#ifdef FOS_DEV_TEST
 static void lut_save(const struct fos_look *f, int film)
 {
     void *fp = lut_file(film, 1);
@@ -234,18 +255,17 @@ static void lut_save(const struct fos_look *f, int film)
     fos_port_close(fp);
 }
 
-/* build up to `count` more grid points; 1 when the table is complete */
-static __attribute__((noinline)) int lut_build(const struct fos_look *f, int film, int count)
+/* The film's table mixed from its look, into memory and into the cache:
+ * how the build makes the table of a film whose colour is its look
+ * (devtest -T, for tools/gentables.py). */
+int fos_dev_table(int film)
 {
-    if (lut_film != film)
+    if (!tables_ready()) return 0;
+    film = fos_clamp(film, 0, fos_nfilms - 1);
+    const struct fos_look *f = fos_look_of(fos_films[film].key);
+    for (int i = 0; i < NGRID; i++)
     {
-        lut_film = film;
-        lut_built = lut_load(f, film) ? NGRID : 0;
-    }
-    if (lut_built >= NGRID) return 1;
-    for (; lut_built < NGRID && count-- > 0; lut_built++)
-    {
-        int i = lut_built, r = i % GRID, g = (i / GRID) % GRID, b = i / (GRID * GRID);
+        int r = i % GRID, g = (i / GRID) % GRID, b = i / (GRID * GRID);
         float lin[3] = { cineon_decode(r / (float) (GRID - 1)), cineon_decode(g / (float) (GRID - 1)),
                          cineon_decode(b / (float) (GRID - 1)) }, out[3];
         fos_film_color(f, lin, out);
@@ -255,21 +275,12 @@ static __attribute__((noinline)) int lut_build(const struct fos_look *f, int fil
             tab->lut[i][c] = (uint8_t) (v < 0 ? 0 : v > 255 ? 255 : v);
         }
     }
-    if (lut_built < NGRID) return 0;
+    lut_film = film;
+    lut_built = NGRID;
     lut_save(f, film);
     return 1;
 }
-
-/* the film's table, into the cache now: the build puts every film's on
- * the card, so the camera never has to mix one */
-int fos_dev_table(int film)
-{
-    if (!tables_ready()) return 0;
-    film = fos_clamp(film, 0, fos_nfilms - 1);
-    lut_film = -1;
-    while (!lut_build(fos_look_of(fos_films[film].key), film, NGRID)) {}
-    return 1;
-}
+#endif
 
 /* tetrahedral lookup at grid positions in 1/256: the four corners of the
  * cell's tetrahedron the point is in, weighted */
@@ -2623,8 +2634,16 @@ static int dev_step(struct fos_dev *d, int budget_ms)
                 d->stage = ST_DECODE;
                 break;
             case ST_DECODE:
-                /* the film's table first, a little at a time */
-                if (!lut_build(d->look, d->film, 64)) break;
+                /* the film's table first */
+                if (!table_load(d->look, d->film))
+                {
+                    char msg[240];
+                    snprintf(msg, sizeof(msg), "dev: no colour table for %s: %s/LOOK%02d.LUT is missing or was made for another "
+                             "version of this film (the tables come in the zip's ML/DARKROOM)", d->look->key,
+                             cache_dir[0] ? cache_dir : "(no table directory)", d->film);
+                    fos_port_log(msg);
+                    return fail(d, "no colour table for this film on the card");
+                }
                 decode(d, 1 << 14);
                 if (d->done >= d->total)
                 {

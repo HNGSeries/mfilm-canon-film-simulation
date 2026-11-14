@@ -17,9 +17,9 @@ still() { python3 topng.py "$(at "$1" "$2")" >/dev/null; cp "$(at "$1" "$2" | se
 last() { local f; f=$(ls out/frames/$1/*.idx | tail -1); python3 topng.py "$f" >/dev/null; cp "${f%.idx}.png" "$OUT/$2.png"; }
 
 # the shelf's samples on the card, as the EOS M build makes them (PLAY on the shelf)
-make -s out/devtest
+make -s out/devtest out/tables/TABLES.txt
 mkdir -p out/card/ML/SAMPLES
-FOS_LUT_DIR=out/lut ./out/devtest -S ../../films/sample/SAMPLE.CR2 out/card/ML/SAMPLES
+FOS_LUT_DIR=out/tables ./out/devtest -S ../../films/sample/SAMPLE.CR2 out/card/ML/SAMPLES
 
 run shelf;  still shelf 660 shelf; still shelf 1110 shelf-gliding
 run sample; still sample 1600 sample

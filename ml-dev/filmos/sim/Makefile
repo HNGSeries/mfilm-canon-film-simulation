@@ -15,11 +15,16 @@ out/FOSFONT.BIN: ../fos_font.c ../tools/fontblob.c ../fos_gfx.h
 	$(CC) -O2 -I.. -o out/fontblob ../tools/fontblob.c
 	./out/fontblob $@
 
-# the films beyond the built-in ones (ML/DATA/FOSFILMS.BIN) and the tables
-# baked from their LUTs (films/getluts.py fetches those)
+# the films beyond the built-in ones, as the camera finds them on its card (ML/DATA/FOSFILMS.BIN)
 out/FOSFILMS.BIN: ../tools/genfilms.py ../tools/catalog.py ../../films/films.py ../../films/filmluts.py ../fos_film.c
 	mkdir -p out
-	python3 ../tools/genfilms.py $@ --tables out/lut
+	python3 ../tools/genfilms.py $@
+
+# every film stock's colour table, as the build puts them in the card's ML/DARKROOM: the camera makes
+# none itself (mkcard.sh copies these onto the simulator's cards). --plain: without the Film-Luts LUTs
+# (films/getluts.py fetches them) those film stocks get the table of their look, which is enough here
+out/tables/TABLES.txt: out/devtest out/FOSFILMS.BIN ../tools/gentables.py ../tools/genfilms.py ../../films/lut.py
+	python3 ../tools/gentables.py out/tables --films out/FOSFILMS.BIN --devtest out/devtest --plain
 
 # the same with the big UI of a low resolution screen (the 1100D's): make out/sim-big
 out/sim-big: $(SRC) ../*.h out/FOSFONT.BIN out/FOSFILMS.BIN
