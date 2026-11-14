@@ -187,7 +187,7 @@ It goes off when you put your eye to the viewfinder, and LiveView brings the vie
 Colour negative, slide, black and white, and cine film, on four shelves. Each film has its own colour,
 grain, halation and softness; rolls come in 36, 24 or 12 frames.
 
-<!-- samples: one photo per film in docs/samples/<film>.jpg (3:2) -->
+<!-- samples: docs/samples/<film>.jpg (3:2), made by ml-dev/films/pictures.py from ml-dev/films/sample/SAMPLE.CR2 -->
 <table>
 <tr>
 <td width="33%"><img src="docs/samples/portra400.jpg" alt="Kodak Portra 400"><br><b>Kodak Portra 400</b><br><sub>Soft warm skin, gentle highlights</sub></td>
@@ -201,7 +201,7 @@ grain, halation and softness; rolls come in 36, 24 or 12 frames.
 </tr>
 <tr>
 <td><img src="docs/samples/cinestill800t.jpg" alt="CineStill 800T"><br><b>CineStill 800T</b><br><sub>Tungsten cine film, night goes blue</sub></td>
-<td><img src="docs/films/pro400h.jpg" alt="Fujifilm Pro 400H"><br><b>Fujifilm Pro 400H</b><br><sub>Airy pastels, fourth colour layer</sub></td>
+<td><img src="docs/samples/pro400h.jpg" alt="Fujifilm Pro 400H"><br><b>Fujifilm Pro 400H</b><br><sub>Airy pastels, fourth colour layer</sub></td>
 <td><img src="docs/samples/trix400.jpg" alt="Kodak Tri-X 400"><br><b>Kodak Tri-X 400</b><br><sub>Gritty contrast, street classic</sub></td>
 </tr>
 </table>

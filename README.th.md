@@ -179,7 +179,7 @@ DSLR ถ่ายผ่านช่องมองกระจก ไม่ม�
 มีทั้งฟิล์มสีเนกาทีฟ สไลด์ ขาวดำ และฟิล์มภาพยนตร์ แยกไว้บนชั้นวาง 4 ชั้น ฟิล์มแต่ละแบบมีสี เกรน halation
 และความนุ่มของภาพเป็นของตัวเอง ม้วนหนึ่งเลือกได้ 36, 24 หรือ 12 รูป
 
-<!-- samples: one photo per film in docs/samples/<film>.jpg (3:2) -->
+<!-- samples: docs/samples/<film>.jpg (3:2), made by ml-dev/films/pictures.py from ml-dev/films/sample/SAMPLE.CR2 -->
 <table>
 <tr>
 <td width="33%"><img src="docs/samples/portra400.jpg" alt="Kodak Portra 400"><br><b>Kodak Portra 400</b><br><sub>สีผิวอุ่นนุ่ม ไฮไลต์ละมุน</sub></td>
@@ -193,7 +193,7 @@ DSLR ถ่ายผ่านช่องมองกระจก ไม่ม�
 </tr>
 <tr>
 <td><img src="docs/samples/cinestill800t.jpg" alt="CineStill 800T"><br><b>CineStill 800T</b><br><sub>ฟิล์มหนังแสงไฟ กลางคืนออกฟ้า</sub></td>
-<td><img src="docs/films/pro400h.jpg" alt="Fujifilm Pro 400H"><br><b>Fujifilm Pro 400H</b><br><sub>สีพาสเทลโปร่ง มีชั้นสีที่สี่</sub></td>
+<td><img src="docs/samples/pro400h.jpg" alt="Fujifilm Pro 400H"><br><b>Fujifilm Pro 400H</b><br><sub>สีพาสเทลโปร่ง มีชั้นสีที่สี่</sub></td>
 <td><img src="docs/samples/trix400.jpg" alt="Kodak Tri-X 400"><br><b>Kodak Tri-X 400</b><br><sub>ขาวดำคอนทราสต์ดิบ คลาสสิกของสตรีท</sub></td>
 </tr>
 </table>
