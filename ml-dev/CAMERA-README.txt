@@ -44,5 +44,6 @@ Remove: format the card in the camera, or delete autoexec.bin and ML/.
 Logs for a bug report: ML/FILMROLL.LOG on the card.
 
 Free software (GPL-2.0, LICENSE.txt; the source is at https://github.com/HNGSeries/mfilm-canon-film-simulation).
-Other parts and their licences, among them the Film-Luts colours: THIRD_PARTY.txt.
+Other parts and their licences: THIRD_PARTY.txt. The colour tables of 59 films (in ML/DARKROOM) are adapted
+from Pat David's film emulation tables and are CC BY-SA 4.0, not GPL-2.0.
 Buy the developer a coffee: https://buy.stripe.com/7sY14p8d93QE5Ny5M58so02

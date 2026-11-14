@@ -4,8 +4,9 @@
     python getluts.py --from ~/Film-Luts      # from a clone you already have
 
 Downloads the collection (about 40 MB) and keeps only the LUTs a film
-names. They are not part of this repository: the collection is shared
-as-is and some LUTs may carry their makers' rights.
+names. They are not part of this repository. The ones M-Film uses are Pat
+David's, CC BY-SA 4.0 (THIRD_PARTY.md); Film-Luts is an export of G'MIC's
+copy of them, and its maintainer does not claim to own them.
 """
 
 import argparse

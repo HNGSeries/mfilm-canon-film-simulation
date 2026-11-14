@@ -83,8 +83,9 @@ jobs:
           p=${{ matrix.platform }}
           if [ "$p" = EOSM.202 ]; then d=ml-dev/out/fork; else d=ml-dev/out/fork-$p; fi
           cp ml-dev/CAMERA-README.txt "$d/M-FILM-README.txt"
-          # the licence and the notices travel with the binaries (GPL-2.0 section 1; the MIT notice of
-          # Film-Luts, whose LUTs the colour tables and samples in ML/ are made from)
+          # the licence and the notices travel with the binaries (GPL-2.0 section 1; the credit and the
+          # CC BY-SA 4.0 notice of Pat David's tables, which 59 of the colour tables in ML/ are made from,
+          # and Film-Luts' own MIT notice)
           cp LICENSE "$d/LICENSE.txt"
           cp THIRD_PARTY.md "$d/THIRD_PARTY.txt"
           (cd "$d" && zip -qr "$GITHUB_WORKSPACE/M-Film-camera-$p.zip" .)
@@ -142,8 +143,9 @@ jobs:
           p=${{ matrix.platform }}
           d=ml-dev/out/fork-$p${{ matrix.suffix }}
           cp ml-dev/CAMERA-README.txt "$d/M-FILM-README.txt"
-          # the licence and the notices travel with the binaries (GPL-2.0 section 1; the MIT notice of
-          # Film-Luts, whose LUTs the colour tables and samples in ML/ are made from)
+          # the licence and the notices travel with the binaries (GPL-2.0 section 1; the credit and the
+          # CC BY-SA 4.0 notice of Pat David's tables, which 59 of the colour tables in ML/ are made from,
+          # and Film-Luts' own MIT notice)
           cp LICENSE "$d/LICENSE.txt"
           cp THIRD_PARTY.md "$d/THIRD_PARTY.txt"
           (cd "$d" && zip -qr "$GITHUB_WORKSPACE/M-Film-camera-$p${{ matrix.suffix }}.zip" .)
@@ -188,3 +190,6 @@ jobs:
             **The films' colour tables** (`M-Film-tables.zip`): every film's table as the cameras' zips carry them
             in ML/DARKROOM, with a list of them and their checksums. The desktop darkroom reads the same files,
             so both give the same colour. You don't need this zip for a camera.
+
+            The colour tables of 59 films are adapted from film emulation tables by Pat David and are licensed
+            CC BY-SA 4.0, not GPL-2.0: THIRD_PARTY.txt in every zip says which, what was changed and what you may do.

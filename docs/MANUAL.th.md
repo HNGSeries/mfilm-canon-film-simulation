@@ -46,7 +46,7 @@
 - ชั้น **RECENT** อยู่บนสุด: ฟิล์ม 4 ตัวที่ใส่ล่าสุด ตัวล่าสุดอยู่หน้าสุด ชั้นวางเปิดที่ชั้นนี้เสมอเมื่อเคยใส่ฟิล์มมาแล้ว
   จะใส่ฟิล์มเดิมอีกม้วนจึงกด SET ครั้งเดียว
 - 8 ตัวแรก (Portra 400, CineStill 800T, Ektar 100, Gold 200, Superia 400, Velvia 50, HP5, Tri-X)
-  สีมาจากโมเดลฟิล์มของ M-Film (`ml-dev/films/films.py`) อีก 59 ตัวมาจาก LUT ของ [Film-Luts](https://github.com/YahiaAngelo/Film-Luts)
+  สีมาจากโมเดลฟิล์มของ M-Film (`ml-dev/films/films.py`) อีก 59 ตัวมาจากตารางของ [Pat David](https://patdavid.net) (CC BY-SA 4.0) ผ่าน G'MIC และ [Film-Luts](https://github.com/YahiaAngelo/Film-Luts)
   (Portra 160/800/NC/VC/UC, Pro 400H, Kodachrome, Ektachrome, Provia, Acros, T-MAX, Delta ฯลฯ)
   และ CineStill 400T จาก LUT ส่วนตัว (`ml-dev/films/luts/cinestill400t.slog3.cube`)
 - ข้อมูลฟิล์มเหล่านี้อยู่ในไฟล์ `ML/DATA/FOSFILMS.BIN` บนการ์ด (ไม่ได้อยู่ใน autoexec.bin

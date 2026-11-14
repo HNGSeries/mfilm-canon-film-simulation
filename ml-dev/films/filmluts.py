@@ -1,6 +1,10 @@
 """Film stocks whose colour comes from the G'MIC film LUTs collected in
 https://github.com/YahiaAngelo/Film-Luts (fetch them with getluts.py).
 
+The tables are Pat David's (2013), CC BY-SA 4.0: looks he made by eye, not
+measurements of the films. What M-Film bakes from them stays CC BY-SA 4.0
+and is credited to him: THIRD_PARTY.md says how.
+
 Every entry: key, the LUT's path in that repository (without .cube),
 brand, name, box speed, and kind:
 

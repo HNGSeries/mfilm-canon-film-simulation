@@ -208,8 +208,10 @@ grain, halation and softness; rolls come in 36, 24 or 12 frames.
 
 **[All 68 films, on the same photo →](FILMS.md)**
 
-Colour for 59 of them comes from the [Film-Luts](https://github.com/YahiaAngelo/Film-Luts) collection; the rest
-from M-Film's own film models ([`ml-dev/films/films.py`](ml-dev/films/films.py)).
+Colour for 59 of them comes from film emulation tables by [Pat David](https://patdavid.net),
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), taken from G'MIC through the [Film-Luts](https://github.com/YahiaAngelo/Film-Luts)
+collection; the rest from M-Film's own film models ([`ml-dev/films/films.py`](ml-dev/films/films.py)). The tables are
+looks made by eye, not measurements of the films: [THIRD_PARTY.md](THIRD_PARTY.md#the-film-colour-tables-cc-by-sa-40).
 
 ---
 
@@ -347,5 +349,6 @@ The camera side of M-Film is free and stays free. If it gave you a roll you like
 M-Film is made by **HNGSeries**, on top of [Magic Lantern](https://www.magiclantern.fm/).
 
 This repository: GPL-2.0 ([LICENSE](LICENSE)), as the camera side builds on Magic Lantern.
-Darkrooms (the desktop program) is a separate, closed-source program under its own licence. Fonts, film LUTs and other
+Darkrooms (the desktop program) is a separate, closed-source program under its own licence. The colour tables of
+59 films are adapted from Pat David's and are CC BY-SA 4.0, not GPL-2.0. Those, the fonts and other
 parts: [THIRD_PARTY.md](THIRD_PARTY.md). Not affiliated with Canon, Kodak, Fujifilm or any film maker.

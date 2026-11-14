@@ -124,7 +124,10 @@ def main():
     if extra:
         sys.exit("gentables: tables for film stocks that are not on the shelf: " + ", ".join(extra))
     index = Path(a.index) if a.index else out / "TABLES.txt"
-    index.write_text("# file, film stock, made from, SHA-256 (tools/gentables.py)\n" + "\n".join(lines) + "\n")
+    index.write_text("# file, film stock, made from, SHA-256 (tools/gentables.py)\n"
+                     "# \"lut\": adapted from a film emulation table by Pat David, CC BY-SA 4.0, and licensed the same\n"
+                     "# (https://creativecommons.org/licenses/by-sa/4.0/). THIRD_PARTY says what was changed.\n"
+                     "# \"look\": mixed from M-Film's own film model.\n" + "\n".join(lines) + "\n")
     n_lut = sum(1 for k in keys if source[k] == "lut")
     print("%s: %d tables, %d from LUTs, %d from looks; list in %s" % (a.out, len(keys), n_lut, len(keys) - n_lut, index))
 
