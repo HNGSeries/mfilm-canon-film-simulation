@@ -18,12 +18,12 @@ let CAMERAS = [
   ['600D.102', 'Canon EOS 600D / Rebel T3i / Kiss X5', 'working'],
   ['100D.101', 'Canon EOS 100D / Rebel SL1 / Kiss X7', 'working'],
   ['650D.104', 'Canon EOS 650D / Rebel T4i / Kiss X6i', 'working'],
+  ['1100D.105', 'Canon EOS 1100D / Rebel T3 / Kiss X50', 'working'],
   ['700D.115', 'Canon EOS 700D / Rebel T5i / Kiss X7i', 'issues'],
   ['70D.112', 'Canon EOS 70D', 'issues'],
   ['5D3.113', 'Canon EOS 5D Mark III (firmware 1.1.3)', 'issues'],
   ['5D3.123', 'Canon EOS 5D Mark III (firmware 1.2.3)', 'issues'],
   ['5D2.212', 'Canon EOS 5D Mark II', 'issues'],
-  ['1100D.105', 'Canon EOS 1100D / Rebel T3 / Kiss X50', 'testing'],
   ['1300D.110', 'Canon EOS 1300D / Rebel T6 / Kiss X80', 'testing'],
 ];
 const REPO = 'https://github.com/HNGSeries/mfilm-canon-film-simulation';
