@@ -124,21 +124,6 @@ void fos_film_color(const struct fos_look *f, const float in[3], float out[3])
     if (f->nhues) shift_hues(f, out);
 }
 
-/* linear sRGB of a blackbody at t kelvin (as cct_to_rgb in the lab) */
-static void cct_rgb(float t, float out[3])
-{
-    float x, y;
-    if (t <= 4000) x = -0.2661239e9f / (t * t * t) - 0.2343589e6f / (t * t) + 0.8776956e3f / t + 0.179910f;
-    else x = -3.0258469e9f / (t * t * t) + 2.1070379e6f / (t * t) + 0.2226347e3f / t + 0.240390f;
-    if (t <= 2222) y = -1.1063814f * x * x * x - 1.34811020f * x * x + 2.18555832f * x - 0.20219683f;
-    else if (t <= 4000) y = -0.9549476f * x * x * x - 1.37418593f * x * x + 2.09137015f * x - 0.16748867f;
-    else y = 3.0817580f * x * x * x - 5.87338670f * x * x + 3.75112997f * x - 0.37001483f;
-    float X = x / y, Y = 1, Z = (1 - x - y) / y;
-    out[0] = 3.2406f * X - 1.5372f * Y - 0.4986f * Z;
-    out[1] = -0.9689f * X + 1.8758f * Y + 0.0415f * Z;
-    out[2] = 0.0557f * X - 0.2040f * Y + 1.0570f * Z;
-}
-
 /* ---------------------------------------------------------------- the film's table */
 
 /* The film's colour as a 3D table over Cineon log code (the density of a
@@ -391,7 +376,8 @@ struct fos_dev
     uint32_t *whist;                    /* the brightest samples, counted: WBINS bins for each colour (white_clip) */
     int wbase, wshift;                  /* a bin's first raw value: wbase + (bin << wshift) */
     int clip;                           /* where this frame's samples clip, 4096 = WHITE_LEVEL */
-    int pre[3];                         /* daylight balance and white level, raw/16 -> 1/4096, << 14 */
+    int wb[3];                          /* the white balance the camera wrote into the frame: red, green, blue; 0s if none */
+    int pre[3];                         /* the frame's white balance and white level, raw/16 -> 1/4096, << 14 */
     int mat[3][3];                      /* camera -> linear sRGB, 1/4096 */
     int mul[3];                         /* exposure and film balance, 1/4096 */
     uint16_t *lin;                      /* in place of sums: linear sRGB, 4096 = 1.0 */
@@ -599,6 +585,27 @@ static int parse_tiff(struct fos_dev *d)
             d->crop_l = u16le(s + 10); d->crop_t = u16le(s + 12);
             d->crop_w = u16le(s + 14) - d->crop_l + 1; d->crop_h = u16le(s + 16) - d->crop_t + 1;
             d->ob_l = u16le(s + 18); d->ob_r = u16le(s + 22);
+        }
+    }
+
+    /* The white balance the camera was on, from Canon's colour data in the
+     * maker note: red, green, green, blue from its 64th value on. That is
+     * where every camera M-Film is built for keeps it (checked against
+     * LibRaw on a frame from each: #123). Canon writes the greens as 1024,
+     * which tells a block laid out some other way from one that is read
+     * right; then the frame is developed with the matrix's daylight. */
+    d->wb[0] = d->wb[1] = d->wb[2] = 0;
+    long cd = mn > 0 ? tiff_tag(d, (unsigned) mn, 0x4001, &cnt) : -1;
+    if (cd > 0 && cnt >= 67)
+    {
+        uint8_t w[8];
+        if (read_at(d, (int) cd + 2 * 63, w, 8))
+        {
+            int r = u16le(w), g = u16le(w + 2), g2 = u16le(w + 4), b = u16le(w + 6);
+            if (g == g2 && g >= 512 && g <= 4096 && r >= g / 4 && r <= g * 8 && b >= g / 4 && b <= g * 8)
+            {
+                d->wb[0] = r; d->wb[1] = g; d->wb[2] = b;
+            }
         }
     }
 
@@ -1547,7 +1554,7 @@ FOS_INLINE void pixel_linear(const struct fos_dev *d, int x, int y, int lin[3])
     }
 }
 
-/* camera -> sRGB with daylight balance, and the black and white levels */
+/* camera -> sRGB, the frame's white balance, and the black and white levels */
 static void setup_colour(struct fos_dev *d)
 {
     float cam_rgb[3][3], pre[3];
@@ -1563,6 +1570,14 @@ static void setup_colour(struct fos_dev *d)
         for (int j = 0; j < 3; j++) cam_rgb[i][j] /= sum;
         pre[i] = 1 / sum;
     }
+    /* pre is now the balance that makes the matrix's D65 neutral. The
+     * frame's own takes its place: what the camera was on, which loading a
+     * roll set to the film stock's (#115). The matrix stays as it is, as in
+     * any RAW developer. */
+    if (d->wb[1])
+        for (int i = 0; i < 3; i++) pre[i] = (float) d->wb[i];
+    else
+        fos_port_log("dev: no white balance in the frame, developed as daylight");
     float green = pre[1];
     for (int i = 0; i < 3; i++) pre[i] /= green;
     /* rgb_cam = inverse(cam_rgb) */
@@ -1582,7 +1597,11 @@ static void setup_colour(struct fos_dev *d)
     float black = d->black_n ? (float) d->black_sum / (float) d->black_n : 2048;
     if (black < 0 || black > WHITE_LEVEL / 2) black = 2048;     /* a damaged file */
     d->black16 = (int) (black * 16 + 0.5f);
+    /* a blown pixel is neutral when every colour is cut at what the least
+     * multiplied one reaches: green, unless a balance turns one down below it */
+    float least = pre[0] < pre[2] ? pre[0] : pre[2];
     d->clip = white_clip(d, black);
+    if (least < 1) d->clip = (int) ((float) d->clip * least);
     /* raw/16 above black -> 4096 at the white level, balanced, << 14 */
     for (int c = 0; c < 3; c++)
     {
@@ -1989,7 +2008,7 @@ int fos_dev_progress(const struct fos_dev *d)
 }
 
 /* the lab scanner: the log-average luminance to a fixed key (negatives),
- * or what was exposed (slides); then the film's balance */
+ * or what was exposed (slides) */
 static void stage_key(struct fos_dev *d)
 {
     const int W = FOS_PRINT_W, H = FOS_PRINT_H;
@@ -2013,7 +2032,8 @@ static void stage_key(struct fos_dev *d)
                 }
             fclose(f);
         }
-        fprintf(stderr, "dump: black %d/16, white %d, clip %d, pre %d %d %d\n", d->black16, WHITE_LEVEL, d->clip, d->pre[0], d->pre[1], d->pre[2]);
+        fprintf(stderr, "dump: black %d/16, white %d, clip %d, pre %d %d %d, balance %d %d %d\n", d->black16, WHITE_LEVEL, d->clip,
+                d->pre[0], d->pre[1], d->pre[2], d->wb[0], d->wb[1], d->wb[2]);
     }
 #endif
     if (!d->look->slide)
@@ -2042,17 +2062,14 @@ static void stage_key(struct fos_dev *d)
         fprintf(stderr, "scanner: key %.4f, %.3f EV; black %d/16, pre %d %d %d\n", (double) key, (double) ev, d->black16, d->pre[0], d->pre[1], d->pre[2]);
 #endif
     }
+    /* The film stock's balance is not applied here any more: the frame comes
+     * balanced as the camera was, and loading a roll put the camera on the
+     * film stock's Kelvin. Shifting again would count it twice (#115). */
     float k = exp2f(ev + d->look->ev);
-    float bal[3] = { 1, 1, 1 };
-    if (d->look->balance != 5500)
-    {
-        float a[3], b[3];
-        cct_rgb(5500, a);
-        cct_rgb((float) d->look->balance, b);
-        for (int c = 0; c < 3; c++) bal[c] = a[c] / b[c];
-        for (int c = 0; c < 3; c++) bal[c] /= a[1] / b[1];
-    }
-    for (int c = 0; c < 3; c++) d->mul[c] = (int) (k * bal[c] * 4096 + 0.5f);
+    for (int c = 0; c < 3; c++) d->mul[c] = (int) (k * 4096 + 0.5f);
+#ifdef FOS_DEV_TEST
+    fprintf(stderr, "film: %s, mul %d %d %d\n", fos_films[d->film].key, d->mul[0], d->mul[1], d->mul[2]);
+#endif
 }
 
 /* Exposing a row goes in two passes, each small enough for the

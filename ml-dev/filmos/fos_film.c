@@ -19,25 +19,29 @@
 
 /* Picture style values are starting points for the in-camera JPEG preview
  * only; the real look comes from the lab. Mono stocks leave saturation and
- * tone alone because the Monochrome style uses those for filter / toning. */
+ * tone alone because the Monochrome style uses those for filter / toning.
+ * The Kelvin is not a starting point: the darkroom develops a frame with the
+ * white balance the camera was on, so it is the light the film stock is
+ * balanced for, 5500 or 3200, with no shift. A look's warmth is in its
+ * table, not here (#115). */
 static const struct fos_film builtin[] =
 {
     { "portra400", "KODAK", "Portra 400", "C-41", "Soft warm skin, gentle highlights",
-      400, 400, PS_STANDARD, -1, -1, 1, 2, 5500, 0, 1,     2, 2, 2, 4, "Portra400", FOS_GROUP_COLOUR, 0 },
+      400, 400, PS_STANDARD, -1, -1, 1, 2, 5500, 0, 0,     2, 2, 2, 4, "Portra400", FOS_GROUP_COLOUR, 0 },
     { "cinestill800t", "CINESTILL", "800T", "C-41", "Tungsten cine film, night goes blue",
       800, 800, PS_STANDARD, 1, 1, -1, 2, 3200, 0, 0,      4, 3, 3, 1, "CineStill800T", FOS_GROUP_CINE, 0 },
     { "ektar100", "KODAK", "Ektar 100", "C-41", "Punchy colour, ultra fine grain",
-      100, 100, PS_LANDSCAPE, 1, 2, 0, 3, 5200, 0, 0,      1, 4, 5, 3, "Ektar100", FOS_GROUP_COLOUR, 0 },
+      100, 100, PS_LANDSCAPE, 1, 2, 0, 3, 5500, 0, 0,      1, 4, 5, 3, "Ektar100", FOS_GROUP_COLOUR, 0 },
     { "gold200", "KODAK", "Gold 200", "C-41", "Golden hour, all day long",
-      200, 200, PS_STANDARD, 1, 1, 2, 2, 5600, 0, 2,       3, 3, 4, 5, "Gold200", FOS_GROUP_COLOUR, 0 },
+      200, 200, PS_STANDARD, 1, 1, 2, 2, 5500, 0, 0,       3, 3, 4, 5, "Gold200", FOS_GROUP_COLOUR, 0 },
     { "superia400", "FUJIFILM", "Superia 400", "C-41", "Green shadows, everyday snaps",
-      400, 400, PS_STANDARD, 1, 1, 0, 2, 5200, 1, 0,       3, 3, 3, 2, "Superia400", FOS_GROUP_COLOUR, 0 },
+      400, 400, PS_STANDARD, 1, 1, 0, 2, 5500, 0, 0,       3, 3, 3, 2, "Superia400", FOS_GROUP_COLOUR, 0 },
     { "velvia50", "FUJIFILM", "Velvia 50", "E-6", "Vivid slide film, hard contrast",
-      50, 100, PS_LANDSCAPE, 3, 4, 0, 3, 5200, 0, 0,       1, 5, 5, 3, "Velvia50", FOS_GROUP_SLIDE, 0 },
+      50, 100, PS_LANDSCAPE, 3, 4, 0, 3, 5500, 0, 0,       1, 5, 5, 3, "Velvia50", FOS_GROUP_SLIDE, 0 },
     { "hp5", "ILFORD", "HP5 Plus", "B&W", "Classic B&W, forgiving latitude",
-      400, 400, PS_MONO, 1, 0, 0, 2, 5200, 0, 0,           4, 2, 0, 0, "HP5", FOS_GROUP_BW, 0 },
+      400, 400, PS_MONO, 1, 0, 0, 2, 5500, 0, 0,           4, 2, 0, 0, "HP5", FOS_GROUP_BW, 0 },
     { "trix400", "KODAK", "Tri-X 400", "B&W", "Gritty contrast, street classic",
-      400, 400, PS_MONO, 3, 0, 0, 2, 5200, 0, 0,           5, 4, 0, 0, "TriX400", FOS_GROUP_BW, 0 },
+      400, 400, PS_MONO, 3, 0, 0, 2, 5500, 0, 0,           5, 4, 0, 0, "TriX400", FOS_GROUP_BW, 0 },
 };
 #define NBUILTIN ((int) (sizeof(builtin) / sizeof(builtin[0])))
 

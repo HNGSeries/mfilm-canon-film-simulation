@@ -67,6 +67,13 @@ def camera_iso(iso):
     return max(100, iso)                # the EOS M starts at 100
 
 
+def camera_kelvin(f):
+    """What loading a roll sets the camera to: the light the film stock is
+    balanced for, with no shift. The darkroom develops a frame with the
+    white balance the camera was on (#115)."""
+    return 3200 if int(f.get("balance", 5500)) == 3200 else 5500
+
+
 def record(key):
     f = FILMS[key]
     kind = f["kind"]
@@ -85,7 +92,7 @@ def record(key):
     lab = LABELS[key]
     return REC.pack(cstr(key, 16), cstr(brand.upper(), 16), cstr(name, 24), cstr(process, 8),
                     cstr(DESC[key], 48), cstr(short_name(key), 24),
-                    iso, camera_iso(iso), style[0], style[1], style[2], style[3], 2, 5200, 0, 0,
+                    iso, camera_iso(iso), style[0], style[1], style[2], style[3], 2, camera_kelvin(f), 0, 0,
                     grain, punch, colour, 3, GROUP[kind],
                     lab["style"], lab["leader"], *lab["bg"], *lab["band"], *lab["accent"], *lab["text"], *lab["num"],
                     cstr(lab["top"], 20), cstr(lab["word"], 14), cstr(lab["num_s"], 8), cstr(lab["sub"], 18),

@@ -6,6 +6,10 @@
  *                 [--portrait] [--ev 0] [--raw out.u16]
  *                 [--white 13900]           the raw value blown samples stop at (a Canon's
  *                                           changes with ISO: sim/colourtest.py, #114)
+ *                 [--wb R,B]                the light: what the camera's white balance has to
+ *                                           multiply red and blue by (green 1) to make a grey
+ *                                           neutral, written into the frame as Canon does (#123).
+ *                                           Without it: daylight, and no balance in the frame
  *                 [--image photo.pfm]       a photo instead of a made-up scene: linear sRGB,
  *                                           0.18 = mid grey (Portable Float Map, 3 channels)
  *
@@ -30,6 +34,7 @@ static int CROP_L = 84, CROP_T = 64, CROP_W = 5184, CROP_H = 3456;   /* the pict
 #define BLACK 2048
 #define WHITE 13600
 static int clip_at = WHITE + 300;               /* --white: where the samples clip */
+static double wb_r, wb_b;                       /* --wb: the camera's white balance, 0 for none */
 
 /* XYZ -> camera, EOS M (LibRaw colordata, same as the 650D) */
 static const double xyz_cam[3][3] = {
@@ -54,7 +59,10 @@ static void camera_init()
         for (int j = 0; j < 3; j++) cam_rgb[i][j] /= sum;
         pre_mul[i] = 1 / sum;
     }
-    for (int i = 0; i < 3; i++) pre_mul[i] /= pre_mul[1] ? pre_mul[1] : 1;
+    /* green 1. (Dividing in place made green 1 before blue's turn, so blue
+     * kept its own sum and every made-up frame was 6 % too blue: #123.) */
+    double green = pre_mul[1] ? pre_mul[1] : 1;
+    for (int i = 0; i < 3; i++) pre_mul[i] /= green;
 }
 
 /* ---------------------------------------------------------------- scenes */
@@ -227,6 +235,8 @@ static void expose(int portrait, double ev)
                     for (int j = 0; j < 3; j++) cam[i] += cam_rgb[i][j] * lin[j];
                     cam[i] /= pre_mul[i];
                 }
+                /* --wb: light that needs these multipliers and not daylight's, green as it was */
+                if (wb_r > 0) { cam[0] *= pre_mul[0] / (pre_mul[1] * wb_r); cam[2] *= pre_mul[2] / (pre_mul[1] * wb_b); }
                 /* RGGB from the picture's top left, as LibRaw has every
                  * Canon here: on a sensor whose picture starts on an odd
                  * row (5D Mark II, 60D, 50D: 51) the red rows are the odd ones */
@@ -447,7 +457,7 @@ int main(int argc, char **argv)
     if (argc < 2)
     {
         fprintf(stderr, "usage: mkcr2 out.CR2 [--scene chart|street] [--small|--half] [--clrs 2|4] "
-                        "[--slices N,W,LAST] [--portrait] [--ev x] [--raw out.u16] [--seed n] [--image photo.pfm] [--white n]\n");
+                        "[--slices N,W,LAST] [--portrait] [--ev x] [--raw out.u16] [--seed n] [--image photo.pfm] [--white n] [--wb r,b]\n");
         return 1;
     }
     int clrs = 2, portrait = 0, slices[3] = { 2, 1760, 1760 };
@@ -483,6 +493,11 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i], "--ev") && i + 1 < argc) ev = atof(argv[++i]);
         else if (!strcmp(argv[i], "--raw") && i + 1 < argc) raw_out = argv[++i];
         else if (!strcmp(argv[i], "--seed") && i + 1 < argc) seed = (unsigned) atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--wb") && i + 1 < argc)
+        {
+            if (sscanf(argv[++i], "%lf,%lf", &wb_r, &wb_b) != 2 || wb_r < 0.3 || wb_r > 7 || wb_b < 0.3 || wb_b > 7)
+            { fprintf(stderr, "--wb: red,blue multipliers, 0.3 to 7\n"); return 1; }
+        }
         else if (!strcmp(argv[i], "--white") && i + 1 < argc)
         {
             clip_at = atoi(argv[++i]);
@@ -516,7 +531,15 @@ int main(int argc, char **argv)
     for (int i = 0; i < 17; i++) w16(sinfo + 2 * i, si[i]);
     static const unsigned char tiny_jpeg[] = { 0xFF, 0xD8, 0xFF, 0xD9 };
     put_bytes(thumb, tiny_jpeg, sizeof(tiny_jpeg));
-    size_t rawdata = data + 256;
+    /* Canon's colour data, as far as the white balance the camera was on:
+     * red, green, green, blue from its 64th value, the greens 1024 */
+    size_t cdata = data + 256, rawdata = data + 512;
+    if (wb_r > 0)
+    {
+        w16(cdata, 10);
+        w16(cdata + 2 * 63, (int) (wb_r * 1024 + 0.5)); w16(cdata + 2 * 64, 1024);
+        w16(cdata + 2 * 65, 1024); w16(cdata + 2 * 66, (int) (wb_b * 1024 + 0.5));
+    }
     put_bytes(rawdata, out, out_len);
     tif_len = rawdata + out_len;
 
@@ -528,11 +551,11 @@ int main(int argc, char **argv)
     };
     ifd(ifd0, e0, sizeof(e0) / sizeof(e0[0]), (unsigned) ifd3);
     struct entry ex[] = {
-        { 0x8827, 3, 1, 400 }, { 0x9003, 2, 20, (unsigned) date }, { 0x927C, 7, 2 + 12 * 2 + 4, (unsigned) mnote },
+        { 0x8827, 3, 1, 400 }, { 0x9003, 2, 20, (unsigned) date }, { 0x927C, 7, 2 + 12 * 3 + 4, (unsigned) mnote },
     };
     ifd(exif, ex, sizeof(ex) / sizeof(ex[0]), 0);
-    struct entry mn[] = { { 0x0010, 4, 1, 0x80000331 }, { 0x00E0, 3, 17, (unsigned) sinfo } };
-    ifd(mnote, mn, 2, 0);
+    struct entry mn[] = { { 0x0010, 4, 1, 0x80000331 }, { 0x00E0, 3, 17, (unsigned) sinfo }, { 0x4001, 3, 67, (unsigned) cdata } };
+    ifd(mnote, mn, wb_r > 0 ? 3 : 2, 0);
     w32(12, (unsigned) ifd3);
     struct entry e3[] = {
         { 0x0103, 3, 1, 6 }, { 0x0111, 4, 1, (unsigned) rawdata }, { 0x0117, 4, 1, (unsigned) out_len },
