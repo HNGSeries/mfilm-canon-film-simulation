@@ -52,6 +52,8 @@ jobs:
         run: bash ml-dev/filmos/sim/tabletest.sh
       - name: What the Film-Luts tables are fed
         run: python ml-dev/filmos/sim/tonetest.py
+      - name: A picture in the docs for every film on the shelf
+        run: python ml-dev/films/pictures.py --list
 
   camera:
     strategy:

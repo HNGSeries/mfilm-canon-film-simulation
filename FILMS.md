@@ -1,8 +1,12 @@
 # One photo, 68 films
 
-The same RAW from a Canon EOS M, developed by M-Film with every film it knows (half resolution here,
-downsized for the page). Colour from [Film-Luts](https://github.com/YahiaAngelo/Film-Luts) where the film has a LUT, from
-M-Film's own model otherwise; grain, halation and softness are modelled per film.
+One RAW from a Canon EOS M ([`ml-dev/films/sample/SAMPLE.CR2`](ml-dev/films/sample/SAMPLE.CR2), a street in late
+afternoon sun), developed with every film on the shelf by the camera's own darkroom code at its Large size, then
+made smaller for the page. Colour from [Film-Luts](https://github.com/YahiaAngelo/Film-Luts) where the film has a LUT,
+from M-Film's own model otherwise; grain, halation and softness are modelled per film.
+
+[`ml-dev/films/pictures.py`](ml-dev/films/pictures.py) makes every picture here, so they can be made again when
+the colour changes. [All of them on one sheet](docs/films/grid.jpg).
 
 [← back](README.md) · [ภาษาไทย](README.th.md)
 
