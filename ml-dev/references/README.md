@@ -9,26 +9,61 @@ No film has been shot yet, so no film stock is measured. The one folder is [made
 paired shot that is drawn, not shot, so the measuring command can be tested. Its record is the example of
 the format, with every field explained in it.
 
-## Comparing two sets of pictures
+## Measuring a look against its reference
 
 ```sh
-cd ml-dev/films
-python3 madeup.py /tmp/shot                # the made-up paired shot's pictures
-python3 measure.py compare ../references/made-up/record.txt canon=/tmp/shot/canon locked=/tmp/shot/locked
+make -C ml-dev/filmos/sim out/devtest out/mkcr2 out/tables/TABLES.txt
+python3 ml-dev/films/measure.py look         # every film stock that has a reference
 ```
 
-`compare` takes a record and two sets of pictures of its frames, the look first and what it is held against
-second. For the frames that decide (the chart at −1, +1 and +3 stops) it prints colour and tone, each as a
-mean and a worst patch, and says whether they are within the pass marks; the other chart frames are printed
-apart and decide nothing. The pass marks are provisional until a roll has been scanned twice.
+`look` develops the paired shot's Canon frames with the darkroom's own code built for a computer and the
+film stock's table, and holds the chart's patches against the locked scan's. For the frames that decide
+(the chart at −1, +1 and +3 stops) it prints colour and tone, each as a mean and a worst patch, and says
+whether they are within the pass marks. The other chart frames are printed apart and decide nothing. The
+pass marks are provisional until a roll has been scanned twice.
 
 - **Colour** is dE2000 with its lightness part left out, over the chart's 24 patches.
 - **Tone** is the difference in L\* over the six grey patches. A black-and-white film stock has tone only,
   over all 24 patches.
-- A patch that is blown or black in either picture is left out and counted.
+- A patch that is blown or black in either picture is left out and counted. So is a patch the Canon's
+  sensor clipped, though the darkroom does not print it white: three stops over, a Canon has lost every
+  patch lighter than mid grey, and the film has not.
+- **The scanner's exposure is held.** It is set once, so that the mid-grey patch of the chart frame at box
+  speed is as light as in the locked scan, and kept for every frame, as the lab kept its own. The
+  darkroom's automatic exposure, which is what people get, is held against the automatic scan where the
+  paired shot has one. That is printed and decides nothing.
 
-The made-up film is not a plain print, so the command reports it as outside the pass marks: that is the
-known distance the tests check (`python3 measuretest.py`). Needs numpy and Pillow.
+A record that says `measured: yes` claims its film stock as measured. From then on `look` fails, and CI
+with it, when that film stock is outside a pass mark. A film stock that is not claimed is only reported.
 
-What is not here yet: developing the Canon frames with a held scanner exposure and running this in CI for
-every film stock that has a reference, and building a look from a paired shot.
+## A paired shot's files
+
+The Canon RAW frames and the scans are not in git. They are published with a release; the record says
+where (`files at`) and has a checksum for each (`file canon/01.CR2: <sha256>`). `look` fetches the ones
+that are missing into `ml-dev/filmos/sim/out/references/<name>/` and stops at a file that is not the one
+the record names. A scan's patches can be kept in the repository instead of fetching the scan every time:
+
+```sh
+python3 ml-dev/films/measure.py read ml-dev/references/<name>/record.txt locked=<folder of the scan's pictures>
+```
+
+writes `locked.txt` beside the record, and `look` then uses it. The made-up paired shot has no files: its
+frames and scans are drawn each time (`ml-dev/films/madeup.py`), and its film stock's table is the made-up
+film, so the darkroom has to land on the "scan". That is what CI runs today.
+
+## Comparing any two sets of pictures
+
+```sh
+cd ml-dev/films
+python3 madeup.py /tmp/shot
+python3 measure.py compare ../references/made-up/record.txt canon=/tmp/shot/canon locked=/tmp/shot/locked
+```
+
+`compare` is the second half alone: a record and two sets of pictures of its frames, the look first and
+what it is held against second. It serves one scan against another, and the darkroom against Darkrooms.
+Here it holds a plain print of the chart against the made-up film, which is far outside the pass marks, as
+it should be.
+
+Tests: `python3 measuretest.py` and `python3 looktest.py` in `ml-dev/films`. Needs numpy and Pillow.
+
+What is not here yet: building a look from a paired shot.

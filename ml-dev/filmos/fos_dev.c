@@ -1565,6 +1565,26 @@ FOS_INLINE void pixel_linear(const struct fos_dev *d, int x, int y, int lin[3])
     }
 }
 
+#ifdef FOS_DEV_TEST
+/* whether one of print pixel (x, y)'s three colours, balanced as in
+ * pixel_linear, reached the clip (FOS_DUMP_CUT) */
+static int pixel_cut(const struct fos_dev *d, int x, int y)
+{
+    int i = y * FOS_PRINT_W + x;
+    int xr, xc;
+    if (d->rows_axis_x) { xr = x - d->ox0; xc = y; if (xr < 0 || xr >= d->ow) return 0; }
+    else { xr = y; xc = x; }
+    int er = d->ne_r[xr], or_ = d->no_r[xr], ec = d->ne_c[xc], oc = d->no_c[xc];
+    int n[3] = { er * ec, er * oc + or_ * ec, or_ * oc };
+    for (int c = 0; c < 3; c++)
+    {
+        int m = n[c] < NMAX ? (int) (d->sums[3 * i + c] * recip[n[c]] >> 12) - d->black16 : 0;
+        if (m > 0 && (int) (((int64_t) m * d->pre[c]) >> 14) >= d->clip) return 1;
+    }
+    return 0;
+}
+#endif
+
 /* camera -> sRGB, the frame's white balance, and the black and white levels */
 static void setup_colour(struct fos_dev *d)
 {
@@ -2046,6 +2066,22 @@ static void stage_key(struct fos_dev *d)
         fprintf(stderr, "dump: black %d/16, white %d, clip %d, pre %d %d %d, balance %d %d %d\n", d->black16, WHITE_LEVEL, d->clip,
                 d->pre[0], d->pre[1], d->pre[2], d->wb[0], d->wb[1], d->wb[2]);
     }
+    /* FOS_DUMP_CUT: a byte for each print pixel, 1 where one of its three
+     * colours reached this frame's clip and was cut there. The picture does
+     * not show it: a cut patch comes out of the film stock's table as a pale
+     * colour, not as white. The measuring command leaves such patches out
+     * (films/measure.py, #128). */
+    if (getenv("FOS_DUMP_CUT"))
+    {
+        FILE *f = fopen(getenv("FOS_DUMP_CUT"), "wb");
+        if (f)
+        {
+            for (int y = 0; y < H; y++)
+                for (int x = 0; x < W; x++)
+                    fputc(pixel_cut(d, x, y), f);
+            fclose(f);
+        }
+    }
 #endif
     if (!d->look->slide)
     {
@@ -2077,6 +2113,19 @@ static void stage_key(struct fos_dev *d)
      * balanced as the camera was, and loading a roll put the camera on the
      * film stock's Kelvin. Shifting again would count it twice (#115). */
     float k = exp2f(ev + d->look->ev);
+#ifdef FOS_DEV_TEST
+    /* FOS_EV: the scanner's exposure held from outside, in stops: the whole
+     * of what the picture is multiplied by before the film stock, the film
+     * stock's own offset included. The measuring command sets it once on a
+     * roll's chart frame and keeps it for every frame, as a locked scan
+     * does; what the scanner would have picked is still printed above
+     * (films/measure.py, #101, #128). */
+    if (getenv("FOS_EV"))
+    {
+        k = exp2f((float) atof(getenv("FOS_EV")));
+        fprintf(stderr, "scanner: held at %.3f EV\n", atof(getenv("FOS_EV")));
+    }
+#endif
     for (int c = 0; c < 3; c++) d->mul[c] = (int) (k * 4096 + 0.5f);
 #ifdef FOS_DEV_TEST
     fprintf(stderr, "film: %s, mul %d %d %d\n", fos_films[d->film].key, d->mul[0], d->mul[1], d->mul[2]);

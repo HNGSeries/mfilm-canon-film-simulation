@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """A made-up paired shot's pictures: what stands in for a roll until one is shot.
 
-    python3 madeup.py OUT [--record ../references/made-up/record.txt]
+    python3 madeup.py OUT [--record ../references/made-up/record.txt] [--raw [--mkcr2 PATH]]
 
 No film has been shot (#121), so the measuring command is tested on a paired
 shot that is drawn. For every frame of the record that shows the chart, at
@@ -15,8 +15,15 @@ writes
                          stands in for the locked scan. A 16-bit TIFF, as a
                          lab hands over
 
-and any other set the record has a "chart in" line for, as the made-up film
-too. The made-up film has the shape a measured film stock's look has (#119):
+    OUT/automatic/NN.jpg the made-up film again with every frame brought back
+                         to a normal exposure, as a lab's everyday scan does
+
+With --raw, OUT/canon/NN.CR2 instead: the chart as a Canon's RAW frames
+(filmos/sim/tools/mkcr2.c), for the measuring command to develop. The
+made-up film is also a table file (table()), so the darkroom can print
+with it and has to come out where the "scan" is.
+
+The made-up film has the shape a measured film stock's look has (#119):
 a mix of the three colours, a tone curve for each with a toe and a shoulder,
 a second mix, then sRGB; for a black-and-white film stock, one mix to grey
 and one curve (LOOK_BW). Its numbers are nobody's film. They are only known,
@@ -32,6 +39,7 @@ Needs numpy and Pillow.
 
 import argparse
 import struct
+import subprocess
 import sys
 from pathlib import Path
 
@@ -39,12 +47,15 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent / "filmos/tools"))
 import lut  # noqa: E402
 import measure  # noqa: E402
 from measure import Bad, Reading, Record  # noqa: E402
 
 RECORD = HERE.parent / "references/made-up/record.txt"
+MKCR2 = HERE.parent / "filmos/sim/out/mkcr2"
 SIZE = (1200, 800)
+RAW_SIZE = (2592, 1728)                 # mkcr2 --half: enough samples of every colour for each pixel of a print
 
 # the chart's 24 patches as sRGB, the values tools/mkcr2.c draws
 CHECKER = np.array([
@@ -105,7 +116,10 @@ def scene(frame):
 
 def printed(record, name, frame):
     """What a set's picture of a chart frame has as sRGB: the 24 patches, the card, the chart's frame."""
-    return [plain(x) if name == "canon" else film(x, look_of(record)) for x in scene(frame)]
+    if name == "canon":
+        return [plain(x) for x in scene(frame)]
+    back = 2.0 ** -frame.ev if name == "automatic" else 1      # an everyday scan levels every frame
+    return [film(x * back, look_of(record)) for x in scene(frame)]
 
 
 def reading(record, name, frame):
@@ -160,33 +174,71 @@ def write(path, pic):
         Image.fromarray(np.rint(np.clip(pic, 0, 1) * 255).astype(np.uint8)).save(path, quality=92)   # the darkroom's own (fos_dev.c)
 
 
-def render(record, out, kinds=None):
-    """Every set's pictures of the record's chart frames into out/<set>/; kinds: a set's file type, where it is not the usual."""
+def render(record, out, kinds=None, mkcr2=None):
+    """Every set's pictures of the record's chart frames into out/<set>/; kinds: a set's file type, where it is
+    not the usual. With mkcr2, the canon set is the Canon's RAW frames and not their plain prints."""
     out = Path(out)
     made = {}
     for name in sorted(record.chart):
         (out / name).mkdir(parents=True, exist_ok=True)
-        ext = (kinds or {}).get(name, ".jpg" if name == "canon" else ".tif")
+        ext = (kinds or {}).get(name, ".tif" if name == "locked" else ".jpg")
         for f in record.charts():
-            write(out / name / ("%02d%s" % (f.n, ext)), draw(*printed(record, name, f), record.corners(name, f.n)))
+            if name == "canon" and mkcr2:
+                raw_frame(out / name / ("%02d.CR2" % f.n), record, f, mkcr2)
+            else:
+                write(out / name / ("%02d%s" % (f.n, ext)), draw(*printed(record, name, f), record.corners(name, f.n)))
         made[name] = out / name
     return made
+
+
+def raw_frame(path, record, frame, mkcr2=MKCR2):
+    """A chart frame as the Canon's RAW file: the scene as light, through mkcr2's sensor."""
+    if not Path(mkcr2).exists():
+        raise Bad(f"no {mkcr2}: make -C ml-dev/filmos/sim out/mkcr2")
+    pic = draw(*scene(frame), record.corners("canon", frame.n), RAW_SIZE)
+    pfm = Path(path).with_suffix(".pfm")
+    pfm.write_bytes(b"PF\n%d %d\n-1.0\n" % RAW_SIZE + pic[::-1].astype("<f4").tobytes())     # rows from the bottom up
+    r = subprocess.run([str(mkcr2), str(path), "--half", "--image", str(pfm)], capture_output=True, text=True)
+    pfm.unlink()
+    if r.returncode:
+        raise Bad(f"mkcr2 did not make {path}: {r.stderr.strip()}")
+
+
+def table(record, out, look=None):
+    """The made-up film (or another look of its shape) as the film stock's table file in out/, where and as
+    tools/gentables.py writes them: 33 points a side over Cineon code, 0.18 = mid grey."""
+    import genfilms
+    import gentables
+    key = record.fields["film stock"]
+    g = np.arange(genfilms.GRID, dtype=np.float32) / (genfilms.GRID - 1)
+    b, gg, r = np.meshgrid(g, g, g, indexing="ij")              # red changes fastest
+    rgb = np.clip(film(lut.decode(np.stack([r, gg, b], -1).reshape(-1, 3), "cineon"), look or look_of(record)), 0, 1)
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / ("LOOK%02d.LUT" % gentables.shelf().index(key))
+    path.write_bytes(b"FOL1" + struct.pack("<I", genfilms.look_hash(key, genfilms.look_bytes(genfilms.FILMS[key])))
+                     + (rgb * 255 + 0.5).astype(np.uint8).tobytes())
+    return out
 
 
 def main():
     ap = argparse.ArgumentParser(description="A made-up paired shot's pictures.")
     ap.add_argument("out")
     ap.add_argument("--record", default=str(RECORD))
+    ap.add_argument("--raw", action="store_true", help="the canon set as RAW frames")
+    ap.add_argument("--mkcr2", default=str(MKCR2))
     a = ap.parse_args()
     try:
         record = Record(a.record)
         if not record.made_up:
             raise Bad(f"{a.record}: not a made-up paired shot (\"made up: yes\"). Its pictures are shot, not drawn")
-        made = render(record, a.out)
+        made = render(record, a.out, mkcr2=a.mkcr2 if a.raw else None)
     except Bad as e:
         sys.exit(f"madeup: {e}")
     for name, where in made.items():
-        print(f"{where}: {len(record.charts())} frames, " + ("the chart printed plainly" if name == "canon" else "the chart through the made-up film"))
+        print(f"{where}: {len(record.charts())} frames, " + (
+            ("the chart as RAW frames" if a.raw else "the chart printed plainly") if name == "canon"
+            else "the made-up film, every frame levelled" if name == "automatic" else "the chart through the made-up film"))
 
 
 if __name__ == "__main__":

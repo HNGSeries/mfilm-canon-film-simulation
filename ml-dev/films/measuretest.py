@@ -119,8 +119,8 @@ def main():
           and by_use[REPORTED] == [-1, 0, 1],
           "the made-up record: 24 frames, built from −3 −2 0 +2 +4, decided by −1 +1 +3, open shade reported")
     check(record.made_up and record.fields["measured"] == "no" and not record.tone_only
-          and all(record.corners(s, f.n).shape == (4, 2) for s in ("canon", "locked") for f in record.charts()),
-          "it is made up, claims nothing, and says where the chart is in every chart frame of both sets")
+          and all(record.corners(s, f.n).shape == (4, 2) for s in ("canon", "locked", "automatic") for f in record.charts()),
+          "it is made up, claims nothing, and says where the chart is in every chart frame of its three sets")
     text = madeup.RECORD.read_text(encoding="utf-8")
 
     def changed(old, new, name="record.txt"):
@@ -138,7 +138,7 @@ def main():
     refused("a field that is no field", lambda: Record(changed("lab: none", "laboratory: none")), "laboratory")
     refused("a film stock that is not on the shelf", lambda: Record(changed("film stock: gold200", "film stock: gold2000")).tone_only,
             "gold2000")
-    refused("a set the record does not have", lambda: record.corners("automatic", 1), "automatic", "canon")
+    refused("a set the record does not have", lambda: record.corners("frontier", 1), "frontier", "canon")
 
     # ---- the made-up paired shot, from pictures and worked out
     worked = Distance(record, {f.n: madeup.reading(record, "canon", f) for f in record.charts()},
@@ -281,8 +281,8 @@ def main():
     check(r.returncode == 0 and "held back, decides" in r.stdout and "OUTSIDE the pass marks" in r.stdout
           and "grain: not measured" in r.stdout and r.stdout.index("held back, decides") < r.stdout.index("held back, reported"),
           "the command prints the deciding frames first and the others apart, and grain as not measured")
-    r = subprocess.run(cmd + [f"canon={sets['canon']}", f"automatic={sets['locked']}"], capture_output=True, text=True)
-    check(r.returncode == 1 and "chart in automatic" in r.stderr, f"a set the record does not have stops it: {r.stderr.strip()[:90]}")
+    r = subprocess.run(cmd + [f"canon={sets['canon']}", f"frontier={sets['locked']}"], capture_output=True, text=True)
+    check(r.returncode == 1 and "chart in frontier" in r.stderr, f"a set the record does not have stops it: {r.stderr.strip()[:90]}")
 
     shutil.rmtree(tmp, ignore_errors=True)
     sys.exit(1 if fail else 0)

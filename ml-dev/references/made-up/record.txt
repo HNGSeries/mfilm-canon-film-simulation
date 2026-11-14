@@ -45,7 +45,9 @@ shot by: nobody (films/madeup.py)
 consent: not needed, made up  # someone other than the maintainer: the text in #111, and the issue it was written in
 
 # whether the film stock is claimed as measured against this paired shot. "yes"
-# is written when it first passes, and never for a made-up one
+# is written when it first passes: from then on the measuring command fails
+# if the film stock is outside a pass mark. Never "yes" for a made-up one
+# in this folder
 measured: no
 
 # The frames, as #111 lists them, the same for every film stock:
@@ -107,8 +109,9 @@ frame 24: chart, main light | 0 | 1/800 | drift
 #
 # A set is a kind of picture of the frames: "canon" is the Canon frames as a
 # developer prints them (the darkroom and Darkrooms print the whole frame, so
-# they share it), "locked" the locked scan. An automatic scan, or a scan on
-# another machine, is another set with its own lines.
+# they share it), "locked" the locked scan, "automatic" the lab's everyday
+# scan of the same roll with its corrections on. A scan on another machine
+# is another set with its own lines.
 
 chart in canon: 0.3675,0.3800 0.6325,0.3800 0.6325,0.6200 0.3675,0.6200
 chart in canon, frame 7: 0.3710,0.3790 0.6360,0.3815 0.6340,0.6215 0.3690,0.6190
@@ -116,3 +119,17 @@ chart in canon, frame 7: 0.3710,0.3790 0.6360,0.3815 0.6340,0.6215 0.3690,0.6190
 chart in locked: 0.3520,0.3720 0.6410,0.3910 0.6300,0.6340 0.3600,0.6120
 chart in locked, frame 4: 0.3480,0.3800 0.6370,0.3840 0.6330,0.6310 0.3530,0.6240
 chart in locked, frame 13: 0.3600,0.3650 0.6500,0.3800 0.6380,0.6260 0.3660,0.6050
+
+chart in automatic: 0.3550,0.3700 0.6440,0.3880 0.6330,0.6320 0.3630,0.6100
+
+# The files, for a paired shot that was shot. They are not in git: they are
+# published with a release, and the measuring command fetches them.
+#
+#   files at: https://github.com/.../releases/download/<tag>     where they are published
+#   file canon/01.CR2: <sha256>                                  one line a file
+#   file locked/01.tif: <sha256>
+#
+# A file is published under its name here with the "/" as a "-"
+# (canon-01.CR2). The command stops at a file whose checksum is not the one
+# written. A made-up paired shot has no such lines: its files are drawn each
+# time.
