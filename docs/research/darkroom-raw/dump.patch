@@ -1,0 +1,39 @@
+diff --git a/ml-dev/filmos/fos_dev.c b/ml-dev/filmos/fos_dev.c
+index fed8838..364705e 100644
+--- a/ml-dev/filmos/fos_dev.c
++++ b/ml-dev/filmos/fos_dev.c
+@@ -19,6 +19,10 @@
+ #include "fos_jpeg.h"
+ #include <math.h>
+ #include <string.h>
++#ifdef FOS_DEV_TEST
++#include <stdio.h>
++#include <stdlib.h>
++#endif
+ 
+ #ifdef FOS_DEV_TEST
+ void fos_dev_test_sample(int x, int y, int v);
+@@ -1900,6 +1904,23 @@ static void stage_key(struct fos_dev *d)
+ {
+     const int W = FOS_PRINT_W, H = FOS_PRINT_H;
+     float ev = 1.0f;
++#ifdef FOS_DEV_TEST
++    if (getenv("FOS_DUMP_LIN"))
++    {
++        /* #98: the picture before the scanner and the film, scene-linear sRGB, 4096 = 1.0 */
++        FILE *f = fopen(getenv("FOS_DUMP_LIN"), "wb");
++        for (int y = 0; y < H; y++)
++            for (int x = 0; x < W; x++)
++            {
++                int lin[3];
++                pixel_linear(d, x, y, lin);
++                fwrite(lin, sizeof(int), 3, f);
++            }
++        fclose(f);
++        fprintf(stderr, "dump: black %d/16, pre %d %d %d, mat %d %d %d / %d %d %d / %d %d %d, white %d\n", d->black16, d->pre[0], d->pre[1], d->pre[2],
++                d->mat[0][0], d->mat[0][1], d->mat[0][2], d->mat[1][0], d->mat[1][1], d->mat[1][2], d->mat[2][0], d->mat[2][1], d->mat[2][2], WHITE_LEVEL);
++    }
++#endif
+     if (!d->look->slide)
+     {
+         /* counted in a histogram so the logs are few */
