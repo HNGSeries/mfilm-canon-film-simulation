@@ -67,6 +67,30 @@ what it is held against second. It serves one scan against another, and the dark
 Here it holds a plain print of the chart against the made-up film, which is far outside the pass marks, as
 it should be.
 
-Tests: `python3 measuretest.py` and `python3 looktest.py` in `ml-dev/films`. Needs numpy and Pillow.
+## Building a look from a paired shot
 
-What is not here yet: building a look from a paired shot.
+```sh
+python3 ml-dev/films/buildlook.py ml-dev/references/<name>/record.txt
+```
+
+fits a look of the shape film has to the paired shot: a mix of the three colours, a tone curve for each
+with a toe and a shoulder, a second mix, then sRGB (for black-and-white, one mix to grey and one curve). It
+uses only the frames the record marks "built from": the tone curves come from the six grey patches across
+those exposures, the mixes from all the patches. A small smooth correction is fitted on top.
+
+The model alone and the model with the correction are each baked into a table and measured with `look`, on
+the held-back frames, which the fitting never opens. The correction stays only if it lowers the distance
+there by a tenth or more. A look that fits the frames it was built from and not the held-back ones is not
+measured, and the command says so.
+
+It writes the film stock's table (`LOOKnn.LUT`, as the camera and Darkrooms read it) and `look.txt`, the
+numbers the table is baked from. For a paired shot that was shot, `look.txt` goes beside the record and
+belongs in the repository. Once the record says `measured: yes`, the shelf's table for that film stock is
+baked from it (`ml-dev/filmos/tools/gentables.py`), in place of its table "in the style of" the film, and
+CI holds it to the pass marks.
+
+Tests, in `ml-dev/films`: `python3 measuretest.py`, `python3 looktest.py`, `python3 buildtest.py`. Needs
+numpy, scipy and Pillow.
+
+What is not here yet: curves shaped beyond the ends of the bracket by the maker's datasheet (none has been
+read into numbers), and a paired shot of a real film.
