@@ -23,7 +23,8 @@ out/FOSFILMS.BIN: ../tools/genfilms.py ../tools/catalog.py ../../films/films.py 
 # every film stock's colour table, as the build puts them in the card's ML/DARKROOM: the camera makes
 # none itself (mkcard.sh copies these onto the simulator's cards). --plain: without the Film-Luts LUTs
 # (films/getluts.py fetches them) those film stocks get the table of their look, which is enough here
-out/tables/TABLES.txt: out/devtest out/FOSFILMS.BIN ../tools/gentables.py ../tools/genfilms.py ../../films/lut.py
+out/tables/TABLES.txt: out/devtest out/FOSFILMS.BIN ../tools/gentables.py ../tools/genfilms.py ../../films/lut.py \
+		../../films/filmshape.py ../../films/measure.py $(wildcard ../../references/*/record.txt ../../references/*/look.txt)
 	python3 ../tools/gentables.py out/tables --films out/FOSFILMS.BIN --devtest out/devtest --plain
 
 # the same with the big UI of a low resolution screen (the 1100D's): make out/sim-big

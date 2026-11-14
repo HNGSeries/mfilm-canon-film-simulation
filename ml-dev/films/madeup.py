@@ -50,6 +50,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent / "filmos/tools"))
 import lut  # noqa: E402
 import measure  # noqa: E402
+from filmshape import film, write_table  # noqa: E402
 from measure import Bad, Reading, Record  # noqa: E402
 
 RECORD = HERE.parent / "references/made-up/record.txt"
@@ -67,11 +68,9 @@ CARD, EDGE = 0.18, 0.035                # the grey card the chart stands on, and
 OUTLINE = 0.62                          # how far the chart's frame reaches past its corner patches' centres, in patches
 SHADE = np.array([0.80, 1.00, 1.30])    # open shade under blue sky, against the main light
 
-# The made-up film. mix: scene light to the film's three layers. curve, per
-# layer: the print's value, lo + (hi - lo) / (1 + exp(-(c0 + a s + b s^2 + c s^3))),
-# s the stops from mid grey (0.18) and c0 where "mid" puts mid grey; b bends
-# the toe against the shoulder (b^2 < 3 a c keeps it rising). out: the print's
-# three colours to sRGB's, as light. Each row of a mix adds up to 1, so grey stays grey.
+# The made-up film, a look of the shape filmshape.py describes: a mix of the
+# three colours, a tone curve for each, a second mix. Each row of a mix adds
+# up to 1, so grey stays grey.
 LOOK = dict(
     mix=[[0.92, 0.06, 0.02], [0.05, 0.90, 0.05], [0.02, 0.10, 0.88]],
     curve=[dict(mid=0.47, a=0.62, b=0.012, c=0.006, lo=0.030, hi=0.97),
@@ -83,20 +82,6 @@ LOOK_BW = dict(
     mix=[[0.30, 0.55, 0.15]],
     curve=[dict(mid=0.45, a=0.66, b=0.012, c=0.007, lo=0.02, hi=0.97)],
 )
-
-
-def film(lin, look):
-    """Scene light (0.18 = mid grey) through a film-shaped look -> sRGB, 0..1."""
-    m = np.maximum(np.asarray(lin, np.float64) @ np.array(look["mix"], np.float64).T, 1e-9)
-    s = np.log2(m / 0.18)
-    v = np.zeros_like(m)
-    for i, c in enumerate(look["curve"]):
-        mid = (c["mid"] - c["lo"]) / (c["hi"] - c["lo"])
-        z = np.log(mid / (1 - mid)) + c["a"] * s[..., i] + c["b"] * s[..., i] ** 2 + c["c"] * s[..., i] ** 3
-        v[..., i] = c["lo"] + (c["hi"] - c["lo"]) / (1 + np.exp(-z))
-    if "out" not in look:
-        return np.repeat(v, 3, -1)
-    return measure.to_srgb(measure.to_lin(v) @ np.array(look["out"], np.float64).T)
 
 
 def plain(lin):
@@ -114,12 +99,13 @@ def scene(frame):
     return measure.to_lin(CHECKER) * light, CARD * light, EDGE * light
 
 
-def printed(record, name, frame):
-    """What a set's picture of a chart frame has as sRGB: the 24 patches, the card, the chart's frame."""
+def printed(record, name, frame, look=None):
+    """What a set's picture of a chart frame has as sRGB: the 24 patches, the card, the chart's frame. look: the
+    film the scans are through, where it is not the made-up one."""
     if name == "canon":
         return [plain(x) for x in scene(frame)]
     back = 2.0 ** -frame.ev if name == "automatic" else 1      # an everyday scan levels every frame
-    return [film(x * back, look_of(record)) for x in scene(frame)]
+    return [film(x * back, look or look_of(record)) for x in scene(frame)]
 
 
 def reading(record, name, frame):
@@ -174,19 +160,22 @@ def write(path, pic):
         Image.fromarray(np.rint(np.clip(pic, 0, 1) * 255).astype(np.uint8)).save(path, quality=92)   # the darkroom's own (fos_dev.c)
 
 
-def render(record, out, kinds=None, mkcr2=None):
+def render(record, out, kinds=None, mkcr2=None, look=None, sets=None):
     """Every set's pictures of the record's chart frames into out/<set>/; kinds: a set's file type, where it is
-    not the usual. With mkcr2, the canon set is the Canon's RAW frames and not their plain prints."""
+    not the usual. With mkcr2, the canon set is the Canon's RAW frames and not their plain prints. look: the film
+    the scans are through, where it is not the made-up one; a function of the frame gives each frame its own.
+    sets: only these."""
     out = Path(out)
     made = {}
-    for name in sorted(record.chart):
+    for name in sorted(sets or record.chart):
         (out / name).mkdir(parents=True, exist_ok=True)
         ext = (kinds or {}).get(name, ".tif" if name == "locked" else ".jpg")
         for f in record.charts():
             if name == "canon" and mkcr2:
                 raw_frame(out / name / ("%02d.CR2" % f.n), record, f, mkcr2)
             else:
-                write(out / name / ("%02d%s" % (f.n, ext)), draw(*printed(record, name, f), record.corners(name, f.n)))
+                write(out / name / ("%02d%s" % (f.n, ext)),
+                      draw(*printed(record, name, f, look(f) if callable(look) else look), record.corners(name, f.n)))
         made[name] = out / name
     return made
 
@@ -207,18 +196,7 @@ def raw_frame(path, record, frame, mkcr2=MKCR2):
 def table(record, out, look=None):
     """The made-up film (or another look of its shape) as the film stock's table file in out/, where and as
     tools/gentables.py writes them: 33 points a side over Cineon code, 0.18 = mid grey."""
-    import genfilms
-    import gentables
-    key = record.fields["film stock"]
-    g = np.arange(genfilms.GRID, dtype=np.float32) / (genfilms.GRID - 1)
-    b, gg, r = np.meshgrid(g, g, g, indexing="ij")              # red changes fastest
-    rgb = np.clip(film(lut.decode(np.stack([r, gg, b], -1).reshape(-1, 3), "cineon"), look or look_of(record)), 0, 1)
-    out = Path(out)
-    out.mkdir(parents=True, exist_ok=True)
-    path = out / ("LOOK%02d.LUT" % gentables.shelf().index(key))
-    path.write_bytes(b"FOL1" + struct.pack("<I", genfilms.look_hash(key, genfilms.look_bytes(genfilms.FILMS[key])))
-                     + (rgb * 255 + 0.5).astype(np.uint8).tobytes())
-    return out
+    return write_table(record.fields["film stock"], out, look or look_of(record)).parent
 
 
 def main():

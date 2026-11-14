@@ -475,10 +475,11 @@ def read_chart(pix, corners, what="the picture"):
     return Reading(lin, coded)
 
 
-def read_set(record, name, folder):
-    """Every chart frame's reading from a folder of pictures, by frame number. A frame with no picture is not in it."""
+def read_set(record, name, folder, use=None):
+    """Every chart frame's reading from a folder of pictures, by frame number. A frame with no picture is not in it.
+    use: only the frames used for that; the others' pictures are not opened."""
     out = {}
-    for f in record.charts():
+    for f in record.charts(use):
         path = picture_of(folder, f.n)
         if path:
             out[f.n] = read_chart(read_picture(path), record.corners(name, f.n), str(path))
@@ -646,7 +647,7 @@ class Darkroom:
         # beside links, by short names: the darkroom keeps paths in 128 bytes, as on a card
         os.symlink(self.tables, Path(self.tmp.name) / "T")
 
-    def develop(self, raw, corners, ev=None):
+    def develop(self, raw, corners, ev=None, dump=False):
         """The chart in a RAW frame as the darkroom prints it; ev: the scanner's exposure held there, in stops
         (None: the darkroom's own). Returns the reading and the exposure the scanner would have picked."""
         tmp = Path(self.tmp.name)
@@ -656,6 +657,9 @@ class Darkroom:
         env = dict(os.environ, FOS_FILMS=str(self.films), FOS_LUT_DIR="T", FOS_JPEG="p.jpg", FOS_DUMP_CUT="cut.u8")
         env.pop("FOS_EV", None)
         env.pop("FOS_BARE", None)
+        env.pop("FOS_DUMP_LIN", None)
+        if dump:
+            env["FOS_DUMP_LIN"] = "lin.i32"
         if ev is not None:
             env["FOS_EV"] = "%.4f" % ev
         if self.bare:
@@ -673,6 +677,17 @@ class Darkroom:
         got.cut = read_chart(np.repeat(cut[..., None], 3, 2), corners).coded[:, 0] >= CUT
         own = re.search(r"scanner: key [\d.]+, (-?[\d.]+) EV", r.stderr)
         return got, float(own.group(1)) if own else None
+
+
+    def scene(self, raw, corners):
+        """The chart in a RAW frame as light, before the scanner's exposure and the film stock: the 24 patches as
+        linear sRGB, 1 = the camera's white level, and which of them the darkroom cut at the sensor's clip."""
+        got, _ = self.develop(raw, corners, dump=True)
+        tmp = Path(self.tmp.name)
+        lin = np.fromfile(tmp / "lin.i32", np.int32).reshape(PRINT[1], PRINT[0], 3) / 4096
+        if got.cut.shape != (24,) or lin.shape[1] != read_picture(tmp / "p.jpg").shape[1]:
+            raise Bad(f"{raw}: an upright frame's light cannot be read yet")
+        return read_chart(lin, corners, str(raw)).coded, got.cut
 
 
 def hold_exposure(darkroom, raw, corners, want):
@@ -693,7 +708,8 @@ class Look:
     held (at held stops, set on frame at); automatic, the darkroom's own exposure against the automatic scan, or
     None; ok, False only when the record claims the film stock as measured and it is not within the pass marks."""
 
-    def __init__(self, record, files, devtest=None, films=None, tables=None, mkcr2=None):
+    def __init__(self, record, files, devtest=None, films=None, tables=None, mkcr2=None, draw=True):
+        """draw=False: a made-up paired shot's files are in the folder already."""
         self.record = record
         files = Path(files)
         sets = [s for s in ("canon", "locked", "automatic") if s in record.chart]
@@ -704,7 +720,8 @@ class Look:
         work = None
         if record.made_up:
             import madeup
-            madeup.render(record, files, mkcr2=mkcr2 or madeup.MKCR2)
+            if draw:
+                madeup.render(record, files, mkcr2=mkcr2 or madeup.MKCR2)
             if not tables:
                 work = tempfile.TemporaryDirectory()
                 tables = madeup.table(record, work.name)

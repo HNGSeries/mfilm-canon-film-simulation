@@ -9,13 +9,18 @@ camera makes no table of its own and stops with "no colour table" if one is
 missing.
 
 A table is "FOL1", a hash of the film stock's look, then 33 x 33 x 33 RGB
-bytes over Cineon code, red changing fastest. It comes from one of two
+bytes over Cineon code, red changing fastest. It comes from one of three
 places:
 
   look  mixed from the film stock's look by the camera's own film model,
         built for a computer (devtest -T: fos_dev_table in fos_dev.c)
   lut   baked from the film stock's LUT in films/luts/ (genfilms.bake);
         films/getluts.py fetches the Film-Luts ones
+  reference
+        baked from the look built from a paired shot of the real film
+        (films/buildlook.py wrote it as references/<name>/look.txt), for a
+        film stock whose record there says "measured: yes". This is what
+        makes a measured film stock's colour the measured one (#119)
 
 --films    the film list devtest reads (tools/genfilms.py writes it)
 --devtest  the build's devtest (default: sim/out/devtest)
@@ -26,6 +31,7 @@ places:
            films/luts/, as CineStill 400T does, always falls back to its look.)
 --index    where the list of tables goes (default: OUT/TABLES.txt): file,
            film stock, where it came from, SHA-256
+--references  the paired shots' records (default: ml-dev/references)
 
 Fails if any film stock ends up without a table, or with one that is not
 for its look. Needs numpy (for the LUTs).
@@ -46,6 +52,7 @@ from genfilms import FILMS, GRID  # noqa: E402
 from filmluts import STOCKS  # noqa: E402  (genfilms put films/ on the path)
 
 FETCHED = {s[0] for s in STOCKS}        # the film stocks whose LUT films/getluts.py fetches
+REFERENCES = HERE.parents[1] / "references"
 
 SIZE = 8 + GRID ** 3 * 3
 
@@ -54,6 +61,30 @@ def shelf():
     """The film stocks in shelf order: the built-in ones, then the rest."""
     built = genfilms.builtin_keys()
     return built + [k for k in FILMS if k not in built]
+
+
+def measured(references):
+    """The film stocks a paired shot's record claims as measured: {film stock: (the paired shot, its look)}. A
+    made-up paired shot claims nothing, whatever its record says."""
+    import filmshape
+    import measure
+    out = {}
+    for path in sorted(Path(references).glob("*/record.txt")):
+        try:
+            record = measure.Record(path)
+            if record.made_up or not record.claimed:
+                continue
+            key = record.fields["film stock"]
+            record.film                 # on the shelf?
+            if key in out:
+                sys.exit("gentables: two paired shots claim %s as measured: %s and %s. One is its reference" % (key, out[key][0], record.name))
+            look = path.with_name("look.txt")
+            if not look.exists():
+                sys.exit("gentables: %s says %s is measured, and there is no %s (films/buildlook.py writes it)" % (path, key, look))
+            out[key] = (record.name, filmshape.load(look))
+        except (measure.Bad, ValueError) as e:
+            sys.exit("gentables: %s" % e)
+    return out
 
 
 def check(path, key):
@@ -75,6 +106,7 @@ def main():
     ap.add_argument("--devtest", default=str(HERE.parent / "sim/out/devtest"))
     ap.add_argument("--plain", action="store_true")
     ap.add_argument("--index")
+    ap.add_argument("--references", default=str(REFERENCES))
     a = ap.parse_args()
     out = Path(a.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -103,6 +135,13 @@ def main():
             source[key] = "look (its LUT is not fetched)"
         elif FILMS[key].get("lut"):
             source[key] = "look (its own LUT is not in films/luts/)"
+    # and from its reference, for the film stocks that are measured
+    import filmshape
+    for key, (name, look) in measured(a.references).items():
+        filmshape.write_table(key, out, look)
+        source[key] = "reference (%s)" % name
+        if key in unfetched:
+            unfetched.remove(key)
     if unfetched:
         msg = "%d film stocks' LUTs are not in films/luts/filmluts (films/getluts.py fetches them): %s" % (
             len(unfetched), ", ".join(unfetched))
@@ -127,9 +166,13 @@ def main():
     index.write_text("# file, film stock, made from, SHA-256 (tools/gentables.py)\n"
                      "# \"lut\": adapted from a film emulation table by Pat David, CC BY-SA 4.0, and licensed the same\n"
                      "# (https://creativecommons.org/licenses/by-sa/4.0/). THIRD_PARTY says what was changed.\n"
-                     "# \"look\": mixed from M-Film's own film model.\n" + "\n".join(lines) + "\n")
+                     "# \"look\": mixed from M-Film's own film model.\n"
+                     "# \"reference\": built from a paired shot of the real film, which the film stock is measured against\n"
+                     "# (ml-dev/references).\n" + "\n".join(lines) + "\n")
     n_lut = sum(1 for k in keys if source[k] == "lut")
-    print("%s: %d tables, %d from LUTs, %d from looks; list in %s" % (a.out, len(keys), n_lut, len(keys) - n_lut, index))
+    n_ref = sum(1 for k in keys if source[k].startswith("reference"))
+    print("%s: %d tables, %d from LUTs, %d from looks%s; list in %s" % (
+        a.out, len(keys), n_lut, len(keys) - n_lut - n_ref, ", %d from references" % n_ref if n_ref else "", index))
 
 
 if __name__ == "__main__":

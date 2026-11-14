@@ -34,7 +34,8 @@ jobs:
   # and the tone the Film-Luts tables are fed has the contrast of the camera's own JPEG (tonetest.py).
   # Last, the measuring command on a paired shot that is drawn because none has been shot: chart
   # patches in two sets of pictures (ml-dev/films/measuretest.py), and the darkroom developing the
-  # paired shot's RAW frames with a held scanner exposure (looktest.py). Then the command itself, on
+  # paired shot's RAW frames with a held scanner exposure (looktest.py), and a look built from the
+  # paired shot and judged on the frames held back from building it (buildtest.py). Then the command itself, on
   # every film stock that has a reference: it fails if one claimed as measured is outside a pass mark
   darkroom:
     runs-on: ubuntu-24.04
@@ -60,6 +61,8 @@ jobs:
         run: python ml-dev/films/pictures.py --list
       - name: The measuring command on a made-up paired shot
         run: python ml-dev/films/measuretest.py && python ml-dev/films/looktest.py
+      - name: The look builder on made-up paired shots
+        run: python ml-dev/films/buildtest.py
       - name: Every film stock that has a reference, against it
         run: python ml-dev/films/measure.py look
 
