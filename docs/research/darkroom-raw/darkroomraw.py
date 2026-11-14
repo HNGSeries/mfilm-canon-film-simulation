@@ -273,7 +273,7 @@ def frame(devtest_dir, config, cr2):
         note = (out["libraw"]["canon_white"] or [None])[0]
         real_white = sat["value"] or note
         out["white_level"] = {"build": white, "pile": sat["value"], "canon_note": note,
-                              "ev": float(np.log2((real_white - black) / (white - black))) if real_white else None}
+                              "ev": float(np.log2((sat["value"] - black) / (white - black))) if sat["value"] else None}
         if info["orientation"] != 1:
             out["skipped"] = "portrait frame: the pictures are not laid over each other here"
             return out
@@ -317,6 +317,8 @@ def frame(devtest_dir, config, cr2):
                 "linear_srgb": [float(x) for x in g],
                 "de2000_at_mid_grey": float(de2000(lab((0.18 * g)[None, None]), lab(np.full((1, 1, 3), 0.18)))[0, 0])}
         # a fully saturated pixel through the build's white level: grey only if the level is right
+        # (only where the frame's blown samples say what its white level is)
+        real_white = sat["value"]
         if real_white:
             cam_rgb = xyz_cam @ M_XYZ
             pre = (1 / cam_rgb.sum(1)) / (1 / cam_rgb.sum(1))[1]

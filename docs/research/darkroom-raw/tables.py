@@ -5,7 +5,11 @@ import sys
 
 r = json.load(open(sys.argv[1]))
 frames = [f for f in r["frames"] if "failed" not in f and "error" not in f["darkroom"]]
-name = lambda f: "sample (EOS M)" if "SAMPLE" in f["file"] else f["file"].split("/")[-2].replace("_", " ")
+def name(f):
+    if "SAMPLE" in f["file"]:
+        return "sample (EOS M)"
+    n = f["file"].split("/")[-2].replace("_", " ")
+    return n.replace("maintainer", "maintainer's,") if n.startswith("maintainer") else n
 
 print("## Same steps\n")
 print("| Frame | Build | ISO | Matrix differs by | Balance differs by | Level, EV | Colour, per channel | dE2000 mean | dE2000 95 % |")

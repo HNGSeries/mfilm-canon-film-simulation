@@ -2,9 +2,9 @@
 
 Task for [#98](https://github.com/HNGSeries/mfilm-canon-film-simulation/issues/98), a child of the map
 [#93](https://github.com/HNGSeries/mfilm-canon-film-simulation/issues/93). Measured 2026-11-14 on a Mac with
-LibRaw 0.22.2 (rawpy 0.28), from 28 frames of 16 camera builds: `ml-dev/films/sample/SAMPLE.CR2` (EOS M,
-ISO 800) and 27 public-domain CR2 files from [raw.pixls.us](https://raw.pixls.us) (CC0), which are not
-committed here. Scripts and full numbers are in [`darkroom-raw/`](darkroom-raw/).
+LibRaw 0.22.2 (rawpy 0.28), from 30 frames of 16 camera builds: three of the maintainer's own
+(`ml-dev/films/sample/SAMPLE.CR2`, EOS M at ISO 800, and two 650D frames at ISO 100 that are not committed)
+and 27 public-domain CR2 files from [raw.pixls.us](https://raw.pixls.us) (CC0), also not committed. Scripts and full numbers are in [`darkroom-raw/`](darkroom-raw/).
 
 "The darkroom's picture" below is what `fos_dev.c` holds where `stage_key()` begins: scene-linear sRGB,
 720 × 480, before the scanner's exposure and before any film stock. It comes from the camera's own code,
@@ -16,7 +16,7 @@ difference an eye sees side by side, and 5 is plain at a glance. EV is stops of 
 ## Short answer
 
 - **The steps are a standard RAW conversion.** Given the same white level, the darkroom's picture and
-  LibRaw's are the same picture on all 28 frames: brightness within 0.013 EV, mean ΔE 0.10 to 0.66, 95 % of
+  LibRaw's are the same picture on all 29 frames that could be laid over each other: brightness within 0.013 EV, mean ΔE 0.10 to 0.66, 95 % of
   the print within ΔE 1.35. Every build's matrix is LibRaw's (largest difference 0.0001, which is rounding),
   the 1300D's included, and the balance it derives is LibRaw's "daylight" within 0.2 %.
 - **The white level is where it stops matching.** `WHITE_LEVEL` is one number per camera, and a Canon
@@ -32,7 +32,7 @@ difference an eye sees side by side, and 5 is plain at a glance. EV is stops of 
     lowers its white level to the frame's brightest sample. Seen by eye on the 50D frame, in the sky.
 - **The fixed balance is the matrix's D65, and no Canon balance agrees with it.** A grey that Canon's own
   Daylight setting (5200 K, stored in every frame) calls neutral leaves the darkroom as roughly
-  (1.2, 0.96, 0.78) in linear sRGB: warm, ΔE 5.7 to 10.1 at mid grey, median 7.8, on every one of the 28
+  (1.2, 0.96, 0.78) in linear sRGB: warm, ΔE 5.7 to 10.1 at mid grey, median 7.8, on every one of the 29
   frames. The film stocks' own model calls 5500 K neutral (`stage_key()` shifts only film stocks whose
   balance is not 5500). By the code's own blackbody formula a grey in 5500 K light comes out
   (1.18, 1, 0.89), ΔE 5.3. So a daylight scene reaches a daylight film stock's table already warm by an
@@ -72,6 +72,7 @@ about colour, so pictures are compared as 8 × 8 block means (90 × 60).
 | Frame | Build | ISO | Matrix differs by | Balance differs by | Level, EV | Colour, per channel | dE2000 mean | dE2000 95 % |
 |---|---|---|---|---|---|---|---|---|
 | sample (EOS M) | EOSM | 800 | 0.0001 | 0.12 % | -0.005 | within 0.14 % | 0.36 | 1.06 |
+| maintainer's, dog | 650D | 100 | 0.0001 | 0.14 % | -0.006 | within 0.34 % | 0.11 | 0.23 |
 | EOS 100D | 100D | 100 | 0.0001 | 0.16 % | -0.004 | within 1.62 % | 0.29 | 0.57 |
 | EOS 1100D | 1100D | 160 | 0.0001 | 0.15 % | -0.005 | within 0.75 % | 0.23 | 0.38 |
 | EOS 1300D | 1300D | 100 | 0.0001 | 0.11 % | -0.002 | within 0.40 % | 0.18 | 0.46 |
@@ -119,13 +120,14 @@ about colour, so pictures are compared as 8 × 8 block means (90 × 60).
 | EOS Rebel T5i | 700D | 400 | 15360 | 16080 | -0.08 | 1.00, 1.00, 1.00 |
 | EOS Rebel T6 | 1300D | 200 | 13584 | 16383 | -0.31 | 1.00, 1.00, 1.00 |
 
-No sample reaches saturation, so the frame says nothing about its white level: EOS 1100D (ISO 160), EOS 1300D (ISO 100), EOS 500D (ISO 200), EOS 550D (ISO 100), EOS 5D Mark II (ISO 100), EOS 600D (ISO 200), EOS 650D (ISO 100), EOS 700D (ISO 200), EOS 70D (ISO 100), EOS Kiss X3 (ISO 400), EOS Kiss X80 (ISO 100), EOS M (ISO 1600), EOS Rebel T3 (ISO 800), EOS Rebel T3i (ISO 100).
+No sample reaches saturation, so the frame says nothing about its white level: maintainer's, dog (ISO 100), maintainer's, building (ISO 100), EOS 1100D (ISO 160), EOS 1300D (ISO 100), EOS 500D (ISO 200), EOS 550D (ISO 100), EOS 5D Mark II (ISO 100), EOS 600D (ISO 200), EOS 650D (ISO 100), EOS 700D (ISO 200), EOS 70D (ISO 100), EOS Kiss X3 (ISO 400), EOS Kiss X80 (ISO 100), EOS M (ISO 1600), EOS Rebel T3 (ISO 800), EOS Rebel T3i (ISO 100).
 
 ## Balance
 
 | Frame | Build | Build's balance (R, B) | Canon Daylight 5200 K (R, B) | Grey under Canon Daylight comes out (linear sRGB) | dE2000 | As shot (R, B) | Grey under as shot | dE2000 |
 |---|---|---|---|---|---|---|---|---|
 | sample (EOS M) | EOSM | 2.42, 1.37 | 1.94, 1.56 | 1.34, 0.92, 0.76 | 10.1 | 2.03, 1.54 | 1.25, 0.95, 0.79 | 8.3 |
+| maintainer's, dog | 650D | 2.41, 1.36 | 2.09, 1.67 | 1.18, 0.98, 0.69 | 9.1 | 2.09, 1.84 | 1.15, 1.00, 0.57 | 12.0 |
 | EOS 100D | 100D | 2.41, 1.36 | 2.02, 1.54 | 1.26, 0.95, 0.77 | 8.5 | 1.99, 1.69 | 1.26, 0.96, 0.66 | 10.2 |
 | EOS 1100D | 1100D | 2.52, 1.26 | 2.42, 1.44 | 1.02, 1.01, 0.79 | 6.8 | 2.83, 1.25 | 0.82, 1.05, 1.04 | 6.3 |
 | EOS 1300D | 1300D | 2.29, 1.37 | 2.02, 1.50 | 1.19, 0.96, 0.83 | 6.6 | 2.02, 1.50 | 1.19, 0.96, 0.83 | 6.6 |
@@ -159,6 +161,7 @@ No sample reaches saturation, so the frame says nothing about its white level: E
 | Frame | Build | A camera channel over 1 after balance | sRGB under 0 after the matrix | sRGB over 1 with no camera channel clipped | Light cut by the clip at 1 |
 |---|---|---|---|---|---|
 | sample (EOS M) | EOSM | 1.45 % | 0.01 % | 0.66 % | 0.41 % |
+| maintainer's, dog | 650D | 0.00 % | 0.00 % | 0.00 % | 0.00 % |
 | EOS 100D | 100D | 0.00 % | 0.01 % | 0.01 % | 0.00 % |
 | EOS 1100D | 1100D | 0.00 % | 0.00 % | 0.00 % | 0.00 % |
 | EOS 1300D | 1300D | 0.00 % | 0.00 % | 0.00 % | 0.00 % |
@@ -214,10 +217,13 @@ setting for 5200 K, read from the maker note of each frame.
   none was taken from anyone else. Nothing above needs one: the same raw samples go through both sides. What
   a chart would add is how far the matrix's colours are from the chart's true colours, which neither side of
   this comparison measures, because both use the same matrix. The first paired shot will have that frame.
-- **One frame is the maintainer's.** The other 27 are single public samples, one or three per camera, at
+- **Three frames are the maintainer's.** The other 27 are single public samples, one to three per camera, at
   whatever ISO they were shot. The white level is shown to change with ISO; its value at each ISO of each
   camera is not mapped.
-- **14 of 28 frames have no blown sample**, so they say nothing about the white level.
+- **16 of 30 frames have no blown sample**, so they say nothing about the white level. Both of the
+  maintainer's 650D frames are among them.
+- **One portrait frame** (the maintainer's, a building) is read for its white level and balance only: the
+  script does not turn pictures to lay them over each other.
 - **The pink highlights were looked at on one frame** (50D); the rest are the arithmetic of a saturated pixel.
 - **Canon's Daylight setting is 5200 K, not 5500 K**, and a camera's setting is its maker's taste as well as
   a measurement. The 5500 K figure is from the code's own formula, not from a frame.
