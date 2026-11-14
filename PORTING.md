@@ -80,7 +80,8 @@ other cameras:
 - **Shooting screen.** On the EOS M the Film OS opens from LiveView; on a DSLR also from Canon's
   shooting screen with LiveView off (`shooting_screen()` in `filmroll.c`, `FOS_LV_ONLY`).
 - **Sensor colours.** `fos_dev.c` picks the camera's matrix and white level by `CONFIG_<camera>`
-  (from LibRaw's `colordata.cpp`); the decoder is checked on every sensor size
+  (from LibRaw's `colordata.cpp`). The white level only sets how bright a frame is; where a frame's
+  highlights clip is read from its own samples, since a Canon's changes with ISO. The decoder is checked on every sensor size
   (`mkcr2 --sensor W,H,LEFT,TOP` makes a RAW of that size, `devtest` decodes it: 0 samples wrong on all).
 - **The camera's name** in About and in the prints' EXIF comes from ML (`fos_port_model()`).
 
