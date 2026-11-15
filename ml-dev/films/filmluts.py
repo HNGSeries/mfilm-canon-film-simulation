@@ -23,8 +23,15 @@ finished photo's tone curve and not the plain sRGB one (lut.py, "photo").
 """
 
 REPO = "https://github.com/YahiaAngelo/Film-Luts"
-ZIP = "https://codeload.github.com/YahiaAngelo/Film-Luts/zip/refs/heads/main"
+# The collection at one commit and no other, so the same M-Film source always gives the same colour (#102).
+# getluts.py fetches this commit. filmluts.sha256, beside this file, has the SHA-256 of every LUT the film
+# stocks below use, as this commit has them: whichever way the LUTs came, they are checked against it before
+# a table is baked from one. To move to another commit: change COMMIT, run getluts.py --pin, and see which
+# tables in TABLES.txt changed.
+COMMIT = "af957b631a304e6be94778b96cb3395de3438e9f"         # its main since 2024-03-07
+ZIP = f"https://codeload.github.com/YahiaAngelo/Film-Luts/zip/{COMMIT}"
 DIR = "filmluts"                    # under films/luts/
+SUMS = "filmluts.sha256"            # beside this file
 
 STOCKS = [
     # colour negative
@@ -125,3 +132,39 @@ def film(key, path, brand, name, iso, kind):
 
 
 FILMS = {s[0]: film(*s) for s in STOCKS}
+
+
+def wanted():
+    """The LUTs the film stocks use, by their path in the collection: "luts/colour/negative/....cube"."""
+    return {f"luts/{path}.cube" for _, path, *_ in STOCKS}
+
+
+def sums():
+    """{a LUT's path in the collection: its SHA-256 at COMMIT}, from filmluts.sha256."""
+    from pathlib import Path
+    out = {}
+    for line in Path(__file__).with_name(SUMS).read_text(encoding="ascii").splitlines():
+        if line.strip() and not line.startswith("#"):
+            digest, rel = line.split(None, 1)
+            out[rel.strip()] = digest
+    return out
+
+
+def not_pinned(files):
+    """Of {path in the collection: bytes}, the LUTs that are not what COMMIT has: ["luts/... : why"]."""
+    import hashlib
+    pinned, out = sums(), []
+    for rel in sorted(files):
+        if rel not in pinned:
+            out.append(f"{rel}: {SUMS} has no line for it (getluts.py --pin writes them)")
+        elif hashlib.sha256(files[rel]).hexdigest() != pinned[rel]:
+            out.append(f"{rel}: not the file Film-Luts has at {COMMIT[:12]}")
+    return out
+
+
+def fetched(folder):
+    """{path in the collection: bytes} for the wanted LUTs that are in folder, as getluts.py leaves them
+    (films/luts/filmluts)."""
+    from pathlib import Path
+    folder = Path(folder)
+    return {rel: (folder / rel[len("luts/"):]).read_bytes() for rel in wanted() if (folder / rel[len("luts/"):]).is_file()}
