@@ -45,7 +45,8 @@ from measure import BUILT, DECIDES, MID_GREY, Bad, Distance, Look, Reading, Reco
 
 CLOSE = 0.5         # how far the darkroom's numbers may be from the ones worked out: it prints at 8 bits, through a
                     # table of 33 points a side, with the film stock's vignette on
-GLOW = 3.0          # a patch has to move by this much when the film stock's glow and grain are on, or they are not off
+STAYS = 1.0         # a chart patch may move by this much when the film stock's glow and grain are on: a bright patch's own
+                    # light is no glow on it, so the chart keeps the table's colours
 
 fail = 0
 
@@ -93,9 +94,10 @@ def main():
     n = record.charts(DECIDES)[-1].n
     glow = measure.de2000(lit.develop(files / "canon" / ("%02d.CR2" % n), record.corners("canon", n), look.held)[0].lab,
                           look.canon[n].lab, lightness=False)
-    check(worst < GLOW < float(glow.max()),
-          f"a made-up film has no glow and no grain, and is printed with neither: with {key}'s own on, the chart at "
-          f"{record.frames[n].ev:+g} moves by up to {glow.max():.1f} ({measure.PATCHES[int(glow.argmax())]}); without, the worst patch is {worst:.1f} away")
+    check(0 < float(glow.max()) < STAYS,
+          f"a made-up film has no glow and no grain, and is printed with neither. With {key}'s own on, the chart at "
+          f"{record.frames[n].ev:+g} keeps its colours all the same: a patch moves by {glow.max():.1f} at most "
+          f"({measure.PATCHES[int(glow.argmax())]}), for a bright patch is not lit by its own glow; without, the worst patch is {worst:.1f} away")
 
     # ---- devtest holds an exposure given from outside
     def develop(n, ev=None):
@@ -195,9 +197,11 @@ def main():
 
     r = Look(real("real"), shot, tables=own)
     base = numbers(r.distance.decides)
-    check(len(names) == 3 * len(record.charts()) and r.distance.decides.colour.worst > GLOW > look.distance.decides.colour.worst,
+    check(len(names) == 3 * len(record.charts()) and base != numbers(look.distance.decides)
+          and r.distance.decides.colour.worst < look.distance.decides.colour.worst + STAYS,
           f"a record that is not made up and names its {len(names)} files and their checksums is measured from them, with the "
-          f"film stock's glow and grain on (the worst patch: {r.distance.decides.colour.worst:.1f})")
+          f"film stock's glow and grain on: other numbers than without them, and the worst patch {r.distance.decides.colour.worst:.1f} "
+          f"where it was {look.distance.decides.colour.worst:.1f}")
     with open(shot / "locked/05.tif", "ab") as f:
         f.write(b"\0")
     refused("a scan that is not the file the record names", lambda: Look(real("real"), shot, tables=own), "locked/05.tif", "sha256")

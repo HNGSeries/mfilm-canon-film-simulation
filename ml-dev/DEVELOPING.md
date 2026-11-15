@@ -61,9 +61,14 @@ above 16 are cut (`stage_key`).
 
 **7. Glow round highlights (halation).** Where the luminance of step 5's picture is above the film
 stock's threshold (`hal_thr`, 0.75 unless the film stock says otherwise), what is above it is gathered
-on a grid a quarter of the 720 × 480 print each way, spread by two passes of [1 2 1] each way
-(`stage_glow`), and added back to the light, times the film stock's `halation` and its tint (red 1,
-green 0.28, blue 0.06 unless it says otherwise). A film stock with `halation` 0 has none.
+on a grid a quarter of the 720 × 480 print each way, and spread by two passes of [1 2 1] each way
+(`stage_glow`). A pixel takes the glow that is over its own share: the grid's value there, less what
+the pixel's own luminance (step 5's, at the size being printed, before the vignette) is above the
+threshold, and nothing where that comes below zero (`finish_pos`). This is added to the light, times
+the film stock's `halation` and its tint (red 1, green 0.28, blue 0.06 unless it says otherwise). So a
+highlight is not lit by its own glow: the film stock's table has a highlight's colour already, a large
+bright area keeps it, and the glow falls on what lies beside it. A film stock with `halation` 0 has
+none.
 
 **8. The film stock's table.** Each colour `x` becomes a Cineon code,
 `v = (685 + 300 log10(0.9892 x + 0.0108)) / 1023`, kept between 0 and 1. The three codes are a place in
