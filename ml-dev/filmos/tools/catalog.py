@@ -11,7 +11,7 @@ GRAY, METAL, AMBER, RED, ORANGE, CRIMSON, GREEN, VIOLET, BLUE = range(9)
 BAND, CAP, STRIPES = range(3)
 
 DESC = {
-    "cinestill400t": "M-Film's own cine look, red halos",
+    "cinestill400t": "M-Film's own cine look, cool shadows",
     "portra160": "Fine grain, natural skin tones",
     "portra800": "Low light portraits, warm grain",
     "portra160nc": "Natural colour, soft contrast",

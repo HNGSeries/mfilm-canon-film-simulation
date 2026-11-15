@@ -60,5 +60,5 @@ the colour changes. [All of them on one sheet](docs/films/grid.jpg).
 ## Cinema · 2
 
 <table>
-<tr><td width="33%"><a href="docs/films/cinestill800t.jpg"><img src="docs/films/cinestill800t.jpg" alt="CineStill 800T"></a><br><b>CineStill 800T</b><br><sub>ISO 800 · C-41 · Tungsten cine film, night goes blue</sub><br><sub><i>In the style of the film · not measured yet</i></sub></td><td width="33%"><a href="docs/films/cinestill400t.jpg"><img src="docs/films/cinestill400t.jpg" alt="CineStill 400T"></a><br><b>CineStill 400T</b><br><sub>ISO 400 · C-41 · M-Film's own cine look, red halos</sub><br><sub><i>M-Film's own · stands for no real film</i></sub></td></tr>
+<tr><td width="33%"><a href="docs/films/cinestill800t.jpg"><img src="docs/films/cinestill800t.jpg" alt="CineStill 800T"></a><br><b>CineStill 800T</b><br><sub>ISO 800 · C-41 · Tungsten cine film, night goes blue</sub><br><sub><i>In the style of the film · not measured yet</i></sub></td><td width="33%"><a href="docs/films/cinestill400t.jpg"><img src="docs/films/cinestill400t.jpg" alt="CineStill 400T"></a><br><b>CineStill 400T</b><br><sub>ISO 400 · C-41 · M-Film's own cine look, cool shadows</sub><br><sub><i>M-Film's own · stands for no real film</i></sub></td></tr>
 </table>
