@@ -69,6 +69,22 @@ the frame will get: with a slow film, or an adapted lens stopped down, it can be
 
 ### New in 0.2
 
+**0.2.3** is about colour, on every camera:
+
+- A roll comes out the same colour in the camera and in **Darkrooms 0.2.0**: the two develop the same way and
+  read the same colour tables ([#132](../../issues/132); [how the darkroom develops](ml-dev/DEVELOPING.md)).
+- The darkroom develops a frame with the white balance the camera was on, and cuts it where that frame's own
+  samples clip: blown highlights are no longer pink.
+- The 59 films whose colour comes from Pat David's tables are fed a finished photo's tone, as those tables
+  expect. Every colour film changes; pictures will not match the ones 0.2.1 developed.
+- The glow round highlights is fainter on every film, and a highlight no longer goes red from its own light.
+- The four cinema print films left the shelf: 68 film stocks.
+- Every film stock says whether it is measured against the real film or only in its style
+  ([FILMS.md](FILMS.md)). None is measured yet: [how a paired shot is made](docs/paired-shot.md).
+
+**Copy the whole `ML` folder of the zip to the card**, not only `autoexec.bin`: the films' colour tables are
+files in `ML/DARKROOM` now, and without them the darkroom stops with "no colour table".
+
 **0.2.1** adds the [Canon EOS 1300D](TESTING.md#canon-eos-1300d), for testers. Nothing changes on the other cameras: they don't need to update.
 
 <table>
@@ -139,7 +155,7 @@ asks, and remembers) or in *Settings → Print size*:
 - A vertical frame is the same, turned upright. Other sensors give in proportion: Large is 2736 × 1824 on a 6D,
   2880 × 1920 on a 5D Mark III.
 - A bigger print takes longer: by the work it is, about 2.6 times a small one for Medium and 4.4 times for Large
-  (a small one takes about 15 seconds a frame on an EOS M).
+  (on an EOS M with 0.2.3 a small one took 22 to 27 seconds a frame, and a Medium one about 50).
   The Darkroom page says how long before you start, from the frames the camera has developed at that size.
 - The JPEG in `DCIM` is the size you chose. Medium and Large prints also keep a file to zoom into on the card
   (2 MB and 4.5 MB a frame).
@@ -228,7 +244,7 @@ still wrong. If you have one marked *needs a tester*, you can help: [TESTING.md]
 <!-- cameras:start -->
 | Camera | Canon firmware | Status | Notes | Card files |
 |---|---|---|---|---|
-| Canon EOS M | 2.0.2 | ✅ **Works** | From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. 0.2 can keep Canon's exposure scale off the viewfinder: *Advanced → Hide Canon's graphics* ([#67](../../issues/67)). | `M-Film-camera-EOSM.202.zip` |
+| Canon EOS M | 2.0.2 | ✅ **Works** | From 0.2 the film OS loads as a module here too (as on the 550D and 650D), and it starts: tried with 0.2.3, rolls shot and developed in the camera. 0.2 can keep Canon's exposure scale off the viewfinder: *Advanced → Hide Canon's graphics* ([#67](../../issues/67)). | `M-Film-camera-EOSM.202.zip` |
 | Canon EOS 5D Mark II | 2.1.2 | ⚠️ Tried, known problem | Most hang at power on: the build is too big at start-up ([#18](../../issues/18)). 0.1.3 has a smaller one (some Magic Lantern features left out, the darkroom kept) and fixes the pink prints: waiting for testers. From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-5D2.212.zip` |
 | Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | ⚠️ Tried, known problem | Starts and shoots; the in-camera darkroom couldn't find the RAWs ([#31](../../issues/31)): fixed in 0.1.3. From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-5D3.113.zip` |
 | Canon EOS 5D Mark III (firmware 1.2.3) | 1.2.3 | ⚠️ Tried, known problem | Starts and shoots; the in-camera darkroom couldn't find the RAWs ([#16](../../issues/16), [#37](../../issues/37)): fixed in 0.1.3. From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-camera-5D3.123.zip` |
