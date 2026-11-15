@@ -15,7 +15,8 @@ places:
   look  mixed from the film stock's look by the camera's own film model,
         built for a computer (devtest -T: fos_dev_table in fos_dev.c)
   lut   baked from the film stock's LUT in films/luts/ (genfilms.bake);
-        films/getluts.py fetches the Film-Luts ones
+        films/getluts.py fetches the Film-Luts ones, at one commit, and each
+        is checked against its SHA-256 before it is baked (filmluts.py)
   reference
         baked from the look built from a paired shot of the real film
         (films/buildlook.py wrote it as references/<name>/look.txt), for a
@@ -122,7 +123,14 @@ def main():
     if r.returncode:
         sys.exit("gentables: devtest -T failed:\n" + (r.stderr or r.stdout).strip())
 
-    # then from its LUT, for the film stocks that have one
+    # then from its LUT, for the film stocks that have one. A fetched LUT has to be the one Film-Luts has at
+    # the commit filmluts.py names: the same source bakes the same table, whatever is in the folder (#102)
+    import filmluts
+    import lut as luts
+    changed = filmluts.not_pinned(filmluts.fetched(luts.LUT_DIR / filmluts.DIR))
+    if changed:
+        sys.exit("gentables: %d LUTs in films/luts/%s are not Film-Luts' at %s (delete the folder and run films/getluts.py):\n  "
+                 % (len(changed), filmluts.DIR, filmluts.COMMIT[:12]) + "\n  ".join(changed))
     source, unfetched = {}, []
     for i, key in enumerate(keys):
         source[key] = "look"

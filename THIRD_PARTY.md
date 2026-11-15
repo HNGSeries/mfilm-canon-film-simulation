@@ -5,8 +5,10 @@
   (https://patdavid.net), shared under **CC BY-SA 4.0**.
   See [The film colour tables](#the-film-colour-tables-cc-by-sa-40) below: they are not under GPL-2.0.
 - **Film-Luts** by Yahia Angelo (MIT License, below): the export of G'MIC's built-in film tables that the
-  build downloads those tables from, https://github.com/YahiaAngelo/Film-Luts. Its `.cube` files are *not*
-  in this repository: the camera build (`ml-dev/films/getluts.py`) and Darkrooms download them.
+  build downloads those tables from, https://github.com/YahiaAngelo/Film-Luts, at one commit:
+  `af957b631a304e6be94778b96cb3395de3438e9f` (`COMMIT` in `ml-dev/films/filmluts.py`; each table it takes is
+  checked against its SHA-256 in `ml-dev/films/filmluts.sha256`). Its `.cube` files are *not* in this
+  repository: the camera build (`ml-dev/films/getluts.py`) and Darkrooms download them.
 - **Barlow** font family (SIL Open Font License 1.1): `ml-dev/filmos/fonts/OFL.txt`.
 - Film names and box art are descriptive and made for this project; they are not affiliated with or endorsed
   by Kodak, Fujifilm, CineStill, Ilford, Agfa or others. "Canon" and "EOS M" are trademarks of Canon Inc.;

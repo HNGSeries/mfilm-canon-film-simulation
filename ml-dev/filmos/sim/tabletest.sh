@@ -2,6 +2,7 @@
 # The films' colour tables: every film on the shelf has one (tools/gentables.py
 # fails otherwise), and a frame whose film has none on the card is not
 # developed with a table the camera made up, but fails and says so (#124).
+# And the Film-Luts LUTs they are baked from are pinned (#102).
 #   make out/devtest out/mkcr2 out/tables/TABLES.txt && ./tabletest.sh
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -37,5 +38,40 @@ grep -qF "no colour table for this film on the card" "$t/other.log" && ok "anoth
     || bad "another film's table was used: $(tail -1 "$t/other.log")"
 dev part portra400 > "$t/first.log"
 grep -q "frame.CR2: [0-9]* ms" "$t/first.log" && ok "the other films still develop" || bad "the other films: $(tail -1 "$t/first.log")"
+
+# the Film-Luts LUTs are the ones of one commit (#102): a SHA-256 for each the film stocks use, and a LUT
+# that is not that file, or is not there, is named. (No fetching here: --check only reads a folder.)
+L=../../films
+python3 - "$L" <<'PY' && ok "filmluts.sha256 has a line for each LUT the film stocks use, and no other" || bad "filmluts.sha256 and the film stocks' LUTs differ"
+import sys
+sys.path.insert(0, sys.argv[1])
+import filmluts
+sys.exit(set(filmluts.sums()) != filmluts.wanted() or len(filmluts.COMMIT) != 40 or filmluts.COMMIT not in filmluts.ZIP)
+PY
+mkdir -p "$t/luts/bw" && echo "not a LUT" > "$t/luts/bw/agfa_apx_100.cube"
+if python3 "$L/getluts.py" --check "$t/luts" > "$t/luts.log" 2>&1; then
+    bad "a folder with another file in a LUT's place passed"
+elif grep -q "luts/bw/agfa_apx_100.cube: not the file Film-Luts has at" "$t/luts.log" \
+        && grep -q "luts/bw/agfa_apx_25.cube: missing" "$t/luts.log"; then
+    ok "a file that is not the pinned LUT is named, and so is a LUT that is not there"
+else
+    bad "the LUT check: $(head -3 "$t/luts.log")"
+fi
+if [ -d "$L/luts/filmluts" ]; then
+    python3 "$L/getluts.py" --check > "$t/have.log" 2>&1 \
+        && ok "the LUTs fetched here are the pinned ones: $(tail -1 "$t/have.log" | cut -d" " -f1) of them" \
+        || bad "the LUTs in films/luts/filmluts: $(sed -n 2p "$t/have.log")"
+    rm -rf "$t/copy" && cp -r "$L/luts/filmluts" "$t/copy"
+    echo >> "$t/copy/bw/agfa_apx_100.cube"
+    if python3 "$L/getluts.py" --check "$t/copy" > "$t/byte.log" 2>&1; then
+        bad "a LUT changed by a byte passed"
+    elif [ "$(grep -c "not the file" "$t/byte.log")" = 1 ] && ! grep -q missing "$t/byte.log"; then
+        ok "a LUT changed by a byte is named, and no other: $(grep "not the file" "$t/byte.log" | sed "s/^ *//; s/:.*//")"
+    else
+        bad "a LUT changed by a byte: $(head -3 "$t/byte.log")"
+    fi
+else
+    echo "      (the LUTs are not fetched here: the fetched ones are not checked)"
+fi
 
 [ "$fail" = 0 ] && echo "tabletest: all passed" || { echo "tabletest: failed (logs in sim/$t)"; exit 1; }
