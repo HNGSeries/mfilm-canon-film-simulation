@@ -103,6 +103,16 @@ def grain_for(iso, kind):
     return round(amount, 4), round(0.7 + 0.11 * steps, 2)
 
 
+# The glow round highlights (halation), by eye: a camera film has a layer against it, and its glow is faint.
+# 0.3 from 0.93 up for a negative and half that for a slide or a black and white film are about what the
+# maintainer set on the five stocks tuned on the Colour Tuner (Nov 2026: 0.2 to 0.4, from 0.91 to 0.97 up).
+# Those that are their own:
+GLOW = {
+    "portra160": dict(halation=0.3, hal_thr=0.93, hal_tint=(1.0, 0.52, 0.38)),      # as tuned
+    "hie": dict(halation=0.4, hal_thr=0.75),        # Kodak HIE has no layer against it: its highlights bloom
+}
+
+
 def film(key, path, brand, name, iso, kind):
     amount, size = grain_for(iso, kind)
     f = dict(
@@ -113,14 +123,15 @@ def film(key, path, brand, name, iso, kind):
         ev=0.2 if kind == "neg" else 0.0, sat=1.0,
         contrast=(0.18, 0.18, 0.18), pivot=(0.0, 0.0, 0.0),
         black=(0.03, 0.03, 0.03), white=(0.96, 0.96, 0.96),
-        halation=0.8, grain=amount, grain_size=size, soft=0.7,
+        halation=0.3, hal_thr=0.93, grain=amount, grain_size=size, soft=0.7,
     )
     if kind in ("slide", "xpro"):
         f.update(slide=True, contrast=(0.22, 0.22, 0.22), black=(0.015,) * 3, white=(0.98,) * 3,
-                 halation=0.4, soft=0.5)
+                 halation=0.15, soft=0.5)
     if kind == "bw":
         f.update(mono=(0.30, 0.59, 0.11), contrast=(0.19,), pivot=(0.0,), black=(0.03,), white=(0.96,),
-                 halation=0.4)
+                 halation=0.15)
+    f.update(GLOW.get(key, {}))
     return f
 
 
