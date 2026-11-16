@@ -73,6 +73,7 @@ the frame will get: with a slow film, or an adapted lens stopped down, it can be
 
 - A roll comes out the same colour in the camera and in **Darkrooms 0.2.0**: the two develop the same way and
   read the same colour tables ([#132](../../issues/132); [how the darkroom develops](ml-dev/DEVELOPING.md)).
+  From this version on, Darkrooms updates itself.
 - The darkroom develops a frame with the white balance the camera was on, and cuts it where that frame's own
   samples clip: blown highlights are no longer pink.
 - The 59 films whose colour comes from Pat David's tables are fed a finished photo's tone, as those tables
@@ -343,7 +344,11 @@ Darkrooms switches to Full by itself within a few seconds. One account works on 
 | **Mac with Apple silicon** | `Darkrooms-macos-apple-silicon.zip` | Same. |
 
 From the **[Darkrooms releases](../../releases?q=Darkrooms&expanded=true)** (the newest is at the top). About 30–50 MB. The program isn't signed with Apple or
-Microsoft yet, hence the warning the first time.
+Microsoft yet, hence the warning the first time. Windows Security has called Darkrooms 0.1.1 a trojan
+(`Trojan:Win32/Bearfoos.B!ml`), a guess of its machine-learning model that has been reported to Microsoft as wrong ([#152](../../issues/152)).
+
+From 0.2.0 on, Darkrooms updates itself: when a new version is out it says so at the top, shows what's new, and
+installs it with one click. Keep it somewhere you can write to (on a Mac, in Applications).
 
 ---
 
