@@ -17,6 +17,10 @@ The camera side is free and open, for everyone.
 [![Cameras](https://img.shields.io/badge/cameras-10%20work%20%C2%B7%205%20with%20a%20problem%20%C2%B7%201%20in%20testing-3b352f)](#cameras)
 [![Films](https://img.shields.io/badge/films-68-3b352f)](FILMS.md)
 
+[![Instagram](https://img.shields.io/badge/Instagram-%40mfilm.official-3b352f?logo=instagram&logoColor=white)](https://www.instagram.com/mfilm.official/)
+[![Threads](https://img.shields.io/badge/Threads-%40mfilm.official-3b352f?logo=threads&logoColor=white)](https://www.threads.com/@mfilm.official)
+[![X](https://img.shields.io/badge/X-%40mfilm__official-3b352f?logo=x&logoColor=white)](https://x.com/mfilm_official)
+
 **English** · [ภาษาไทย](README.th.md) · [Films](#68-films) · [Cameras](#cameras) · [Darkrooms](#develop-on-your-computer-darkrooms) · [Take it further](PORTING.md)
 
 <br>
@@ -368,6 +372,10 @@ installs it with one click. Keep it somewhere you can write to (on a Mac, in App
 
 The camera side of M-Film is free and stays free. If it gave you a roll you like, you can
 **[buy the developer a coffee ☕](https://buy.stripe.com/7sY14p8d93QE5Ny5M58so02)**.
+
+New versions and rolls people shoot with it are posted on
+[Instagram](https://www.instagram.com/mfilm.official/), [Threads](https://www.threads.com/@mfilm.official)
+and [X](https://x.com/mfilm_official).
 
 ## License
 
