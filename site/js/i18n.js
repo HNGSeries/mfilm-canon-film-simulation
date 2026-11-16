@@ -154,7 +154,7 @@ Object.assign(STR.en, {
   'faq.6.a': 'M-Film needs Magic Lantern, which is mature on DIGIC 4 and 5 cameras. On newer ones (200D, 80D, M50, the R series) Magic Lantern itself is still experimental.',
   'foot.tag': 'Your Canon, shot like film.', 'foot.project': 'Project', 'foot.releases': 'Releases',
   'foot.test': 'Test a camera', 'foot.issue': 'Report a problem', 'foot.more': 'More',
-  'foot.manual': 'Manual (Thai)', 'foot.privacy': 'Darkrooms privacy', 'foot.coffee': 'Buy the developer a coffee',
+  'foot.manual': 'Manual (Thai)', 'foot.privacy': 'Darkrooms privacy', 'foot.coffee': 'Buy the developer a coffee', 'foot.follow': 'Follow',
 });
 Object.assign(STR.th, {
   'nav.faq': 'คำถาม', 'nav.install': 'วิธีติดตั้ง', 'get.guide': 'วิธีติดตั้งทีละขั้น พร้อมภาพ →',
@@ -206,7 +206,7 @@ Object.assign(STR.th, {
   'faq.6.a': 'M-Film ต้องใช้ Magic Lantern ซึ่งเสถียรบนกล้อง DIGIC 4 และ 5 ส่วนรุ่นใหม่กว่า (200D, 80D, M50, ซีรีส์ R) Magic Lantern เองยังอยู่ในขั้นทดลอง',
   'foot.tag': 'เปลี่ยน Canon ของคุณให้ถ่ายเหมือนกล้องฟิล์ม', 'foot.project': 'โปรเจกต์', 'foot.releases': 'ทุกเวอร์ชัน',
   'foot.test': 'ช่วยทดสอบกล้อง', 'foot.issue': 'แจ้งปัญหา', 'foot.more': 'อื่นๆ',
-  'foot.manual': 'คู่มือ (ภาษาไทย)', 'foot.privacy': 'ความเป็นส่วนตัวของ Darkrooms', 'foot.coffee': 'เลี้ยงกาแฟผู้พัฒนา',
+  'foot.manual': 'คู่มือ (ภาษาไทย)', 'foot.privacy': 'ความเป็นส่วนตัวของ Darkrooms', 'foot.coffee': 'เลี้ยงกาแฟผู้พัฒนา', 'foot.follow': 'ติดตาม',
 });
 
 let lang = (() => {

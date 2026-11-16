@@ -429,7 +429,7 @@ body.noscroll { overflow: hidden; }
 .faq details p { margin: 0 0 18px; }
 
 footer { display: block; }
-.foot-cols { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 24px; max-width: 1360px; margin: 0 auto; }
+.foot-cols { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 24px; max-width: 1360px; margin: 0 auto; }
 @media (max-width: 640px) { .foot-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .foot-cols > div:first-child { grid-column: 1 / -1; } }
 .foot-cols b { display: block; color: var(--ink); margin-bottom: 8px; font-size: 14px; }
 .foot-cols a:not(.brand) { display: block; text-decoration: none; color: var(--muted); padding: 3px 0; }

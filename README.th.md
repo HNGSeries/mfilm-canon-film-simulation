@@ -17,6 +17,10 @@
 [![Cameras](https://img.shields.io/badge/cameras-10%20work%20%C2%B7%205%20with%20a%20problem%20%C2%B7%201%20in%20testing-3b352f)](#กล้องที่รองรับ)
 [![Films](https://img.shields.io/badge/films-68-3b352f)](FILMS.md)
 
+[![Instagram](https://img.shields.io/badge/Instagram-%40mfilm.official-3b352f?logo=instagram&logoColor=white)](https://www.instagram.com/mfilm.official/)
+[![Threads](https://img.shields.io/badge/Threads-%40mfilm.official-3b352f?logo=threads&logoColor=white)](https://www.threads.com/@mfilm.official)
+[![X](https://img.shields.io/badge/X-%40mfilm__official-3b352f?logo=x&logoColor=white)](https://x.com/mfilm_official)
+
 [English](README.md) · **ภาษาไทย** · [ฟิล์ม](#ฟิล์ม-68-แบบ) · [กล้องที่รองรับ](#กล้องที่รองรับ) · [Darkrooms](#ล้างบนคอม-darkrooms) · [คู่มือในกล้อง](docs/MANUAL.th.md) · [ทำต่อยอด](PORTING.md)
 
 <br>
@@ -352,6 +356,10 @@ Microsoft ครั้งแรกจึงมีคำเตือน Windows S
 
 ส่วนในกล้องของ M-Film ใช้ฟรีและจะฟรีตลอดไป ถ้าได้ม้วนที่ชอบ
 **[เลี้ยงกาแฟผู้พัฒนาได้ที่นี่ ☕](https://buy.stripe.com/7sY14p8d93QE5Ny5M58so02)**
+
+เวอร์ชันใหม่และม้วนที่คนถ่ายด้วย M-Film โพสต์ที่
+[Instagram](https://www.instagram.com/mfilm.official/), [Threads](https://www.threads.com/@mfilm.official)
+และ [X](https://x.com/mfilm_official)
 
 ## License
 
