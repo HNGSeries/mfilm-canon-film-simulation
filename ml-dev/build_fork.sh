@@ -174,7 +174,10 @@ if [ -n "$MODULE" ]; then
         arm-none-eabi-gcc -march=armv5te -O1 -I"$SRC/tcc" -o "$MOD/build/linktest" "$HERE/fork/module/linktest.c" \
             "$SRC/platform/$PLAT/build/tcc/libtccx.o" --specs=rdimon.specs -lc -lrdimon -lm >> "$LOG" 2>&1 \
             || { echo "linktest didn't build, see $LOG"; exit 1; }
-        (cd "$MOD/build" && qemu-arm -cpu arm926 ./linktest filmos.mo "$SYM") || { echo "the camera's loader wouldn't take the film OS module"; exit 1; }
+        # semihosting hands the program its command line as one string, split at spaces: so only names
+        # without a path go to it (a checkout under "Claude Projects" broke here)
+        cp "$SYM" "$MOD/build/camera.sym"
+        (cd "$MOD/build" && qemu-arm -cpu arm926 ./linktest filmos.mo camera.sym) || { echo "the camera's loader wouldn't take the film OS module"; exit 1; }
     else
         echo "(no qemu-arm: the module isn't link-tested; apt install qemu-user)"
     fi
