@@ -39,6 +39,8 @@ EOSM.202      working   727072      Canon EOS M | From 0.2 the film OS loads as 
 5DSR.112      no        -           Canon EOS 5DS R
 6D2.111       no        -           Canon EOS 6D Mark II
 850D.100      no        -           Canon EOS 850D / Rebel T8i
+# 800D: Magic Lantern has no platform folder for it at all, so no firmware is named (#161)
+800D.-        no        -           Canon EOS 800D / Rebel T7i / Kiss X9i (Magic Lantern has no port for it yet)
 M50.110       no        -           Canon EOS M50
 R.180         no        -           Canon EOS R
 RP.160        no        -           Canon EOS RP
