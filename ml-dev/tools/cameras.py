@@ -26,6 +26,7 @@ STATUS_TH = {
 WHY_TH = {
     WHY_NO: "Magic Lantern เองยังเป็นรุ่นทดลองบนกล้องเหล่านี้",
     "Magic Lantern's current source doesn't build it": "source ปัจจุบันของ Magic Lantern build รุ่นนี้ไม่ได้",
+    "Magic Lantern has no port for it yet": "Magic Lantern ยังไม่มีพอร์ตสำหรับรุ่นนี้",
 }
 
 
