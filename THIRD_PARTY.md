@@ -33,7 +33,7 @@ side over Cineon code and gives its input the tone curve of a finished photo (`m
 `ml-dev/filmos/tools/genfilms.py`, `ml-dev/filmos/tools/gentables.py`).
 
 **Which files.** The tables made that way: `ML/DARKROOM/LOOKnn.LUT` on the card for those 59 film stocks, and the
-same files in `M-Film-tables.zip`. `TABLES.txt` in that zip lists every table and marks these ones `lut`. The
+same files in `M-Film-<version>-tables.zip`. `TABLES.txt` in that zip lists every table and marks these ones `lut`. The
 other tables there are mixed from M-Film's own film model and are part of M-Film.
 
 **Their licence.** Those table files are licensed under the Creative Commons Attribution-ShareAlike 4.0

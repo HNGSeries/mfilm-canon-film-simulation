@@ -101,12 +101,14 @@ jobs:
           # and Film-Luts' own MIT notice)
           cp LICENSE "$d/LICENSE.txt"
           cp THIRD_PARTY.md "$d/THIRD_PARTY.txt"
-          (cd "$d" && zip -qr "$GITHUB_WORKSPACE/M-Film-camera-$p.zip" .)
-          ls -la M-Film-camera-$p.zip
+          # the zip's name says which M-Film it is (VERSION), so two downloads can't be mixed up
+          v=$(tr -d ' \r\n' < VERSION)
+          (cd "$d" && zip -qr "$GITHUB_WORKSPACE/M-Film-$v-camera-$p.zip" .)
+          ls -la M-Film-$v-camera-$p.zip
       - uses: actions/upload-artifact@v4
         with:
           name: M-Film-camera-${{ matrix.platform }}
-          path: M-Film-camera-${{ matrix.platform }}.zip
+          path: M-Film-*-camera-${{ matrix.platform }}.zip
           if-no-files-found: error
       # every film's colour table and the list of them (file, film, source, SHA-256), for the desktop
       # darkroom: the same bytes as in every zip's ML/DARKROOM, so both develop with the same tables.
@@ -118,13 +120,14 @@ jobs:
           cp ml-dev/out/fork/ML/DARKROOM/LOOK*.LUT ml-dev/out/TABLES.txt tables/
           cp LICENSE tables/LICENSE.txt
           cp THIRD_PARTY.md tables/THIRD_PARTY.txt
-          (cd tables && sha256sum LOOK*.LUT > SHA256SUMS && zip -qr "$GITHUB_WORKSPACE/M-Film-tables.zip" .)
-          ls -la M-Film-tables.zip
+          v=$(tr -d ' \r\n' < VERSION)
+          (cd tables && sha256sum LOOK*.LUT > SHA256SUMS && zip -qr "$GITHUB_WORKSPACE/M-Film-$v-tables.zip" .)
+          ls -la M-Film-$v-tables.zip
       - uses: actions/upload-artifact@v4
         if: ${{ matrix.platform == 'EOSM.202' }}
         with:
           name: M-Film-tables
-          path: M-Film-tables.zip
+          path: M-Film-*-tables.zip
           if-no-files-found: error
 
   # builds for testers, not for releases. Their artifacts are named test-..., which the release leaves out.
@@ -161,12 +164,13 @@ jobs:
           # and Film-Luts' own MIT notice)
           cp LICENSE "$d/LICENSE.txt"
           cp THIRD_PARTY.md "$d/THIRD_PARTY.txt"
-          (cd "$d" && zip -qr "$GITHUB_WORKSPACE/M-Film-camera-$p${{ matrix.suffix }}.zip" .)
-          ls -la M-Film-camera-$p${{ matrix.suffix }}.zip
+          v=$(tr -d ' \r\n' < VERSION)
+          (cd "$d" && zip -qr "$GITHUB_WORKSPACE/M-Film-$v-camera-$p${{ matrix.suffix }}.zip" .)
+          ls -la M-Film-$v-camera-$p${{ matrix.suffix }}.zip
       - uses: actions/upload-artifact@v4
         with:
           name: test-M-Film-camera-${{ matrix.platform }}${{ matrix.suffix }}
-          path: M-Film-camera-${{ matrix.platform }}${{ matrix.suffix }}.zip
+          path: M-Film-*-camera-${{ matrix.platform }}${{ matrix.suffix }}.zip
           if-no-files-found: error
 
   release:
@@ -194,13 +198,13 @@ jobs:
           make_latest: true
           files: zips/*.zip
           body: |
-            **On the camera** (`M-Film-camera-<camera>.zip`): the Film OS with Magic Lantern. Unzip it onto the card
+            **On the camera** (`M-Film-<version>-camera-<camera>.zip`): the Film OS with Magic Lantern. Unzip it onto the card
             and run *Firmware ver.* → update once (see M-FILM-README.txt in the zip). How far testers have got on
             each camera, and what's still wrong, is in the README's camera table: see TESTING.md before you put it
             on a camera nobody has tried yet. Every zip has the in-camera darkroom. The film OS is a module on
             every camera (ML/modules/filmos.mo, loaded after boot): one zip a camera.
 
-            **The films' colour tables** (`M-Film-tables.zip`): every film's table as the cameras' zips carry them
+            **The films' colour tables** (`M-Film-<version>-tables.zip`): every film's table as the cameras' zips carry them
             in ML/DARKROOM, with a list of them and their checksums. The desktop darkroom reads the same files,
             so both give the same colour. You don't need this zip for a camera.
 

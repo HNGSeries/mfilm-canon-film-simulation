@@ -4,9 +4,9 @@
 // Stripe sends the visitor back here with ?thanks=1, where the download starts.
 
 import { T } from './i18n.js';
-import { latestRelease } from './releases.js';
+import { latestRelease, cameraZip } from './releases.js';
 
-// the cameras with a release zip, M-Film-camera-<platform>.zip: fos/cameras.json (from ml-dev/cameras.txt)
+// the cameras with a release zip, M-Film-<version>-camera-<platform>.zip: fos/cameras.json (from ml-dev/cameras.txt)
 // once it has loaded; this list until then, or if it can't be
 let CAMERAS = [
   ['EOSM.202', 'Canon EOS M', 'working'],
@@ -32,10 +32,14 @@ const DONATE = 'https://darkrooms-licence.suphalapruksasathit.workers.dev/v1/don
 const COFFEE = 'https://buy.stripe.com/7sY14p8d93QE5Ny5M58so02';
 // the newest M-Film release (tags v*): Darkrooms' (app-v*) are in the same repository, and either can be
 // GitHub's "latest". Until GitHub answers, or if it doesn't, "latest" it is.
-let camTag = null;
-const tagReady = latestRelease((t) => /^v\d/.test(t)).then((r) => { camTag = r && r.tag; });
-const zipUrl = (p) => camTag ? `${REPO}/releases/download/${camTag}/M-Film-camera-${p}.zip`
-                             : `${REPO}/releases/latest/download/M-Film-camera-${p}.zip`;
+// The zip's name carries the release's version (M-Film-0.2.4-camera-<platform>.zip), so the link is
+// taken from the release's own list of files. Until GitHub answers, or if it doesn't, the release page.
+let camRelease = null;
+const tagReady = latestRelease((t) => /^v\d/.test(t)).then((r) => { camRelease = r; });
+const zipUrl = (p) => {
+  const z = cameraZip(camRelease, p);
+  return z ? z.browser_download_url : `${REPO}/releases/latest`;
+};
 const settled = () => Promise.race([tagReady, new Promise((r) => setTimeout(r, 2500))]);
 
 const dlg = document.getElementById('dl');

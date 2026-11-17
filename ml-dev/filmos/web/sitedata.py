@@ -39,7 +39,7 @@ def cameras():
         if status in ("working", "issues", "testing", "nodark"):
             out.append({"platform": platform, "name": name, "firmware": firmware(platform),
                         "status": status, "note": note, "note_th": note_th,
-                        "zip": f"M-Film-camera-{platform}.zip"})
+                        "zip": f"M-Film-<version>-camera-{platform}.zip"})   # the site puts the newest release's name in
         else:
             later.append({"name": re.sub(r"\s*\(.*\)$", "", name), "why": status})
     return {"cameras": out, "later": later}
