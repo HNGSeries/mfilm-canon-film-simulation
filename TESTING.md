@@ -14,27 +14,27 @@ it takes about 20 minutes, and you can always go back.
 ## 1. Get the files
 
 From the [latest release](../../releases/latest) (or the newest run under *Actions*), download
-`M-Film-camera-<your camera>.zip`:
+`M-Film-<version>-camera-<your camera>.zip` (the version is the release's, for example `M-Film-0.2.4-camera-EOSM.202.zip`; releases before 0.2.4 named it without one):
 
 <!-- cameras:start -->
 | Camera | Canon firmware it needs | File |
 |---|---|---|
-| Canon EOS M | 2.0.2 | `M-Film-camera-EOSM.202.zip` |
-| Canon EOS 5D Mark II | 2.1.2 | `M-Film-camera-5D2.212.zip` |
-| Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | `M-Film-camera-5D3.113.zip` |
-| Canon EOS 5D Mark III (firmware 1.2.3) | 1.2.3 | `M-Film-camera-5D3.123.zip` |
-| Canon EOS 6D | 1.1.6 | `M-Film-camera-6D.116.zip` |
-| Canon EOS 50D | 1.0.9 | `M-Film-camera-50D.109.zip` |
-| Canon EOS 60D | 1.1.1 | `M-Film-camera-60D.111.zip` |
-| Canon EOS 70D | 1.1.2 | `M-Film-camera-70D.112.zip` |
-| Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | `M-Film-camera-100D.101.zip` |
-| Canon EOS 500D / Rebel T1i / Kiss X3 | 1.1.1 | `M-Film-camera-500D.111.zip` |
-| Canon EOS 550D / Rebel T2i / Kiss X4 | 1.0.9 | `M-Film-camera-550D.109.zip` |
-| Canon EOS 600D / Rebel T3i / Kiss X5 | 1.0.2 | `M-Film-camera-600D.102.zip` |
-| Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | `M-Film-camera-650D.104.zip` |
-| Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | `M-Film-camera-700D.115.zip` |
-| Canon EOS 1100D / Rebel T3 / Kiss X50 | 1.0.5 | `M-Film-camera-1100D.105.zip` |
-| Canon EOS 1300D / Rebel T6 / Kiss X80 | 1.1.0 | `M-Film-camera-1300D.110.zip` |
+| Canon EOS M | 2.0.2 | `M-Film-<version>-camera-EOSM.202.zip` |
+| Canon EOS 5D Mark II | 2.1.2 | `M-Film-<version>-camera-5D2.212.zip` |
+| Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | `M-Film-<version>-camera-5D3.113.zip` |
+| Canon EOS 5D Mark III (firmware 1.2.3) | 1.2.3 | `M-Film-<version>-camera-5D3.123.zip` |
+| Canon EOS 6D | 1.1.6 | `M-Film-<version>-camera-6D.116.zip` |
+| Canon EOS 50D | 1.0.9 | `M-Film-<version>-camera-50D.109.zip` |
+| Canon EOS 60D | 1.1.1 | `M-Film-<version>-camera-60D.111.zip` |
+| Canon EOS 70D | 1.1.2 | `M-Film-<version>-camera-70D.112.zip` |
+| Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | `M-Film-<version>-camera-100D.101.zip` |
+| Canon EOS 500D / Rebel T1i / Kiss X3 | 1.1.1 | `M-Film-<version>-camera-500D.111.zip` |
+| Canon EOS 550D / Rebel T2i / Kiss X4 | 1.0.9 | `M-Film-<version>-camera-550D.109.zip` |
+| Canon EOS 600D / Rebel T3i / Kiss X5 | 1.0.2 | `M-Film-<version>-camera-600D.102.zip` |
+| Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | `M-Film-<version>-camera-650D.104.zip` |
+| Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | `M-Film-<version>-camera-700D.115.zip` |
+| Canon EOS 1100D / Rebel T3 / Kiss X50 | 1.0.5 | `M-Film-<version>-camera-1100D.105.zip` |
+| Canon EOS 1300D / Rebel T6 / Kiss X80 | 1.1.0 | `M-Film-<version>-camera-1300D.110.zip` |
 <!-- cameras:end -->
 
 The firmware must match exactly (MENU → last settings tab → *Firmware ver.*).
@@ -124,7 +124,7 @@ and the file **`ML/FILMROLL.LOG`** from the card attached.
 The camera found no update file it accepts on the card:
 - The Canon firmware isn't exactly the one in the table: `ML-SETUP.FIR` only works on that version.
 - `ML-SETUP.FIR` isn't at the top of the card. Unzipping on a Mac, or with Windows' *Extract All*, often
-  makes a folder (`M-Film-camera-EOSM.202/`). The card's top level should show `autoexec.bin`,
+  makes a folder (`M-Film-0.2.4-camera-EOSM.202/`). The card's top level should show `autoexec.bin`,
   `ML-SETUP.FIR` and `ML`.
 - On a Mac, hidden `._` files next to them can trip the camera. With the card in the reader, run
   `dot_clean -m /Volumes/EOS_DIGITAL` in *Terminal* (your card's name in place of `EOS_DIGITAL`),
@@ -158,7 +158,7 @@ ML-SETUP.FIR
 ML/
 ```
 
-- Unzipping often makes a folder (`M-Film-camera-6D.116/`; Windows' *Extract All* does too). Copy what
+- Unzipping often makes a folder (`M-Film-0.2.4-camera-6D.116/`; Windows' *Extract All* does too). Copy what
   is inside it, the `ML` folder included, not the folder itself.
 - Format the card **in the camera** first, not on the computer, then copy the files onto it.
 - A card bigger than 32 GB is formatted as exFAT. If a big card keeps saying this, a card of 32 GB or

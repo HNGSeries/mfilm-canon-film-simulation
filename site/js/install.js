@@ -2,6 +2,7 @@
 // (fos/cameras.json: its Canon firmware, its zip, how far testers got).
 
 import { T, applyLang, toggleLang, addStrings, currentLang } from './i18n.js';
+import { latestRelease, cameraZip } from './releases.js';
 
 addStrings({
   en: {
@@ -109,12 +110,16 @@ const AV_HOME = new Set(['1300D.110']);
 
 const sel = document.getElementById('ig-camera');
 let cams = [];
+let camRelease = null;
+latestRelease((t) => /^v\d/.test(t)).then((r) => { camRelease = r; if (cams.length) show(); });
 
 function show() {
   const c = cams.find((x) => x.platform === sel.value) || cams[0];
   if (!c) return;
   document.getElementById('ig-fw').textContent = c.firmware;
-  document.getElementById('ig-zip').textContent = c.zip;
+  // the newest release's own name for it (M-Film-0.2.4-camera-...zip), once GitHub has answered
+  const z = cameraZip(camRelease, c.platform);
+  document.getElementById('ig-zip').textContent = z ? z.name : c.zip;
   const st = document.getElementById('ig-status');
   const status = c.status === 'nodark' ? 'working' : c.status;
   const note = (currentLang() === 'th' && c.note_th) || c.note;

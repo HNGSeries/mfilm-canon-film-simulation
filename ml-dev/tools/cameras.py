@@ -81,7 +81,7 @@ def main():
         rows = [head, "|---|---|---|---|---|"]
         for c in cams:
             if c["status"] in ("working", "issues", "testing", "planned"):
-                dl = f"`M-Film-camera-{c['plat']}.zip`" if c["status"] in ("working", "issues", "testing") else ""
+                dl = f"`M-Film-<version>-camera-{c['plat']}.zip`" if c["status"] in ("working", "issues", "testing") else ""
                 rows.append(f"| {c['name']} | {c['fw']} | {status[c['status']]} | {issue_links(c['note_th' if th else 'note'])} | {dl} |")
         # the ones Magic Lantern isn't ready on: one line, grouped by why
         why = {}
@@ -109,7 +109,7 @@ def main():
 
     built = [c for c in cams if c["status"] in ("working", "issues", "testing")]
     rows = ["| Camera | Canon firmware it needs | File |", "|---|---|---|"]
-    rows += [f"| {c['name']} | {c['fw']} | `M-Film-camera-{c['plat']}.zip` |" for c in built]
+    rows += [f"| {c['name']} | {c['fw']} | `M-Film-<version>-camera-{c['plat']}.zip` |" for c in built]
     replace(ROOT / "TESTING.md", "<!-- cameras:start -->", "<!-- cameras:end -->", "\n".join(rows))
 
     wf = ROOT / ".github" / "workflows" / "camera.yml"

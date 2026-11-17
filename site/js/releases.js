@@ -32,3 +32,12 @@ export async function latestRelease(test) {
     return null;
   }
 }
+
+// a camera's zip in a release: M-Film-<version>-camera-<platform>.zip since 0.2.4,
+// M-Film-camera-<platform>.zip before. { name, browser_download_url }, or null
+export function cameraZip(release, platform) {
+  if (!release) return null;
+  const tail = `camera-${platform}.zip`;
+  return release.assets.find((a) => a.name === `M-Film-${tail}` ||
+    (a.name.endsWith(`-${tail}`) && /^M-Film-\d[\w.]*$/.test(a.name.slice(0, -tail.length - 1)))) || null;
+}
