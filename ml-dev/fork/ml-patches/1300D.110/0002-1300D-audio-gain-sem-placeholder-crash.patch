@@ -1,0 +1,51 @@
+From: tanojericko <115430549+tanojericko@users.noreply.github.com>
+Subject: [PATCH] 1300D: don't give the audio gain semaphore before it exists
+
+CRASH00.LOG on a Rebel T6 (M-Film 0.2.1):
+  ASSERT: 0 at SystemIF::KerSem.c:354, PropMgr
+The stack goes through global_property_handler (blx to a handler) into
+give_semaphore. The handler is PROP_MVR_REC_START in audio-common.c:
+enable_recording() gives gain.sem, which is the placeholder (void*)1 until
+my_sounddev_task (audio-ak.c) creates the real semaphore. If the property
+fires first, Canon asserts in PropMgr, the property task dies and the GUI
+freezes while the shutter still works.
+---
+diff --git a/src/audio-common.c b/src/audio-common.c
+index 9135844..965599d 100755
+--- a/src/audio-common.c
++++ b/src/audio-common.c
+@@ -81,6 +81,16 @@ static struct gain_struct gain = {
+     .sem                    = (void*) 1,
+ };
+ 
++#ifdef CONFIG_1300D
++/* gain.sem is a placeholder (1) until my_sounddev_task (audio-ak.c) creates
++ * the real semaphore. On the 1300D, PROP_MVR_REC_START can fire before that,
++ * and give_semaphore(1) asserts in Canon's KerSem.c inside PropMgr: the
++ * property task dies and the GUI freezes (shutter still works). */
++#define give_gain_sem() do { if ((uintptr_t) gain.sem > 1) give_semaphore( gain.sem ); } while (0)
++#else
++#define give_gain_sem() give_semaphore( gain.sem )
++#endif
++
+ 
+ static CONFIG_VAR_CHANGE_FUNC(lovl_on_change)
+ {
+@@ -1061,7 +1071,7 @@ enable_recording(int mode)
+             #if defined(CONFIG_600D) || defined(CONFIG_7D)
+             audio_configure(1);
+             #else
+-            give_semaphore( gain.sem );
++            give_gain_sem();
+             #endif
+             break;
+         case 1:
+@@ -1076,7 +1086,7 @@ enable_recording(int mode)
+ // to be called from some other tasks that may mess with audio 
+ static void audio_force_reconfigure() 
+ {
+-    give_semaphore( gain.sem ); 
++    give_gain_sem();
+ }
+ 
+ static void
