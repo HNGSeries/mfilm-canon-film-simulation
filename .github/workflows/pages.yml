@@ -6,9 +6,12 @@ name: mfilm.app
 on:
   push:
     branches: ["main"]
-    paths: ["site/**", "ml-dev/filmos/**", "ml-dev/films/**", "ml-dev/references/**", "FILMS.md", "VERSION", ".github/workflows/pages.yml"]
+    # every file the site is made from (ml-dev/filmos/web/build.sh and sitedata.py read them)
+    paths: ["site/**", "ml-dev/filmos/**", "ml-dev/films/**", "ml-dev/references/**", "ml-dev/cameras.txt",
+            "FILMS.md", "VERSION", "LICENSE", "THIRD_PARTY.md", "docs/films/**", "docs/images/**",
+            ".github/workflows/pages.yml"]
   pull_request:
-    paths: ["site/**", "ml-dev/filmos/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", "ml-dev/filmos/**", "ml-dev/cameras.txt", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
