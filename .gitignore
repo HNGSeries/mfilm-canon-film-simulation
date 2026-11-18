@@ -1,5 +1,8 @@
 # Canon firmware files (Canon's copyright, not ours to publish)
 firmware/
+# Ricoh GR firmware, which the GRKit pack's fit reads (Ricoh's copyright)
+fwdc*.bin
+fwdc*.zip
 
 # photos: test RAWs and developed rolls
 Pic Test/
