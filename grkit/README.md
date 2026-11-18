@@ -76,10 +76,11 @@ share them. So the pack comes as one set a shelf, and a card should carry one se
    needs `--exposure` or is left out.
 2. **The exposure.** `GREY` in `mfilm_grkit.py` says where the GR's 18% grey lands in M-Film's light. It
    is a provisional number; check it against the light of `ml-dev/films/sample/SAMPLE.CR2`.
-3. **The boxes.** Each effect's cover is set in `BOXES`: GRKit's layout, and its own packaging colours
-   (`LOOKS`, from GRKit's site, MIT) where it has them; Rollei, Lomography and CineStill keep the colours of
-   M-Film's canister. None is checked against a photo of the real box yet. `check` refuses a text GRKit
-   would refuse; `grkit effects build` is the final word.
+3. **The covers.** Each effect shows M-Film's own cover on the camera ([covers.py](covers.py)): the end of
+   a film box in three bands, brand, the film's name large, its speed, in the colours of its canister on
+   M-Film's shelf. `card` puts it into each `.GRF` in place of GRKit's template, as the 40 × 40 pixels the
+   file keeps, and writes the file's CRC again. GRKit's template (`BOXES`) stays in each `effect.json`,
+   which its compiler needs. Check on the camera that GRKit shows the replaced icon.
 4. **A camera.** Nothing here has run on a GR. Try a set on GR IIIx 1.71 first, read `GRKIT/REPORT.TXT`, and
    keep GRKit's [recovery guide](https://github.com/ahonn/grkit/blob/main/resources/RECOVERY.md) at hand.
 5. **Recipes.** `recipes` writes each film stock's grain, glow and white balance in the shape of GRKit's

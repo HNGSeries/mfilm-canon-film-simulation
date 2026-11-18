@@ -102,6 +102,51 @@ class Shelf(unittest.TestCase):
         self.assertEqual(m.ink((m.catalog.GRAY, 0)), [4, 3, 3])
 
 
+class Covers(unittest.TestCase):
+    def setUp(self):
+        import covers
+        self.c = covers
+
+    def test_name_and_speed(self):
+        self.assertEqual(self.c.name_and_speed("portra160nc"), ("Portra NC", "160"))
+        self.assertEqual(self.c.name_and_speed("cinestill800t"), ("CineStill", "800T"))
+        self.assertEqual(self.c.name_and_speed("provia100f"), ("Provia", "100F"))
+        self.assertEqual(self.c.name_and_speed("hp5"), ("HP5 Plus", "400"))
+
+    def test_every_film_has_a_cover(self):
+        for key in m.FILMS:
+            self.c.label(key)
+            self.assertTrue(self.c.brand(key) and self.c.process(key))
+
+    def test_camera_icon_is_what_grkit_takes(self):
+        icon = self.c.camera_icon("portra400")
+        self.assertEqual(len(icon), 40 * 40 * 4)
+        self.assertTrue(all(a == 255 for a in icon[3::4]))
+
+    def test_patch_grf_writes_icon_and_crc(self):
+        import tempfile
+        import zlib
+        from pathlib import Path
+        size = self.c.GRF_ICON + 40 * 40 * 4 + 64
+        blob = bytearray(size)
+        blob[:8] = self.c.GRF_MAGIC
+        blob[8:12] = size.to_bytes(4, "little")
+        blob[12:16] = self.c.checksum(bytes(blob)).to_bytes(4, "little")
+        icon = self.c.camera_icon("velvia50")
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "X.GRF"
+            path.write_bytes(bytes(blob))
+            self.c.patch_grf(path, icon)
+            out = path.read_bytes()
+        self.assertEqual(out[self.c.GRF_ICON:self.c.GRF_ICON + len(icon)], icon)
+        crc = zlib.crc32(out[:12] + bytes(4) + out[16:])
+        self.assertEqual(int.from_bytes(out[12:16], "little"), crc)
+
+    def test_grf_name_is_grkits(self):
+        # GRKit names the file by the first 8 hex digits of the ID's SHA-256, in capitals
+        self.assertRegex(self.c.grf_name("mfilm-portra400-v1"), r"^[0-9A-F]{8}\.GRF$")
+
+
 @unittest.skipUnless((m.TABLES / "TABLES.txt").exists(), "no tables built")
 class Tables(unittest.TestCase):
     def test_grey_prints_as_a_mid_tone(self):

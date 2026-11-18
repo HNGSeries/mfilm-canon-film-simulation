@@ -20,7 +20,8 @@ turns M-Film's film stocks into its effects, one film stock to one effect:
            CLI and your own official GR III 2.10 firmware file (the fit reads
            the Standard base gamma from it); neither is in this repository
   card     the effects compiled into GRKIT/EFFECTS, ready to copy to a card
-           that has GRKit (`grkit effects build`)
+           that has GRKit (`grkit effects build`), each with M-Film's own
+           cover in place of GRKit's template (covers.py)
   recipes  each film stock's grain, glow and white balance, in the shape of
            GRKit's recipe model. GRKit takes recipes only from its own
            presets and from the camera for now, so this is a proposal
@@ -562,6 +563,9 @@ def do_card(entries, effects, out, grkit, which):
         shutil.copytree(effects / e["effect_id"], stage / e["effect_id"])
     run_grkit(grkit, "effects", "build", "--source", stage, "--out", dest)
     shutil.rmtree(stage)
+    import covers                       # Pillow, only for this step
+    for e in entries:                   # M-Film's own cover in place of GRKit's template
+        covers.patch_grf(dest / covers.grf_name(e["effect_id"]), covers.camera_icon(e["key"]))
     print(f"{dest}: copy GRKIT/ to the root of a card that has GRKit {GRKIT_VERSION}, then power on.")
 
 
