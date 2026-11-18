@@ -1,0 +1,21 @@
+What M-Film changed in making these files from spektrafilm's profiles
+
+Derived from spektrafilm by Andrea Volpato, https://github.com/andreavolpato/spektrafilm, licensed CC BY-SA 4.0 (SPEKTRAFILM_LICENSE.txt).
+Modified by the M-Film project, https://github.com/HNGSeries/mfilm-canon-film-simulation.
+
+Each .tab here is spektrafilm's rendering, at commit 3bb2c2d2801ff68b92019cf1dbcbb133d60832bc, of one film profile, sampled at
+33 x 33 x 33 points over Cineon code (linear sRGB in, sRGB out, 8 bits), with spektrafilm's lut_mode:
+no spatial effects, nothing random. A negative is printed on Kodak Portra Endura and the print scanned;
+a slide film is scanned as it is. The exposure is M-Film's: grey at 0.11 prints as bright as the film
+stock's earlier table printed it. M-Film puts each one, behind an 8-byte header, in the film stock's
+LOOKnn.LUT (ml-dev/filmos/tools/gentables.py; TABLES.txt marks them "spektrafilm").
+
+portra160.tab  from kodak_portra_160, printed on kodak_portra_endura, at +0.657 EV
+portra400.tab  from kodak_portra_400, printed on kodak_portra_endura, at +0.319 EV
+portra800.tab  from kodak_portra_800, printed on kodak_portra_endura, at +0.428 EV
+ektar100.tab  from kodak_ektar_100, printed on kodak_portra_endura, at +0.297 EV
+gold200.tab  from kodak_gold_200, printed on kodak_portra_endura, at +0.335 EV
+pro400h.tab  from fujifilm_pro_400h, printed on kodak_portra_endura, at +0.654 EV
+velvia100.tab  from fujifilm_velvia_100, scanned as it is, at +0.158 EV
+provia100f.tab  from fujifilm_provia_100f, scanned as it is, at +0.047 EV
+kodachrome64.tab  from kodak_kodachrome_64, scanned as it is, at +0.297 EV

@@ -7,3 +7,5 @@
 Makefile text eol=lf
 # checksum lists are read line by line: keep LF
 *.sha256 text eol=lf
+# the colour tables rendered from spektrafilm are bytes: never touch their line ends
+*.tab binary

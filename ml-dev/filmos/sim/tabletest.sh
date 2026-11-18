@@ -2,7 +2,7 @@
 # The films' colour tables: every film on the shelf has one (tools/gentables.py
 # fails otherwise), and a frame whose film has none on the card is not
 # developed with a table the camera made up, but fails and says so (#124).
-# And the Film-Luts LUTs they are baked from are pinned (#102).
+# And the Film-Luts LUTs they are baked from are pinned (#102), and so are the tables rendered from spektrafilm.
 #   make out/devtest out/mkcr2 out/tables/TABLES.txt && ./tabletest.sh
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -73,5 +73,29 @@ if [ -d "$L/luts/filmluts" ]; then
 else
     echo "      (the LUTs are not fetched here: the fetched ones are not checked)"
 fi
+
+# the tables rendered from spektrafilm: each film stock spektra.py names gets its own, as it is in films/spektra/,
+# and one that is not the file spektra.sha256 names stops the build
+python3 - "$L" out/tables <<'PY' && ok "the film stocks from spektrafilm have its tables: $(grep -c '^LOOK.* spektrafilm ' out/tables/TABLES.txt)" \
+    || bad "the film stocks from spektrafilm: their tables are not the rendered ones"
+import sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import spektra
+listed = {line.split()[1]: line.split()[0] for line in Path(sys.argv[2], "TABLES.txt").read_text().splitlines()
+          if line.startswith("LOOK") and line.split()[2] == "spektrafilm"}
+sys.exit(spektra.problems() or set(listed) != set(spektra.KEYS)
+         or any(Path(sys.argv[2], f).read_bytes()[8:] != spektra.body(k) for k, f in listed.items()))
+PY
+rm -rf "$t/sf" && cp -r "$L/spektra" "$t/sf"
+printf '\001' | dd of="$L/spektra/gold200.tab" bs=1 seek=1000 conv=notrunc 2>/dev/null
+if python3 ../tools/gentables.py "$t/sftables" --films out/FOSFILMS.BIN --devtest out/devtest --plain > "$t/sf.log" 2>&1; then
+    bad "a rendered table changed by a byte was taken"
+elif grep -q "gold200.tab: not the table spektra.sha256 names" "$t/sf.log"; then
+    ok "a rendered table changed by a byte stops the build, and is named"
+else
+    bad "a rendered table changed by a byte: $(tail -2 "$t/sf.log")"
+fi
+cp "$t/sf/gold200.tab" "$L/spektra/gold200.tab"
 
 [ "$fail" = 0 ] && echo "tabletest: all passed" || { echo "tabletest: failed (logs in sim/$t)"; exit 1; }

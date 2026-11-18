@@ -52,7 +52,9 @@
   จะใส่ฟิล์มเดิมอีกม้วนจึงกด SET ครั้งเดียว
 - 8 ตัวแรก (Portra 400, CineStill 800T, Ektar 100, Gold 200, Superia 400, Velvia 50, HP5, Tri-X)
   สีมาจากโมเดลฟิล์มของ M-Film (`ml-dev/films/films.py`) อีก 59 ตัวมาจากตารางของ [Pat David](https://patdavid.net) (CC BY-SA 4.0) ผ่าน G'MIC และ [Film-Luts](https://github.com/YahiaAngelo/Film-Luts)
-  (Portra 160/800/NC/VC/UC, Pro 400H, Kodachrome, Ektachrome, Provia, Acros, T-MAX, Delta ฯลฯ)
+  (Portra NC/VC/UC, Kodachrome 25/200, Ektachrome, Acros, T-MAX, Delta ฯลฯ)
+  ยกเว้น 9 ตัวที่สีมาจาก [spektrafilm](https://github.com/andreavolpato/spektrafilm) (CC BY-SA 4.0): Portra 160, 400, 800, Ektar 100, Gold 200, Kodachrome 64,
+  Pro 400H, Velvia 100, Provia 100F (`ml-dev/films/spektra.py`)
   และ CineStill 400T จาก LUT ส่วนตัว (`ml-dev/films/luts/cinestill400t.slog3.cube`)
 - ข้อมูลฟิล์มเหล่านี้อยู่ในไฟล์ `ML/DATA/FOSFILMS.BIN` บนการ์ด (ไม่ได้อยู่ใน autoexec.bin
   ที่ต้องเล็ก) ฉลากกลักวาดจากส่วนประกอบตามยี่ห้อ (`ml-dev/filmos/tools/catalog.py`)
@@ -283,5 +285,7 @@ make out/devtest && ./out/devtest -f portra400 IMG_0001.CR2 out.BMP out.ppm   # 
 - `films.py` ค่าของฟิล์มแต่ละตัว ตั้งด้วยสายตา ยังไม่ได้วัดเทียบกับฟิล์มจริง
 - `filmluts.py` ฟิล์ม 59 ตัวที่สีมาจาก Film-Luts, `getluts.py` ดาวน์โหลด LUT เหล่านั้นไว้ที่
   `luts/filmluts/` (ไม่ได้เก็บใน git) ตอน build กล้องจะอบเป็นตารางสีลงการ์ด
+- `spektra.py` ฟิล์ม 9 ตัวที่สีมาจาก spektrafilm: render ครั้งเดียวบนคอม (ต้องมี spektrafilm และ Python 3.13)
+  ได้ตารางเก็บไว้ใน git ที่ `spektra/` พร้อม SHA-256 ใน `spektra.sha256` ตอน build ไม่ต้องใช้ spektrafilm
 - `lut.py` อ่านและใช้ไฟล์ `.cube` (`python lut.py info ไฟล์.cube` ดูว่าใน LUT มีอะไร)
 - CineStill 400T ใช้ LUT ส่วนตัว: วางไว้ที่ `luts/cinestill400t.slog3.cube`

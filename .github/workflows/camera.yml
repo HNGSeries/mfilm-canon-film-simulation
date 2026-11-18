@@ -97,10 +97,13 @@ jobs:
           if [ "$p" = EOSM.202 ]; then d=ml-dev/out/fork; else d=ml-dev/out/fork-$p; fi
           cp ml-dev/CAMERA-README.txt "$d/M-FILM-README.txt"
           # the licence and the notices travel with the binaries (GPL-2.0 section 1; the credit and the
-          # CC BY-SA 4.0 notice of Pat David's tables, which 59 of the colour tables in ML/ are made from,
-          # and Film-Luts' own MIT notice)
+          # CC BY-SA 4.0 notice of Pat David's tables, which 53 of the colour tables in ML/ are made from,
+          # and Film-Luts' own MIT notice; spektrafilm's licence, unchanged, and what M-Film changed, for the 9
+          # tables rendered from it, as that licence asks)
           cp LICENSE "$d/LICENSE.txt"
           cp THIRD_PARTY.md "$d/THIRD_PARTY.txt"
+          cp ml-dev/films/spektra/SPEKTRAFILM_LICENSE.txt "$d/SPEKTRAFILM_LICENSE.txt"
+          cp ml-dev/films/spektra/CHANGELOG.txt "$d/SPEKTRAFILM_CHANGELOG.txt"
           # the zip's name says which M-Film it is (VERSION), so two downloads can't be mixed up
           v=$(tr -d ' \r\n' < VERSION)
           (cd "$d" && zip -qr "$GITHUB_WORKSPACE/M-Film-$v-camera-$p.zip" .)
@@ -120,6 +123,8 @@ jobs:
           cp ml-dev/out/fork/ML/DARKROOM/LOOK*.LUT ml-dev/out/TABLES.txt tables/
           cp LICENSE tables/LICENSE.txt
           cp THIRD_PARTY.md tables/THIRD_PARTY.txt
+          cp ml-dev/films/spektra/SPEKTRAFILM_LICENSE.txt tables/SPEKTRAFILM_LICENSE.txt
+          cp ml-dev/films/spektra/CHANGELOG.txt tables/SPEKTRAFILM_CHANGELOG.txt
           v=$(tr -d ' \r\n' < VERSION)
           (cd tables && sha256sum LOOK*.LUT > SHA256SUMS && zip -qr "$GITHUB_WORKSPACE/M-Film-$v-tables.zip" .)
           ls -la M-Film-$v-tables.zip
@@ -160,10 +165,13 @@ jobs:
           d=ml-dev/out/fork-$p${{ matrix.suffix }}
           cp ml-dev/CAMERA-README.txt "$d/M-FILM-README.txt"
           # the licence and the notices travel with the binaries (GPL-2.0 section 1; the credit and the
-          # CC BY-SA 4.0 notice of Pat David's tables, which 59 of the colour tables in ML/ are made from,
-          # and Film-Luts' own MIT notice)
+          # CC BY-SA 4.0 notice of Pat David's tables, which 53 of the colour tables in ML/ are made from,
+          # and Film-Luts' own MIT notice; spektrafilm's licence, unchanged, and what M-Film changed, for the 9
+          # tables rendered from it, as that licence asks)
           cp LICENSE "$d/LICENSE.txt"
           cp THIRD_PARTY.md "$d/THIRD_PARTY.txt"
+          cp ml-dev/films/spektra/SPEKTRAFILM_LICENSE.txt "$d/SPEKTRAFILM_LICENSE.txt"
+          cp ml-dev/films/spektra/CHANGELOG.txt "$d/SPEKTRAFILM_CHANGELOG.txt"
           v=$(tr -d ' \r\n' < VERSION)
           (cd "$d" && zip -qr "$GITHUB_WORKSPACE/M-Film-$v-camera-$p${{ matrix.suffix }}.zip" .)
           ls -la M-Film-$v-camera-$p${{ matrix.suffix }}.zip
@@ -208,5 +216,6 @@ jobs:
             in ML/DARKROOM, with a list of them and their checksums. The desktop darkroom reads the same files,
             so both give the same colour. You don't need this zip for a camera.
 
-            The colour tables of 59 films are adapted from film emulation tables by Pat David and are licensed
-            CC BY-SA 4.0, not GPL-2.0: THIRD_PARTY.txt in every zip says which, what was changed and what you may do.
+            The colour tables of 53 films are adapted from film emulation tables by Pat David, and those of 9 are derived
+            from spektrafilm by Andrea Volpato; both are licensed CC BY-SA 4.0, not GPL-2.0: THIRD_PARTY.txt in every zip
+            says which, what was changed and what you may do.
