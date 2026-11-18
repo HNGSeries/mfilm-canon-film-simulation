@@ -11,7 +11,8 @@ on:
             "FILMS.md", "VERSION", "LICENSE", "THIRD_PARTY.md", "docs/films/**", "docs/images/**",
             ".github/workflows/pages.yml"]
   pull_request:
-    paths: ["site/**", "ml-dev/filmos/**", "ml-dev/cameras.txt", ".github/workflows/pages.yml"]
+    # ml-dev/films: the colour tables on the page's card come from there, and the check below develops with them
+    paths: ["site/**", "ml-dev/filmos/**", "ml-dev/films/**", "ml-dev/cameras.txt", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -38,6 +39,17 @@ jobs:
           python -m pip install -q numpy scipy pillow
       - name: Build the film OS for the browser
         run: bash ml-dev/filmos/web/build.sh site/fos
+      # The page as a visitor uses it: a roll loaded, shot and developed in a headless browser (#143).
+      # A page that can't develop isn't published. Tried a second time before it fails, so that a
+      # browser that was only slow doesn't hold the site back.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: The page shoots and develops a roll
+        run: |
+          npm install --no-save --no-package-lock --silent playwright@1.64.1
+          npx playwright install --with-deps chromium
+          node ml-dev/filmos/web/pagetest.mjs site || { echo "once more"; node ml-dev/filmos/web/pagetest.mjs site; }
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
