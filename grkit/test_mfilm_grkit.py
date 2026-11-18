@@ -83,6 +83,14 @@ class Shelf(unittest.TestCase):
             self.assertTrue(box["brand"] and box["name"], key)
             self.assertNotEqual(box.get("number"), "", key)
 
+    def test_every_cover_fits_grkits_font(self):
+        self.assertEqual([p for key in m.FILMS for p in m.icon_problems(key)], [])
+
+    def test_pixel_font_widths(self):
+        self.assertEqual(m.pixel_width("PORTRA"), 6 * 3 + 5)
+        self.assertEqual(m.pixel_width("KODACHROME"), 41)             # too wide with the regular M
+        self.assertEqual(m.pixel_width("KODACHROME", m.NARROW), 39)    # so GRKit takes the narrow one
+
     def test_box_colours_are_rgb(self):
         for key in m.FILMS:
             for rgb in m.icon(key)["colors"].values():

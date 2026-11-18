@@ -267,38 +267,181 @@ RAMPS = {k: (_rgb(lo), _rgb(mid), _rgb(hi), at) for k, (lo, mid, hi, at) in {
     "BLUE": (0x020508, 0x1E77C6, 0xD5EBFF, 150),
 }.items()}
 
-# A box for the film stocks the catalog has no label for (the built-in eight): body, band, text by shelf.
-PLAIN_BOX = {
-    "neg": ([236, 232, 224], [214, 150, 30], [30, 26, 22]),
-    "cine": ([28, 26, 24], [200, 40, 45], [240, 236, 228]),
-    "slide": ([40, 70, 140], [40, 70, 140], [240, 236, 228]),
-    "xpro": ([120, 40, 120], [230, 120, 40], [240, 236, 228]),
-    "bw": ([236, 232, 224], [28, 26, 24], [28, 26, 24]),
+# ---------------------------------------------------------------- the box on the camera's screen
+
+# GRKit draws each effect's icon itself, 40 x 40 pixels (crates/grkit-core/src/artwork.rs): a brand band, a
+# body with the name and the number, and for "box" with band, a stripe at the bottom ("box2" on its site);
+# "cine" ends in three stripes, "stack" has the brand at the bottom. Five flat colours; no picture or logo.
+# Brand, name and number are 1 to 12 characters; a name above a number is drawn in a 5-pixel font of
+# capitals, digits, spaces, "-" and "+" that must fit 40 pixels.
+#
+# The colours: GRKit's own inks and looks for film covers (web/src/coverPalette.ts COVER_INKS and
+# COVER_LOOKS, MIT), which its site uses for the packaging colours of each film. Rollei, Lomography and
+# CineStill, which GRKit has no look for, keep the colours of M-Film's canister (catalog.py). None of it is
+# checked against a photo of the box yet.
+INKS = {
+    "white": [255, 255, 255], "cream": [255, 240, 200], "warmWhite": [255, 236, 220],
+    "portraCream": [232, 212, 176], "portraText": [255, 242, 228], "goldText": [255, 220, 120],
+    "silver": [236, 236, 236], "steel": [168, 168, 176], "mist": [200, 200, 200], "ash": [64, 64, 64],
+    "charcoal": [48, 48, 48], "graphite": [36, 36, 36], "black": [20, 20, 20], "ink": [16, 16, 16],
+    "kodakYellow": [242, 196, 24], "kodakRed": [196, 24, 24], "ektarRed": [220, 48, 32],
+    "orange": [240, 112, 48], "agfaOrange": [224, 96, 32], "vistaOrange": [232, 120, 40], "amber": [242, 168, 64],
+    "portraBrown": [96, 56, 40], "portraBody": [44, 36, 32], "portraAccent": [212, 168, 120],
+    "brown": [40, 24, 16], "warmDark": [40, 32, 28], "navy": [24, 40, 72],
+    "violet": [120, 72, 168], "violetBody": [24, 16, 36], "lilac": [236, 228, 255],
+    "chromeBlue": [32, 140, 196], "sky": [200, 232, 255], "ocean": [20, 36, 56], "teal": [24, 96, 120],
+    "blueAccent": [64, 144, 200], "velviaGreen": [8, 88, 64], "fujiGreen": [28, 120, 64],
+    "superiaGreen": [36, 160, 64], "chartreuse": [180, 200, 48], "forest": [20, 96, 56], "pine": [16, 88, 72],
+    "sage": [120, 168, 136], "sageDark": [40, 48, 40], "mint": [160, 200, 184], "mintText": [220, 255, 240],
+    "leaf": [220, 255, 236], "greenDark": [28, 64, 28], "greenBody": [32, 40, 28],
+    "rose": [216, 152, 160], "blush": [255, 236, 228], "ricohRed": [220, 32, 40],
+    "cineYellowBody": [40, 28, 8],
 }
+#              band            brand          body          text          accent
+LOOKS = {
+    "kodak": ("kodakYellow", "kodakRed", "graphite", "white", "kodakYellow"),
+    "gold": ("kodakYellow", "kodakRed", "navy", "goldText", "kodakYellow"),
+    "ektar": ("ektarRed", "warmWhite", "black", "warmWhite", "orange"),
+    "ektachrome": ("chromeBlue", "white", "ocean", "sky", "kodakYellow"),
+    "kodachrome": ("kodakRed", "warmWhite", "black", "warmWhite", "kodakYellow"),
+    "portra": ("portraCream", "portraBrown", "portraBody", "portraText", "portraAccent"),
+    "trix": ("black", "kodakYellow", "ink", "white", "kodakRed"),
+    "tmax": ("steel", "ink", "charcoal", "silver", "kodakYellow"),
+    "velvia": ("velviaGreen", "cream", "ocean", "leaf", "ektarRed"),
+    "provia": ("teal", "white", "ocean", "sky", "blueAccent"),
+    "astia": ("sage", "sageDark", "portraBody", "blush", "rose"),
+    "superia": ("superiaGreen", "white", "greenBody", "cream", "kodakYellow"),
+    "c200": ("chartreuse", "greenDark", "greenBody", "cream", "fujiGreen"),
+    "pro": ("forest", "white", "black", "mintText", "mint"),
+    "nps": ("pine", "mintText", "graphite", "mintText", "mint"),
+    "acros": ("ink", "white", "charcoal", "silver", "fujiGreen"),
+    "hp5": ("ink", "white", "black", "white", "kodakYellow"),
+    "delta": ("silver", "ink", "black", "white", "kodakYellow"),
+    "xp2": ("violet", "white", "violetBody", "lilac", "kodakYellow"),
+    "precisa": ("agfaOrange", "white", "warmDark", "warmWhite", "ektarRed"),
+    "vista": ("vistaOrange", "brown", "warmDark", "portraText", "amber"),
+    "agfa": ("agfaOrange", "white", "warmDark", "warmWhite", "ektarRed"),
+    "cinema": ("ash", "mist", "ink", "white", "steel"),
+    "cinemaYellow": ("ricohRed", "white", "cineYellowBody", "goldText", "kodakYellow"),
+}
+
+# key: (look, or None for the canister's colours; template; bottom band; brand; name; number)
+BOXES = {
+    "portra400": ("portra", "box", True, "Kodak", "PORTRA", "400"),
+    "portra160": ("portra", "box", True, "Kodak", "PORTRA", "160"),
+    "portra800": ("portra", "box", True, "Kodak", "PORTRA", "800"),
+    "portra160nc": ("portra", "box", True, "Kodak", "PORTRA NC", "160"),
+    "portra160vc": ("portra", "box", True, "Kodak", "PORTRA VC", "160"),
+    "portra400nc": ("portra", "box", True, "Kodak", "PORTRA NC", "400"),
+    "portra400vc": ("portra", "box", True, "Kodak", "PORTRA VC", "400"),
+    "portra400uc": ("portra", "box", True, "Kodak", "PORTRA UC", "400"),
+    "ektar100": ("ektar", "box", True, "Kodak", "EKTAR", "100"),
+    "gold200": ("gold", "box", False, "Kodak", "GOLD", "200"),
+    "elite200": ("kodak", "box", False, "Kodak", "ELITE", "200"),
+    "elite400": ("kodak", "box", False, "Kodak", "ELITE", "400"),
+    "extracolor100": ("kodak", "box", False, "Kodak", "EXTRACOLOR", "100"),
+    "e100gx": ("ektachrome", "box", True, "Kodak", "EKTACHROME", "E100GX"),
+    "e100vs": ("ektachrome", "box", True, "Kodak", "EKTACHROME", "E100VS"),
+    "elitechrome200": ("ektachrome", "box", False, "Kodak", "ELITE", "200"),
+    "elitechrome400": ("ektachrome", "box", False, "Kodak", "ELITE", "400"),
+    "elite100xpro": ("ektachrome", "box", False, "Kodak", "ELITE X-PRO", "100"),
+    "kodachrome25": ("kodachrome", "box", True, "Kodak", "KODACHROME", "25"),
+    "kodachrome64": ("kodachrome", "box", True, "Kodak", "KODACHROME", "64"),
+    "kodachrome200": ("kodachrome", "box", True, "Kodak", "KODACHROME", "200"),
+    "trix400": ("trix", "box", True, "Kodak", "TRI-X", "400"),
+    "tmax100": ("tmax", "box", True, "Kodak", "T-MAX", "100"),
+    "tmax400": ("tmax", "box", True, "Kodak", "T-MAX", "400"),
+    "tmax3200": ("tmax", "box", True, "Kodak", "T-MAX", "P3200"),
+    "bw400cn": ("tmax", "box", False, "Kodak", "BW400CN", ""),
+    "hie": ("trix", "box", True, "Kodak", "INFRARED", "HIE"),
+    "superia100": ("superia", "box", False, "FUJIFILM", "SUPERIA", "100"),
+    "superia200": ("superia", "box", False, "FUJIFILM", "SUPERIA", "200"),
+    "superia400": ("superia", "box", False, "FUJIFILM", "SUPERIA", "400"),
+    "superia800": ("superia", "box", False, "FUJIFILM", "SUPERIA", "800"),
+    "superia1600": ("superia", "box", False, "FUJIFILM", "SUPERIA", "1600"),
+    "xtra800": ("superia", "box", False, "FUJIFILM", "X-TRA", "800"),
+    "superia200xpro": ("superia", "box", False, "FUJIFILM", "SUPERIA XP", "200"),
+    "reala100": ("c200", "box", False, "FUJIFILM", "REALA", "100"),
+    "pro160c": ("nps", "box", True, "FUJIFILM", "PRO", "160C"),
+    "pro400h": ("pro", "box", True, "FUJIFILM", "PRO", "400H"),
+    "pro800z": ("pro", "box", True, "FUJIFILM", "PRO", "800Z"),
+    "velvia50": ("velvia", "box", True, "FUJIFILM", "VELVIA", "50"),
+    "velvia100": ("velvia", "box", True, "FUJIFILM", "VELVIA", "100"),
+    "provia100f": ("provia", "box", True, "FUJIFILM", "PROVIA", "100F"),
+    "provia400f": ("provia", "box", True, "FUJIFILM", "PROVIA", "400F"),
+    "provia400x": ("provia", "box", True, "FUJIFILM", "PROVIA", "400X"),
+    "astia100f": ("astia", "box", True, "FUJIFILM", "ASTIA", "100F"),
+    "sensia100": ("provia", "box", False, "FUJIFILM", "SENSIA", "100"),
+    "acros100": ("acros", "box", True, "FUJIFILM", "ACROS", "100"),
+    "neopan1600": ("acros", "box", True, "FUJIFILM", "NEOPAN", "1600"),
+    "hp5": ("hp5", "box", True, "ILFORD", "HP5 PLUS", "400"),
+    "fp4": ("hp5", "box", True, "ILFORD", "FP4 PLUS", "125"),
+    "panf50": ("hp5", "box", True, "ILFORD", "PAN F PLUS", "50"),
+    "hps800": ("hp5", "box", True, "ILFORD", "HPS", "800"),
+    "delta100": ("delta", "box", True, "ILFORD", "DELTA", "100"),
+    "delta400": ("delta", "box", True, "ILFORD", "DELTA", "400"),
+    "delta3200": ("delta", "box", True, "ILFORD", "DELTA", "3200"),
+    "xp2": ("xp2", "box", True, "ILFORD", "XP2 SUPER", "400"),
+    "vista200": ("vista", "box", True, "AGFA", "VISTA", "200"),
+    "ultra100": ("agfa", "box", True, "AGFA", "ULTRA", "100"),
+    "precisa100": ("precisa", "box", True, "AGFA", "PRECISA", "100"),
+    "apx25": ("agfa", "box", True, "AGFA", "APX", "25"),
+    "apx100": ("agfa", "box", True, "AGFA", "APX", "100"),
+    "retro80s": (None, "box", True, "ROLLEI", "RETRO", "80S"),
+    "retro100": (None, "box", True, "ROLLEI", "RETRO", "100"),
+    "ortho25": (None, "box", True, "ROLLEI", "ORTHO", "25"),
+    "ir400": (None, "box", True, "ROLLEI", "INFRARED", "400"),
+    "redscale100": (None, "box", False, "LOMOGRAPHY", "REDSCALE", "100"),
+    "xproslide200": (None, "box", False, "LOMOGRAPHY", "X-PRO SLIDE", "200"),
+    "cinestill800t": ("cinemaYellow", "cine", False, "CINESTILL", "TUNGSTEN", "800T"),
+    "cinestill400t": ("cinema", "cine", False, "M-FILM", "CINE", "400T"),
+}
+
+# The 5-pixel font of GRKit's covers (artwork.rs pixel_glyph): the width of each character it has.
+PIXEL = {**{c: 3 for c in "ABCDEFGHJKLOPQRSTUVXYZ02356789+"}, "I": 1, "M": 5, "N": 4, "W": 5,
+         "1": 2, "4": 3, "-": 2, " ": 1}
+NARROW = {**PIXEL, "M": 3, "W": 3}
+
+
+def pixel_width(text, font=PIXEL):
+    """The width of a text in the pixel font, one blank column between characters; None if it has a
+    character the font does not."""
+    if any(c not in font for c in text):
+        return None
+    return sum(font[c] + 1 for c in text) - 1
 
 
 def icon(key):
-    """GRKit's film box (effects/README.md, Icons) in the colours of M-Film's canister."""
-    f = FILMS[key]
-    label = catalog.LABELS.get(key)
-    if label:
-        brand = (label["top"].split() or ["M-FILM"])[0]
-        box = {"template": "box", "brand": brand, "name": " ".join(filter(None, [label["word"], label["sub"]])),
-               "number": label["num_s"], "band": True,
-               "colors": {"body": ink(label["bg"]), "band": ink(label["band"]), "brand": ink(label["text"]),
-                          "text": ink(label["num"]), "accent": ink(label["accent"])}}
+    """GRKit's cover (effects/README.md, Icons) for the film stock."""
+    look, template, band, brand, name, number = BOXES[key]
+    if look:
+        colors = dict(zip(("band", "brand", "body", "text", "accent"), (INKS[i] for i in LOOKS[look])))
     else:
-        body, band, text = PLAIN_BOX[f["kind"]]
-        words = f["name"].split()
-        number = next((w for w in reversed(words) if any(c.isdigit() for c in w)), "")
-        box = {"template": "box", "brand": words[0], "name": " ".join(w for w in words[1:] if w != number),
-               "number": number, "band": True,
-               "colors": {"body": body, "band": band, "brand": text, "text": text, "accent": band}}
-    if not box["name"]:                 # "CineStill 800T": the number is all the name there is
-        box["name"] = box.pop("number")
-    if not box.get("number"):
-        box.pop("number", None)
+        label = catalog.LABELS[key]
+        colors = {"band": ink(label["band"]), "brand": ink(label["text"]), "body": ink(label["bg"]),
+                  "text": ink(label["num"]), "accent": ink(label["accent"])}
+    box = {"template": template, "brand": brand, "name": name, "colors": colors}
+    if number:
+        box["number"] = number
+    if template == "box":
+        box["band"] = band
     return box
+
+
+def icon_problems(key):
+    """What GRKit's cover compiler would refuse, as far as it can be told without it."""
+    box, out = icon(key), []
+    for field in ("brand", "name", "number"):
+        text = box.get(field)
+        if text is not None and not (1 <= len(text) <= 12 and text.isascii() and text.isprintable()):
+            out.append(f"{key}: cover {field} {text!r} is not 1 to 12 printable ASCII characters")
+    if "number" in box:
+        w = pixel_width(box["name"]) if pixel_width(box["name"]) and pixel_width(box["name"]) <= 40 \
+            else pixel_width(box["name"], NARROW)
+        if w is None or w > 40:
+            out.append(f"{key}: cover name {box['name']!r} is too wide for the 5-pixel font "
+                       "(GRKit then tries a 4- or 5-pixel outline; check it with grkit effects build)")
+    return out
 
 
 def grain(key):
@@ -355,6 +498,10 @@ def check(entries):
         n = e["name"]
         if not (1 <= len(n) <= 16 and n.isascii() and n.isprintable()):
             problems.append(f"{e['key']}: effect name {n!r} is not 1 to 16 printable ASCII characters")
+        if e["key"] not in BOXES:
+            problems.append(f"{e['key']}: no cover in BOXES")
+        else:
+            problems += [p for p in icon_problems(e["key"]) if "too wide" not in p]
     for s in SETS:
         count = sum(e["set"] == s for e in entries)
         if count > INSTALLED:
