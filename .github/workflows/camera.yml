@@ -67,6 +67,8 @@ jobs:
         run: python ml-dev/films/buildtest.py
       - name: Every film stock that has a reference, against it
         run: python ml-dev/films/measure.py look
+      - name: The Fujifilm port on a fake X-A2 and XF1 (ml-dev/fuji)
+        run: make -C ml-dev/fuji check
 
   camera:
     strategy:

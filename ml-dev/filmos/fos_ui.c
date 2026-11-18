@@ -251,10 +251,23 @@ void ui_status_bar(const char *title)
     }
 }
 
+/* The screens name Canon's buttons; FOS_KEYS_FUJI gives them the names printed
+ * on a Fujifilm (ml-dev/fuji): MENU/OK sets, DISP/BACK goes back, Fn is INFO */
+static const char *key_name(const char *key)
+{
+#ifdef FOS_KEYS_FUJI
+    if (!strcmp(key, "SET")) return "OK";
+    if (!strcmp(key, "MENU")) return "BACK";
+    if (!strcmp(key, "INFO")) return "FN";
+#endif
+    return key;
+}
+
 int ui_keycap(int x, int base, const char *key)
 {
     /* arrows are drawn ("<>", "^v", or "<" alone), words are written */
     int w;
+    key = key_name(key);
     if (key[0] == '<' || key[0] == '^')
     {
         w = key[1] ? 34 : 22;
@@ -272,7 +285,7 @@ int ui_keycap(int x, int base, const char *key)
 
 static int keycap_w(const char *key)
 {
-    return key[0] == '<' || key[0] == '^' ? (key[1] ? 34 : 22) : fos_text_w(&fos_font_xs, key, 16) + 14;
+    return key[0] == '<' || key[0] == '^' ? (key[1] ? 34 : 22) : fos_text_w(&fos_font_xs, key_name(key), 16) + 14;
 }
 
 void ui_hints(const struct hint *h, int n)

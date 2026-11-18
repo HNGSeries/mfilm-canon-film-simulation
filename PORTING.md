@@ -109,6 +109,10 @@ tester*, or with one of the known problems there. The closest to the EOS M are t
 M-Film builds it from a camera patch. DIGIC 6 and later (80D, 200D, EOS R …) wait for Magic
 Lantern itself, and the 7D doesn't build in Magic Lantern's current source.
 
+**Fujifilm.** A port to Fujifilm bodies over FujiHack, not Magic Lantern, is started in
+[`ml-dev/fuji/`](ml-dev/fuji/README.md): the X-A2 (firmware 1.30) first. It builds and runs on a fake
+camera on a PC; it hasn't run on a camera yet ([ADR 0002](docs/adr/0002-fujifilm-port-on-fujihack.md)).
+
 ## How to go about a port
 
 1. **Own the camera.** Every step needs trying on the body: there is no emulator that runs this.

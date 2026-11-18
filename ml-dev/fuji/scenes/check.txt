@@ -1,0 +1,12 @@
+# make check: Home, the shelf, turn it, load a roll; the keys as the X-A2 has them.
+# Once the roll is in, the film OS hands back to the camera by itself.
+open home
+1200 shot home
+1400 ok
+3000 shot shelf
+3200 dial+
+4000 dial+
+5000 shot shelf-turned
+5200 ok
+6700 shot loaded
+9000 end

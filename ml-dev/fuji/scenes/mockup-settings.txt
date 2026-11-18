@@ -1,0 +1,14 @@
+# the mockups: Settings, then the shelf's B&W films
+open home
+1200 down
+1500 down
+1800 ok
+3200 shot settings
+3400 back
+4300 up
+4600 up
+5000 ok
+6400 down
+6800 down
+9400 shot shelf-bw
+9800 end
