@@ -110,6 +110,17 @@ def grain_for(iso, kind):
     return round(amount, 4), round(0.7 + 0.11 * steps, 2)
 
 
+# The professional 400s are finer than their box speed says (#80): the grain
+# of these, amplitude and clump size, in place of grain_for's. Pro 400H just
+# above Portra 400 in films.py; the older Portra 400s a step coarser.
+GRAIN = {
+    "pro400h": (0.016, 1.0),
+    "portra400nc": (0.018, 1.05),
+    "portra400vc": (0.018, 1.05),
+    "portra400uc": (0.018, 1.05),
+}
+
+
 # The glow round highlights (halation), by eye: a camera film has a layer against it, and its glow is faint.
 # 0.3 from 0.93 up for a negative and half that for a slide or a black and white film are about what the
 # maintainer set on the five stocks tuned on the Colour Tuner (Nov 2026: 0.2 to 0.4, from 0.91 to 0.97 up).
@@ -121,7 +132,7 @@ GLOW = {
 
 
 def film(key, path, brand, name, iso, kind):
-    amount, size = grain_for(iso, kind)
+    amount, size = GRAIN.get(key) or grain_for(iso, kind)
     f = dict(
         name=f"{brand} {name}", iso=iso, kind=kind, balance=5500,
         # "photo": the tables were made by eye on finished photos, so they are fed one (lut.py, #125)
