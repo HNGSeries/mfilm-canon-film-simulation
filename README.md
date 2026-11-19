@@ -233,10 +233,13 @@ grain, halation and softness; rolls come in 36, 24 or 12 frames.
 **None of the 68 film stocks is measured against the real film yet.** 65 are in the style of their film and not measured yet. 2 (Kodak HIE Infrared, Rollei Infrared 400) are impressions of infrared film: a Canon with its infrared filter in place does not record what that film does. 1 (CineStill 400T) is M-Film's own and stands for no real film. A film stock counts as measured when its colour and tone come within the pass marks of a lab scan of a roll of the real film, shot beside a Canon: [how a film stock becomes measured](docs/paired-shot.md). [Every film stock's state →](FILMS.md)
 <!-- film-states:end -->
 
-Colour for 59 of them comes from film emulation tables by [Pat David](https://patdavid.net),
+Colour for 53 of them comes from film emulation tables by [Pat David](https://patdavid.net),
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), taken from G'MIC through the [Film-Luts](https://github.com/YahiaAngelo/Film-Luts)
-collection; the rest from M-Film's own film models ([`ml-dev/films/films.py`](ml-dev/films/films.py)). The tables are
-looks made by eye, not measurements of the films: [THIRD_PARTY.md](THIRD_PARTY.md#the-film-colour-tables-cc-by-sa-40).
+collection: looks made by eye, not measurements of the films ([THIRD_PARTY.md](THIRD_PARTY.md#the-film-colour-tables-cc-by-sa-40)).
+For 9 (Portra 160, 400 and 800, Ektar 100, Gold 200, Kodachrome 64, Pro 400H, Velvia 100, Provia 100F) it comes
+from [spektrafilm](https://github.com/andreavolpato/spektrafilm) by Andrea Volpato, CC BY-SA 4.0, which builds each film from its maker's data
+([how they compare](docs/spektrafilm.md)). The rest come from M-Film's own film models
+([`ml-dev/films/films.py`](ml-dev/films/films.py)).
 
 ---
 
@@ -383,5 +386,6 @@ M-Film is made by **HNGSeries**, on top of [Magic Lantern](https://www.magiclant
 
 This repository: GPL-2.0 ([LICENSE](LICENSE)), as the camera side builds on Magic Lantern.
 Darkrooms (the desktop program) is a separate, closed-source program under its own licence. The colour tables of
-59 films are adapted from Pat David's and are CC BY-SA 4.0, not GPL-2.0. Those, the fonts and other
+53 films are adapted from Pat David's, and those of 9 derived from spektrafilm by Andrea Volpato; both are
+CC BY-SA 4.0, not GPL-2.0. Those, the fonts and other
 parts: [THIRD_PARTY.md](THIRD_PARTY.md). Not affiliated with Canon, Kodak, Fujifilm or any film maker.

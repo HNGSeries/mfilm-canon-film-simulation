@@ -9,7 +9,7 @@ camera makes no table of its own and stops with "no colour table" if one is
 missing.
 
 A table is "FOL1", a hash of the film stock's look, then 33 x 33 x 33 RGB
-bytes over Cineon code, red changing fastest. It comes from one of three
+bytes over Cineon code, red changing fastest. It comes from one of four
 places:
 
   look  mixed from the film stock's look by the camera's own film model,
@@ -17,6 +17,11 @@ places:
   lut   baked from the film stock's LUT in films/luts/ (genfilms.bake);
         films/getluts.py fetches the Film-Luts ones, at one commit, and each
         is checked against its SHA-256 before it is baked (filmluts.py)
+  spektrafilm
+        rendered from spektrafilm's profile of the film, for the film stocks
+        it has one of (films/spektra.py did it; the tables are in films/spektra/,
+        each checked against films/spektra.sha256 before it is taken). It
+        takes the place of the film stock's LUT or look
   reference
         baked from the look built from a paired shot of the real film
         (films/buildlook.py wrote it as references/<name>/look.txt), for a
@@ -143,6 +148,19 @@ def main():
             source[key] = "look (its LUT is not fetched)"
         elif FILMS[key].get("lut"):
             source[key] = "look (its own LUT is not in films/luts/)"
+    # then from spektrafilm, for the film stocks it has a profile of: rendered once (films/spektra.py) and kept in
+    # this repository, each the one films/spektra.sha256 names
+    import spektra
+    wrong = spektra.problems()
+    if wrong:
+        sys.exit("gentables: the tables rendered from spektrafilm (films/spektra/):\n  " + "\n  ".join(wrong))
+    for i, key in enumerate(keys):
+        if key in spektra.KEYS:
+            head = b"FOL1" + struct.pack("<I", genfilms.look_hash(key, genfilms.look_bytes(FILMS[key])))
+            (out / ("LOOK%02d.LUT" % i)).write_bytes(head + spektra.body(key))
+            source[key] = "spektrafilm"
+            if key in unfetched:
+                unfetched.remove(key)
     # and from its reference, for the film stocks that are measured
     import filmshape
     for key, (name, look) in measured(a.references).items():
@@ -174,13 +192,16 @@ def main():
     index.write_text("# file, film stock, made from, SHA-256 (tools/gentables.py)\n"
                      "# \"lut\": adapted from a film emulation table by Pat David, CC BY-SA 4.0, and licensed the same\n"
                      "# (https://creativecommons.org/licenses/by-sa/4.0/). THIRD_PARTY says what was changed.\n"
+                     "# \"spektrafilm\": derived from spektrafilm by Andrea Volpato, https://github.com/andreavolpato/spektrafilm,\n"
+                     "# CC BY-SA 4.0, and licensed the same; rendered and changed by M-Film (SPEKTRAFILM_CHANGELOG.txt).\n"
                      "# \"look\": mixed from M-Film's own film model.\n"
                      "# \"reference\": built from a paired shot of the real film, which the film stock is measured against\n"
                      "# (ml-dev/references).\n" + "\n".join(lines) + "\n")
     n_lut = sum(1 for k in keys if source[k] == "lut")
     n_ref = sum(1 for k in keys if source[k].startswith("reference"))
-    print("%s: %d tables, %d from LUTs, %d from looks%s; list in %s" % (
-        a.out, len(keys), n_lut, len(keys) - n_lut - n_ref, ", %d from references" % n_ref if n_ref else "", index))
+    n_sf = sum(1 for k in keys if source[k] == "spektrafilm")
+    print("%s: %d tables, %d from LUTs, %d from spektrafilm, %d from looks%s; list in %s" % (
+        a.out, len(keys), n_lut, n_sf, len(keys) - n_lut - n_sf - n_ref, ", %d from references" % n_ref if n_ref else "", index))
 
 
 if __name__ == "__main__":

@@ -223,10 +223,12 @@ DSLR ถ่ายผ่านช่องมองกระจก ไม่ม�
 **ยังไม่มี film stock ใดใน 68 แบบที่วัดเทียบกับฟิล์มจริงแล้ว** 65 แบบเป็นลุค "ในสไตล์ของ" ฟิล์มนั้น และยังไม่ได้วัด 2 แบบ (Kodak HIE Infrared, Rollei Infrared 400) เป็นภาพจำลองความรู้สึกของฟิล์มอินฟราเรด เพราะ Canon ที่ยังมีฟิลเตอร์อินฟราเรดอยู่บันทึกสิ่งที่ฟิล์มแบบนั้นบันทึกไม่ได้ และ 1 แบบ (CineStill 400T) เป็นลุคของ M-Film เอง ไม่ได้แทนฟิล์มจริงตัวใด film stock จะนับว่าวัดแล้วเมื่อสีและโทนอยู่ใน pass mark ของสแกนจากแล็บของฟิล์มจริงม้วนหนึ่ง ที่ถ่ายคู่กับ Canon: [วิธีที่ film stock จะนับว่าวัดแล้ว](docs/paired-shot.th.md) · [สถานะของ film stock ทุกตัว](FILMS.md)
 <!-- film-states:end -->
 
-สีของฟิล์ม 59 แบบมาจากตารางจำลองฟิล์มของ [Pat David](https://patdavid.net) ซึ่งเผยแพร่ภายใต้
+สีของฟิล์ม 53 แบบมาจากตารางจำลองฟิล์มของ [Pat David](https://patdavid.net) ซึ่งเผยแพร่ภายใต้
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) โดยเอามาจาก G'MIC ผ่านชุด [Film-Luts](https://github.com/YahiaAngelo/Film-Luts)
-ที่เหลือมาจากโมเดลฟิล์มของ M-Film เอง ([`ml-dev/films/films.py`](ml-dev/films/films.py)) ตารางพวกนี้เป็นลุคที่ทำด้วยตา
-ไม่ใช่ค่าที่วัดจากฟิล์มจริง: [THIRD_PARTY.md](THIRD_PARTY.md#the-film-colour-tables-cc-by-sa-40)
+ตารางพวกนี้เป็นลุคที่ทำด้วยตา ไม่ใช่ค่าที่วัดจากฟิล์มจริง ([THIRD_PARTY.md](THIRD_PARTY.md#the-film-colour-tables-cc-by-sa-40))
+อีก 9 แบบ (Portra 160, 400, 800, Ektar 100, Gold 200, Kodachrome 64, Pro 400H, Velvia 100, Provia 100F) มาจาก
+[spektrafilm](https://github.com/andreavolpato/spektrafilm) ของ Andrea Volpato (CC BY-SA 4.0) ซึ่งสร้างฟิล์มแต่ละตัวจากข้อมูลของผู้ผลิต
+([เทียบกันอย่างไร](docs/spektrafilm.md)) ที่เหลือมาจากโมเดลฟิล์มของ M-Film เอง ([`ml-dev/films/films.py`](ml-dev/films/films.py))
 
 ---
 
@@ -366,5 +368,5 @@ Microsoft ครั้งแรกจึงมีคำเตือน Windows S
 M-Film สร้างโดย **HNGSeries** ต่อยอดจาก [Magic Lantern](https://www.magiclantern.fm/)
 
 repo นี้ใช้ GPL-2.0 ([LICENSE](LICENSE)) เพราะส่วนในกล้องต่อยอดจาก Magic Lantern
-Darkrooms (โปรแกรมบนคอม) เป็นโปรแกรมแยก ปิดซอร์ส ใช้สัญญาอนุญาตของตัวเอง ตารางสีของฟิล์ม 59 แบบดัดแปลงจากของ
-Pat David และเป็น CC BY-SA 4.0 ไม่ใช่ GPL-2.0 ตารางเหล่านี้ ฟอนต์ และส่วนอื่นๆ: [THIRD_PARTY.md](THIRD_PARTY.md) ไม่มีส่วนเกี่ยวข้องกับ Canon, Kodak, Fujifilm หรือผู้ผลิตฟิล์มรายใด
+Darkrooms (โปรแกรมบนคอม) เป็นโปรแกรมแยก ปิดซอร์ส ใช้สัญญาอนุญาตของตัวเอง ตารางสีของฟิล์ม 53 แบบดัดแปลงจากของ
+Pat David และอีก 9 แบบมาจาก spektrafilm ของ Andrea Volpato ทั้งสองเป็น CC BY-SA 4.0 ไม่ใช่ GPL-2.0 ตารางเหล่านี้ ฟอนต์ และส่วนอื่นๆ: [THIRD_PARTY.md](THIRD_PARTY.md) ไม่มีส่วนเกี่ยวข้องกับ Canon, Kodak, Fujifilm หรือผู้ผลิตฟิล์มรายใด
