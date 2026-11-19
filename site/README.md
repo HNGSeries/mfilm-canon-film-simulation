@@ -27,6 +27,26 @@ the films' colour tables. It fetches the Film-Luts LUTs once
 (`ml-dev/films/getluts.py`, about 40 MB); `MFILM_PLAIN=1` builds without them,
 for a try on a computer that can't, with those films' colour mixed from their look.
 
+## Does it still develop?
+
+`ml-dev/filmos/web/pagetest.mjs` uses the built page as a visitor does, in a
+headless browser: it loads a roll of Portra 400, shoots it and develops it, and
+fails unless every frame comes out of the darkroom with its colour table. When
+the Film-Luts tables were built, a roll of Portra 160 goes through too. CI runs
+it after every build of the page (`pages.yml`), and a page that fails it twice
+isn't published (#143).
+
+```bash
+npm install --no-save playwright && npx playwright install chromium
+```
+
+```bash
+node ml-dev/filmos/web/pagetest.mjs site
+```
+
+With Chrome or Edge already on the computer, `playwright-core` and
+`MFILM_BROWSER=chrome` (or `msedge`) do without the download.
+
 ## What to replace
 
 - **The cameras**: every camera M-Film runs on is in `js/bodies.js`, each a
