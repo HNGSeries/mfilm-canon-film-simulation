@@ -332,7 +332,7 @@ M-Film ทำบน EOS M และใช้ได้จริงบนรุ่
 | **Mac ชิป Intel** | `Darkrooms-macos-intel.zip` | แตกไฟล์ ลากไปไว้ใน Applications แล้วเปิด ครั้งแรกไปที่ *System Settings → Privacy & Security → Open Anyway* (macOS 14 ลงไป: คลิกขวา → Open) |
 | **Mac ชิป Apple silicon** | `Darkrooms-macos-apple-silicon.zip` | เหมือนกัน |
 
-โหลดได้จาก **[หน้าของ Darkrooms](https://github.com/HNGSeries/darkrooms-app/releases/latest)** (repo ของตัวเอง ไฟล์จะได้ไม่ปนกับของกล้อง) ขนาดประมาณ 30–50 MB โปรแกรมยังไม่ได้ sign กับ Apple หรือ
+โหลดได้จาก **[หน้าของ Darkrooms](https://github.com/HNGSeries/Darkrooms-app/releases/latest)** (repo ของตัวเอง ไฟล์จะได้ไม่ปนกับของกล้อง) ขนาดประมาณ 30–50 MB โปรแกรมยังไม่ได้ sign กับ Apple หรือ
 Microsoft ครั้งแรกจึงมีคำเตือน Windows Security เคยมองว่า Darkrooms 0.1.1 เป็นโทรจัน (`Trojan:Win32/Bearfoos.B!ml`)
 ซึ่งเป็นการเดาของโมเดล machine learning และแจ้ง Microsoft ไปแล้วว่าผิด ([#152](../../issues/152))
 

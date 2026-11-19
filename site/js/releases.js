@@ -3,7 +3,7 @@
 // and those releases stay there, so M-Film's are still picked by tag. Kept for an hour in sessionStorage.
 
 export const MFILM = 'HNGSeries/mfilm-canon-film-simulation';
-export const DARKROOMS = 'HNGSeries/darkrooms-app';
+export const DARKROOMS = 'HNGSeries/Darkrooms-app';
 const lists = {};
 
 async function releases(repo) {
