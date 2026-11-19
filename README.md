@@ -290,13 +290,13 @@ roll you shot with its film, and develops them at full resolution.
 |---|---|---|
 | Rolls a day | 1, of up to 36 frames (the same roll again that day doesn't count) | as many as you like |
 | Every film, full size, EXIF, contact sheets | ✓ | ✓ |
-| Many rolls at once on every core | | ✓ |
+| *Fast*: every core at once | | ✓ |
 | Price | free, with a Google account | **US$2.99 a month** or **US$14.99 once** (checkout shows your currency), updates included |
 
 The camera's own darkroom stays free and unlimited. Darkrooms goes with your **Google account**: no key to type in or keep.
 Click the badge at the top right → *Sign in with Google*, then *Get it monthly* or *Get it for life*. After you pay,
-Darkrooms switches to Full by itself within a few seconds. One account works on **two computers** at a time
-(sign in on the other one with the same Google account). Cancel the monthly plan any time in the program
+Darkrooms switches to Full by itself within a few seconds. One Google account works on **two computers** at a time, Free or Full
+(sign in on the other one with the same account). Cancel the monthly plan any time in the program
 (*Manage the subscription*): it stays on until the end of the month paid for.
 [Privacy](https://darkrooms-licence.suphalapruksasathit.workers.dev/privacy): your pictures never leave your computer.
 
