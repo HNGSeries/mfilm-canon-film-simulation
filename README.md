@@ -302,18 +302,25 @@ Darkrooms switches to Full by itself within a few seconds. One Google account wo
 
 ### Download
 
-| Your computer | Get | Open it |
-|---|---|---|
-| **Windows 10 / 11** | `Darkrooms-windows-x64.zip` | Unzip, open the `Darkrooms` folder, run `Darkrooms.exe` (the orange icon: Windows often shows it as just `Darkrooms`, without `.exe`). If Windows warns: *More info* → *Run anyway*. |
-| **Mac with Intel** | `Darkrooms-macos-intel.zip` | Unzip, drag to Applications and open it. The first time: *System Settings → Privacy & Security → Open Anyway* (macOS 14 and older: right-click → Open). |
-| **Mac with Apple silicon** | `Darkrooms-macos-apple-silicon.zip` | Same. |
+From **[Darkrooms' own page](https://github.com/HNGSeries/Darkrooms-app/releases/latest)**, its own repository, so its
+downloads don't mix with the camera's.
 
-From **[Darkrooms' own page](https://github.com/HNGSeries/Darkrooms-app/releases/latest)** (its own repository, so its downloads don't mix with the camera's). About 30–50 MB. The program isn't signed with Apple or
-Microsoft yet, hence the warning the first time. Windows Security has called Darkrooms 0.1.1 a trojan
+| Your computer | File | How to open it |
+|---|---|---|
+| **Windows 10 / 11** | `Darkrooms-windows-x64.zip` | Unzip, open the `Darkrooms` folder, run `Darkrooms.exe` (the orange icon: Windows often shows it as just `Darkrooms`, without `.exe`). |
+| **Mac with Apple silicon** (M1 and later) | `Darkrooms-macos-apple-silicon.zip` | Unzip, drag `Darkrooms.app` to Applications and open it. |
+| **Mac with Intel** | `Darkrooms-macos-intel.zip` | Same. |
+
+About 45 MB for Windows and 30 MB for a Mac.
+
+**The first time it opens.** Darkrooms isn't signed with Microsoft or Apple yet, so your computer asks first.
+**Windows:** *More info* → *Run anyway*. **Mac:** *System Settings → Privacy & Security*, scroll down, *Open Anyway*
+(macOS 14 and older: right-click the app → *Open*); if it still won't open,
+`xattr -dr com.apple.quarantine "/Applications/Darkrooms.app"`. Windows Security has called Darkrooms 0.1.1 a trojan
 (`Trojan:Win32/Bearfoos.B!ml`), a guess of its machine-learning model that has been reported to Microsoft as wrong ([#152](../../issues/152)).
 
-From 0.2.0 on, Darkrooms updates itself: when a new version is out it says so at the top, shows what's new, and
-installs it with one click. Keep it somewhere you can write to (on a Mac, in Applications).
+**It updates itself.** When a new version is out it says so at the top, shows what's new, and installs it with one
+click. Keep it somewhere you can write to (on a Mac, in Applications).
 
 ---
 

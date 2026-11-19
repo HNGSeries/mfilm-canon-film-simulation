@@ -292,17 +292,23 @@ M-Film ทำบน EOS M และใช้ได้จริงบนรุ่
 
 ### ดาวน์โหลด
 
+โหลดได้จาก **[หน้าของ Darkrooms](https://github.com/HNGSeries/Darkrooms-app/releases/latest)** (repo ของตัวเอง ไฟล์จะได้ไม่ปนกับของกล้อง)
+
 | คอมของคุณ | ไฟล์ | เปิดยังไง |
 |---|---|---|
-| **Windows 10 / 11** | `Darkrooms-windows-x64.zip` | แตกไฟล์ เปิดโฟลเดอร์ `Darkrooms` แล้วเปิด `Darkrooms.exe` (ไอคอนสีส้ม Windows มักแสดงชื่อแค่ `Darkrooms` ไม่มี `.exe`) ถ้า Windows เตือน: *More info* → *Run anyway* |
-| **Mac ชิป Intel** | `Darkrooms-macos-intel.zip` | แตกไฟล์ ลากไปไว้ใน Applications แล้วเปิด ครั้งแรกไปที่ *System Settings → Privacy & Security → Open Anyway* (macOS 14 ลงไป: คลิกขวา → Open) |
-| **Mac ชิป Apple silicon** | `Darkrooms-macos-apple-silicon.zip` | เหมือนกัน |
+| **Windows 10 / 11** | `Darkrooms-windows-x64.zip` | แตกไฟล์ เปิดโฟลเดอร์ `Darkrooms` แล้วเปิด `Darkrooms.exe` (ไอคอนสีส้ม Windows มักแสดงชื่อแค่ `Darkrooms` ไม่มี `.exe`) |
+| **Mac ชิป Apple silicon** (M1 ขึ้นไป) | `Darkrooms-macos-apple-silicon.zip` | แตกไฟล์ ลาก `Darkrooms.app` ไปไว้ใน Applications แล้วเปิด |
+| **Mac ชิป Intel** | `Darkrooms-macos-intel.zip` | เหมือนกัน |
 
-โหลดได้จาก **[หน้าของ Darkrooms](https://github.com/HNGSeries/Darkrooms-app/releases/latest)** (repo ของตัวเอง ไฟล์จะได้ไม่ปนกับของกล้อง) ขนาดประมาณ 30–50 MB โปรแกรมยังไม่ได้ sign กับ Apple หรือ
-Microsoft ครั้งแรกจึงมีคำเตือน Windows Security เคยมองว่า Darkrooms 0.1.1 เป็นโทรจัน (`Trojan:Win32/Bearfoos.B!ml`)
+ขนาดประมาณ 45 MB สำหรับ Windows และ 30 MB สำหรับ Mac
+
+**ครั้งแรกที่เปิด** Darkrooms ยังไม่ได้ sign กับ Microsoft หรือ Apple คอมจึงถามก่อน
+**Windows:** *More info* → *Run anyway* **Mac:** *System Settings → Privacy & Security* เลื่อนลงไปกด *Open Anyway*
+(macOS 14 ลงไป: คลิกขวาที่โปรแกรม → *Open*) ถ้ายังเปิดไม่ได้ ใช้ `xattr -dr com.apple.quarantine "/Applications/Darkrooms.app"`
+Windows Security เคยมองว่า Darkrooms 0.1.1 เป็นโทรจัน (`Trojan:Win32/Bearfoos.B!ml`)
 ซึ่งเป็นการเดาของโมเดล machine learning และแจ้ง Microsoft ไปแล้วว่าผิด ([#152](../../issues/152))
 
-ตั้งแต่ 0.2.0 Darkrooms อัปเดตตัวเอง: มีเวอร์ชันใหม่จะขึ้นบอกที่แถบบน กดดูได้ว่ามีอะไรใหม่ แล้วกดครั้งเดียวก็ติดตั้ง
+**อัปเดตตัวเอง** มีเวอร์ชันใหม่จะขึ้นบอกที่แถบบน กดดูได้ว่ามีอะไรใหม่ แล้วกดครั้งเดียวก็ติดตั้ง
 เก็บโปรแกรมไว้ในที่ที่เขียนได้ (Mac: ใน Applications)
 
 ---
