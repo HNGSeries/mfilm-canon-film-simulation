@@ -73,24 +73,13 @@ the frame will get: with a slow film, or an adapted lens stopped down, it can be
 
 ### New in 0.2
 
-**0.2.3** is about colour, on every camera:
-
-- A roll comes out the same colour in the camera and in **Darkrooms 0.2.0**: the two develop the same way and
-  read the same colour tables ([#132](../../issues/132); [how the darkroom develops](ml-dev/DEVELOPING.md)).
-  From this version on, Darkrooms updates itself.
-- The darkroom develops a frame with the white balance the camera was on, and cuts it where that frame's own
-  samples clip: blown highlights are no longer pink.
-- The 59 films whose colour comes from Pat David's tables are fed a finished photo's tone, as those tables
-  expect. Every colour film changes; pictures will not match the ones 0.2.1 developed.
-- The glow round highlights is fainter on every film, and a highlight no longer goes red from its own light.
-- The four cinema print films left the shelf: 68 film stocks.
-- Every film stock says whether it is measured against the real film or only in its style
-  ([FILMS.md](FILMS.md)). None is measured yet: [how a paired shot is made](docs/paired-shot.md).
+**0.2.3** is about colour, on every camera. A roll comes out the same colour in the camera and in
+**Darkrooms**: the two develop the same way and read the same colour tables. Blown highlights are no longer
+pink, and every colour film changes, so pictures won't match the ones 0.2.1 developed. The four cinema print
+films left the shelf: if one is loaded, rewind it before you update.
 
 **Copy the whole `ML` folder of the zip to the card**, not only `autoexec.bin`: the films' colour tables are
 files in `ML/DARKROOM` now, and without them the darkroom stops with "no colour table".
-
-**0.2.1** adds the [Canon EOS 1300D](TESTING.md#canon-eos-1300d), for testers. Nothing changes on the other cameras: they don't need to update.
 
 <table>
 <tr>
@@ -111,39 +100,8 @@ files in `ML/DARKROOM` now, and without them the darkroom stops with "no colour 
 </tr>
 </table>
 
-- **Print sizes and zoom**: [how big the prints are](#how-big-the-prints-are).
-- **A quieter darkroom.** The developing screen keeps the safelight, the tray and the paper, and draws again
-  only when a print is done: the camera's one processor develops instead of animating. INFO dims the screen
-  while it works.
-- **The camera's white balance.** The darkroom develops each frame with the white balance the camera was on
-  when it was shot. Loading a roll sets it to the light the film is made for: 5500 K, or 3200 K for a tungsten
-  film. Change it by hand and the print follows. Daylight pictures come out cooler than they used to: the old
-  fixed balance was too warm.
-- **The 59 films whose colour comes from Film-Luts have more contrast and darker shadows.** Their tables were
-  made by eye on finished photos, and the darkroom was giving them a flatter picture than any camera's own
-  JPEG: about 88 % of its contrast. They now get the tone of a finished photo (Canon's Standard picture
-  style), with the middle tones where they were. The eight films with M-Film's own model have not changed.
-- **Four films have left the shelf:** the cinema print films Kodak Vision 2383 and 2393 and Fujifilm Eterna 3510
-  and 3513. Their colour tables came with no licence, they were made for a film scan and not for a photo, and a
-  print film is never loaded in a camera, so they could not be checked against the real thing. A roll already
-  shot on one is listed in the darkroom under its name and is not developed as some other film; its RAWs stay
-  on the card. If one of them is loaded when you update, rewind it first.
-- **Date stamp** (*Settings → Date stamp*): the day in the corner of each print, in orange, like a compact's data back.
-- **The battery** beside the clock on every page and in the viewfinder: in percent on the 60D, 6D, 70D,
-  5D Mark II and 5D Mark III, whose battery reports it; as an icon with three levels on the others, where
-  Canon knows no more.
-- **The films you loaded last** have a shelf of their own, where the film shelf opens: the same film again is one press.
-- **Settings** is one page (viewfinder, exposure simulation, print size, date stamp, film mode); the rest is
-  under *Manual lens* and *Advanced*. The wind lever no longer locks the shutter: it reminds, or is off.
-- **Menus that are simply there.** Going into a menu and back no longer slides; the fade between the shelf,
-  the darkroom and the prints is shorter, and *Advanced → Page fade* turns it off.
-- **The readout lights when you turn a dial**, not only on a half-press. On cameras with two dials (50D, 60D,
-  70D, 5D Mark II, 5D Mark III, 6D) the top one changes shelves on the film shelf and the rear one picks the film.
-- **EOS M: *Advanced → Hide Canon's graphics*** keeps Canon's exposure scale and icons off the viewfinder
-  (its focus frame goes too, so it is off unless you turn it on).
-- **One build.** The film OS now loads as a module after the camera starts on every camera, so Magic Lantern
-  takes no more memory at power on than it does alone ([why](ml-dev/MEMORY.md)). On the cameras that had it
-  built in until 0.1.6 (EOS M, 6D, 5D Mark III, 60D, 500D, 50D, 5D Mark II) this is new: see [Cameras](#cameras).
+Also in 0.2: a date stamp, the camera's own white balance, a shelf of the films you loaded last, Settings on
+one page, and the film OS as a module on every camera. **Everything, version by version: [CHANGELOG.md](CHANGELOG.md).**
 
 ### How big the prints are
 
@@ -253,27 +211,27 @@ still wrong. If you have one marked *needs a tester*, you can help: [TESTING.md]
 | Camera | Canon firmware | Status | Notes | Card files |
 |---|---|---|---|---|
 | Canon EOS M | 2.0.2 | ✅ **Works** | From 0.2 the film OS loads as a module here too (as on the 550D and 650D), and it starts: tried with 0.2.3, rolls shot and developed in the camera. 0.2 can keep Canon's exposure scale off the viewfinder: *Advanced → Hide Canon's graphics* ([#67](../../issues/67)). | `M-Film-<version>-camera-EOSM.202.zip` |
-| Canon EOS 5D Mark II | 2.1.2 | ✅ **Works** | Works since 0.1.3, whose smaller build no longer hangs at power on and fixes the pink prints ([#18](../../issues/18), [#32](../../issues/32)); another owner reports no hang either ([#157](../../issues/157)). From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-<version>-camera-5D2.212.zip` |
-| Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | ✅ **Works** | Works since 0.1.3: starts and shoots, and the in-camera darkroom finds the RAWs and develops whole rolls ([#31](../../issues/31)). From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-<version>-camera-5D3.113.zip` |
-| Canon EOS 5D Mark III (firmware 1.2.3) | 1.2.3 | ✅ **Works** | Works since 0.1.3: starts and shoots ([#16](../../issues/16), [#37](../../issues/37)). The darkroom couldn't find the RAWs before 0.1.3; the fix is the same on both firmwares, and a 5D Mark III developed whole rolls with it ([#31](../../issues/31)). From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-<version>-camera-5D3.123.zip` |
+| Canon EOS 5D Mark II | 2.1.2 | ✅ **Works** | Works since 0.1.3, whose smaller build no longer hangs at power on and fixes the pink prints ([#18](../../issues/18), [#32](../../issues/32)); another owner reports no hang either ([#157](../../issues/157)). 0.2 not confirmed here yet: say if it starts. | `M-Film-<version>-camera-5D2.212.zip` |
+| Canon EOS 5D Mark III (firmware 1.1.3) | 1.1.3 | ✅ **Works** | Works since 0.1.3: starts and shoots, and the in-camera darkroom finds the RAWs and develops whole rolls ([#31](../../issues/31)). 0.2 not confirmed here yet: say if it starts. | `M-Film-<version>-camera-5D3.113.zip` |
+| Canon EOS 5D Mark III (firmware 1.2.3) | 1.2.3 | ✅ **Works** | Works since 0.1.3: starts and shoots ([#16](../../issues/16), [#37](../../issues/37)). The darkroom couldn't find the RAWs before 0.1.3; the fix is the same on both firmwares, and a 5D Mark III developed whole rolls with it ([#31](../../issues/31)). 0.2 not confirmed here yet: say if it starts. | `M-Film-<version>-camera-5D3.123.zip` |
 | Canon EOS 6D | 1.1.6 | ✅ **Works** | Works since 0.1.2 ([#17](../../issues/17), [#22](../../issues/22)). From 0.2 the film OS loads as a module here too (as on the 550D and 650D), and it starts: tried with 0.2.1, the film shelf with both dials, and the darkroom's bigger prints ([#17](../../issues/17)). Canon's own screen still shows while a frame is being saved to the card, then M-Film's comes back ([#17](../../issues/17)). 0.2 lights the readout when a dial is turned ([#23](../../issues/23)): say if it still stays dark. | `M-Film-<version>-camera-6D.116.zip` |
-| Canon EOS 50D | 1.0.9 | ✅ **Works** | Works ([#43](../../issues/43)). 0.1.5 repaints the plate when Canon draws over it, but a slight flicker may remain, as on the 500D; 0.1.6 puts the plate together off-screen and puts back only what Canon drew over: reports wanted in [#64](../../issues/64). From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-<version>-camera-50D.109.zip` |
-| Canon EOS 60D | 1.1.1 | ✅ **Works** | Works since 0.1.3 ([#25](../../issues/25)). 0.1.5: Screen orientation for a broken hinge switch ([#49](../../issues/49)). From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-<version>-camera-60D.111.zip` |
+| Canon EOS 50D | 1.0.9 | ✅ **Works** | Works ([#43](../../issues/43)). 0.1.5 repaints the plate when Canon draws over it, but a slight flicker may remain, as on the 500D; 0.1.6 puts the plate together off-screen and puts back only what Canon drew over: reports wanted in [#64](../../issues/64). 0.2 not confirmed here yet: say if it starts. | `M-Film-<version>-camera-50D.109.zip` |
+| Canon EOS 60D | 1.1.1 | ✅ **Works** | Works since 0.1.3 ([#25](../../issues/25)). 0.1.5: Screen orientation for a broken hinge switch ([#49](../../issues/49)). 0.2 not confirmed here yet: say if it starts. | `M-Film-<version>-camera-60D.111.zip` |
 | Canon EOS 70D | 1.1.2 | ⚠️ Tried, known problem | 0.1.5 works on a tester's 70D, with the film OS as a module ([#40](../../issues/40)); on another, Magic Lantern installs but the camera then starts Canon's own firmware ([#58](../../issues/58)): more reports wanted. | `M-Film-<version>-camera-70D.112.zip` |
 | Canon EOS 100D / Rebel SL1 / Kiss X7 | 1.0.1 | ✅ **Works** | Works, the film OS as a module since 0.1.5 ([#48](../../issues/48)). 0.1.6 as first released (8 Nov) flickered and took no buttons: fixed in the zips rebuilt on 9 Nov and in 0.2, and its tester says it works again ([#73](../../issues/73)). | `M-Film-<version>-camera-100D.101.zip` |
-| Canon EOS 500D / Rebel T1i / Kiss X3 | 1.1.1 | ✅ **Works** | Works ([#44](../../issues/44)). 0.1.5 repaints the plate when Canon draws over it, but a slight flicker remains; 0.1.6 puts the plate together off-screen and puts back only what Canon drew over: does it still flicker? ([#64](../../issues/64)) From 0.2 the film OS loads as a module here too (as on the 550D and 650D): not confirmed on this camera yet, say if it starts. | `M-Film-<version>-camera-500D.111.zip` |
+| Canon EOS 500D / Rebel T1i / Kiss X3 | 1.1.1 | ✅ **Works** | Works ([#44](../../issues/44)). 0.1.5 repaints the plate when Canon draws over it, but a slight flicker remains; 0.1.6 puts the plate together off-screen and puts back only what Canon drew over: does it still flicker? ([#64](../../issues/64)) 0.2 not confirmed here yet: say if it starts. | `M-Film-<version>-camera-500D.111.zip` |
 | Canon EOS 550D / Rebel T2i / Kiss X4 | 1.0.9 | ✅ **Works** | Works since 0.1.5, the film OS as a module, darkroom included ([#48](../../issues/48), [#50](../../issues/50)). | `M-Film-<version>-camera-550D.109.zip` |
 | Canon EOS 600D / Rebel T3i / Kiss X5 | 1.0.2 | ✅ **Works** | Starts and shoots since 0.1.5, the film OS as a module ([#46](../../issues/46)). On a tester's 600D the in-camera darkroom develops at all three sizes, Large at about a minute a frame, and every viewfinder HUD draws in LiveView ([#153](../../issues/153)). Shoot with Image quality RAW. | `M-Film-<version>-camera-600D.102.zip` |
 | Canon EOS 650D / Rebel T4i / Kiss X6i | 1.0.4 | ✅ **Works** | Works with the film OS as a module, darkroom included ([#54](../../issues/54)). From 0.1.3 to 0.1.5 the plain zip came without the darkroom (with it built in, the 650D doesn't start: [#34](../../issues/34)): in 0.1.5, take the `-module.zip`. | `M-Film-<version>-camera-650D.104.zip` |
 | Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | ⚠️ Tried, known problem | 0.1.5's module build works on a tester's 700D, darkroom included ([#19](../../issues/19)), but M-Film's and Canon's menus still glitch over each other; 0.1.6 holds Canon's screen as the film OS opens, and as it closes back to the HUD: reports wanted. From 0.1.3 to 0.1.5 the plain zip came without the darkroom: in 0.1.5, take the `-module.zip`. | `M-Film-<version>-camera-700D.115.zip` |
 | Canon EOS 1100D / Rebel T3 / Kiss X50 | 1.0.5 | ✅ **Works** | Works on testers' 1100Ds ([#81](../../issues/81), [#109](../../issues/109)): shooting, the frame count in LiveView (the optical viewfinder has nowhere to show one) and the in-camera darkroom at all three sizes, at about 11, 24 and 37 seconds a frame for Small, Medium and Large. Canon's newest firmware for it is 1.0.6, and M-Film needs 1.0.5: on 1.0.6, go back with Canon's 1.0.5 updater first ([#81](../../issues/81)), or *Firmware ver.* → update can stay on *Loading* ([TESTING.md](TESTING.md#if-firmware-ver--update-stays-on-loading)). | `M-Film-<version>-camera-1100D.105.zip` |
-| Canon EOS 1300D / Rebel T6 / Kiss X80 | 1.1.0 | 🧪 Builds, needs a tester | New in 0.2.1, on Magic Lantern's own 1300D port, which is new and experimental. Installed with mlinstall over USB, not a firmware update ([TESTING.md](TESTING.md#canon-eos-1300d)). Loading a roll doesn't set ISO, white balance or picture style here: Magic Lantern can't change Canon's settings on the 1300D yet, so the look comes when the roll is developed. Set the camera's white balance to Daylight yourself (Tungsten for a tungsten film): the darkroom develops with the white balance the camera was on. Canon's firmware 1.1.0 comes in two kinds: if the camera hangs at power on, take the battery out and put the old card back. The first tester's 1300D froze at power on with 0.2.1 (0.2.3 still has the bug): Magic Lantern's 1300D port asked for a lock it hadn't made yet ([#85](../../issues/85)). Their fix is in 0.2.4, and with it the film shelf, rolls in the viewfinder and LiveView, and the in-camera darkroom all worked on their camera. Use 0.2.4 or later, and say if it works on yours. | `M-Film-<version>-camera-1300D.110.zip` |
+| Canon EOS 1300D / Rebel T6 / Kiss X80 | 1.1.0 | 🧪 Builds, needs a tester | New in 0.2.1, on Magic Lantern's own 1300D port, which is new and experimental. Installed with mlinstall over USB, not a firmware update ([TESTING.md](TESTING.md#canon-eos-1300d)). Loading a roll doesn't set ISO, white balance or picture style here: Magic Lantern can't change Canon's settings on the 1300D yet, so the look comes when the roll is developed. Set the camera's white balance to Daylight yourself (Tungsten for a tungsten film): the darkroom develops with the white balance the camera was on. Canon's firmware 1.1.0 comes in two kinds: if the camera hangs at power on, take the battery out and put the old card back. The first tester's 1300D froze at power on with 0.2.1 (0.2.3 still has the bug): Magic Lantern's 1300D port asked for a lock it hadn't made yet ([#85](../../issues/85)). Their fix is on main and goes out with 0.2.4, which isn't released yet: with it the film shelf, rolls in the viewfinder and LiveView, and the in-camera darkroom all worked on their camera. Until 0.2.4 is out, the 1300D zip in the newest release still freezes at power on; once it is, take 0.2.4 or later and say if it works on yours. | `M-Film-<version>-camera-1300D.110.zip` |
 
 **Not yet:** 5D Mark IV, 5DS R, 6D Mark II, 7D Mark II, 77D, 80D, 200D, 750D, 850D, M50, R, R5, R6, RP, SX70 HS, SX740 HS (Magic Lantern itself is still experimental on these) · 7D (Magic Lantern's current source doesn't build it) · 800D (Magic Lantern has no port for it yet).
 <!-- cameras:end -->
 
-✅ tried on the camera and works · ⚠️ tried, with a problem · 🧪 builds; waiting for someone to try it. From 0.2 the film OS is a module on every camera ([why](ml-dev/MEMORY.md)): one zip a camera. The card files are in each
-[release](../../releases/latest). The list lives in [`ml-dev/cameras.txt`](ml-dev/cameras.txt); porting
+✅ tried on the camera and works · ⚠️ tried, with a problem · 🧪 builds; waiting for someone to try it. From 0.2 the film OS is a module on every camera ([why](ml-dev/MEMORY.md)): one zip a camera. *0.2 not confirmed here yet*: the camera worked up to 0.1.6, with the film OS built in, and nobody has said yet whether 0.2's module starts on it. The card files are in each
+[release](../../releases/latest). Up to 0.2.3 a zip's name has no version in it: `M-Film-camera-EOSM.202.zip`. The list lives in [`ml-dev/cameras.txt`](ml-dev/cameras.txt); porting
 notes in [PORTING.md](PORTING.md).
 
 ### Putting it on the camera
@@ -332,13 +290,13 @@ roll you shot with its film, and develops them at full resolution.
 |---|---|---|
 | Rolls a day | 1, of up to 36 frames (the same roll again that day doesn't count) | as many as you like |
 | Every film, full size, EXIF, contact sheets | ✓ | ✓ |
-| Many rolls at once on every core | | ✓ |
+| *Fast*: every core at once | | ✓ |
 | Price | free, with a Google account | **US$2.99 a month** or **US$14.99 once** (checkout shows your currency), updates included |
 
 The camera's own darkroom stays free and unlimited. Darkrooms goes with your **Google account**: no key to type in or keep.
 Click the badge at the top right → *Sign in with Google*, then *Get it monthly* or *Get it for life*. After you pay,
-Darkrooms switches to Full by itself within a few seconds. One account works on **two computers** at a time
-(sign in on the other one with the same Google account). Cancel the monthly plan any time in the program
+Darkrooms switches to Full by itself within a few seconds. One Google account works on **two computers** at a time, Free or Full
+(sign in on the other one with the same account). Cancel the monthly plan any time in the program
 (*Manage the subscription*): it stays on until the end of the month paid for.
 [Privacy](https://darkrooms-licence.suphalapruksasathit.workers.dev/privacy): your pictures never leave your computer.
 
