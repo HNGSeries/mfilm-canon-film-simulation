@@ -347,7 +347,7 @@ Darkrooms switches to Full by itself within a few seconds. One account works on 
 | **Mac with Intel** | `Darkrooms-macos-intel.zip` | Unzip, drag to Applications and open it. The first time: *System Settings → Privacy & Security → Open Anyway* (macOS 14 and older: right-click → Open). |
 | **Mac with Apple silicon** | `Darkrooms-macos-apple-silicon.zip` | Same. |
 
-From the **[Darkrooms releases](../../releases?q=Darkrooms&expanded=true)** (the newest is at the top). About 30–50 MB. The program isn't signed with Apple or
+From **[Darkrooms' own page](https://github.com/HNGSeries/darkrooms-app/releases/latest)** (its own repository, so its downloads don't mix with the camera's). About 30–50 MB. The program isn't signed with Apple or
 Microsoft yet, hence the warning the first time. Windows Security has called Darkrooms 0.1.1 a trojan
 (`Trojan:Win32/Bearfoos.B!ml`), a guess of its machine-learning model that has been reported to Microsoft as wrong ([#152](../../issues/152)).
 

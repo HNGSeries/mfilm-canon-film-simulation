@@ -3,7 +3,7 @@
 // cameras.txt; and Darkrooms' download links, from the newest Darkrooms release.
 
 import { T, currentLang as lang } from './i18n.js';
-import { latestRelease } from './releases.js';
+import { latestRelease, DARKROOMS } from './releases.js';
 
 const REPO = 'https://github.com/HNGSeries/mfilm-canon-film-simulation';
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -91,7 +91,7 @@ function drawCameras() {
 // ---------------------------------------------------------------- Darkrooms
 
 async function darkrooms() {
-  const r = await latestRelease((tag) => tag.startsWith('app-v'));
+  const r = await latestRelease((tag) => tag.startsWith('app-v'), DARKROOMS);
   if (!r) return;
   for (const a of document.querySelectorAll('#dr-links [data-os]')) {
     const asset = r.assets.find((x) => x.name.includes(a.dataset.os) && x.name.endsWith('.zip'));

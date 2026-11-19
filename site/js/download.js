@@ -30,8 +30,8 @@ const REPO = 'https://github.com/HNGSeries/mfilm-canon-film-simulation';
 const DONATE = 'https://darkrooms-licence.suphalapruksasathit.workers.dev/v1/donate';
 // the Stripe Payment Link that was there before (any amount, typed on Stripe's page): when /v1/donate can't answer
 const COFFEE = 'https://buy.stripe.com/7sY14p8d93QE5Ny5M58so02';
-// the newest M-Film release (tags v*): Darkrooms' (app-v*) are in the same repository, and either can be
-// GitHub's "latest". Until GitHub answers, or if it doesn't, "latest" it is.
+// the newest M-Film release (tags v*): Darkrooms' older ones (app-v*, up to 0.2.2) are in the same
+// repository too, so the tag is checked. Until GitHub answers, or if it doesn't, "latest" it is.
 // The zip's name carries the release's version (M-Film-0.2.4-camera-<platform>.zip), so the link is
 // taken from the release's own list of files. Until GitHub answers, or if it doesn't, the release page.
 let camRelease = null;
