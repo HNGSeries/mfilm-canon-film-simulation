@@ -10,6 +10,16 @@
 <script type="module" src="js/install.js"></script>
 </head>
 <body class="guide-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.8l1.4-2h6.6l1.4 2h2.8A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><path d="M7 3h7.5L19 7.5V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M9.5 3v4M12.5 3v4M15.5 4.5V7"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4.5" y="5" width="15" height="10.5" rx="1"/><path d="M2.5 19h19"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 4.5a4 4 0 0 0-4.9 5.2L4 15.3a1.8 1.8 0 0 0 2.6 2.6l5.6-5.6a4 4 0 0 0 5.2-4.9l-2.5 2.5-2.3-.6-.6-2.3z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5.5M12 16.5h.01"/></symbol>
+</svg>
 
 <header class="top">
   <a class="brand" href="./"><img src="img/mfilm.png" alt="" width="28" height="28"> M·FILM</a>
@@ -35,10 +45,10 @@
   <section class="ig-need">
     <h2 data-i18n="ig.need.t">What you need</h2>
     <ul class="need">
-      <li><b>📷</b><span data-i18n="ig.need.1">Your camera, with a <b>fully charged battery</b></span></li>
-      <li><b>💾</b><span data-i18n="ig.need.2">An SD card (a CF card on the 5D Mark II and 50D), <b>32 GB or smaller</b> is best</span></li>
-      <li><b>💻</b><span data-i18n="ig.need.3">A computer with a card reader (Windows or Mac)</span></li>
-      <li><b>⏱</b><span data-i18n="ig.need.4">About 15 minutes, not in the middle of a shoot</span></li>
+      <li><svg class="i"><use href="#i-camera"/></svg><span data-i18n="ig.need.1">Your camera, with a <b>fully charged battery</b></span></li>
+      <li><svg class="i"><use href="#i-card"/></svg><span data-i18n="ig.need.2">An SD card (a CF card on the 5D Mark II and 50D), <b>32 GB or smaller</b> is best</span></li>
+      <li><svg class="i"><use href="#i-laptop"/></svg><span data-i18n="ig.need.3">A computer with a card reader (Windows or Mac)</span></li>
+      <li><svg class="i"><use href="#i-clock"/></svg><span data-i18n="ig.need.4">About 15 minutes, not in the middle of a shoot</span></li>
     </ul>
   </section>
 
@@ -46,13 +56,17 @@
   <div class="ig-progress" id="ig-progress" hidden>
     <span class="ig-count" id="ig-count"></span>
     <div class="ig-dots" id="ig-dots"></div>
+    <div class="ig-nav-top">
+      <button class="btn ghost small" type="button" id="ig-back" data-go="back" data-i18n="ig.back">← Back</button>
+      <button class="btn small" type="button" id="ig-next" data-go="next">Next →</button>
+    </div>
   </div>
 
   <ol class="ig-steps">
     <li id="s1">
       <h3 data-i18n="ig.1.t">Check the camera's Canon firmware</h3>
       <p data-i18n="ig.1.d">M-Film is made for one exact version of Canon's software. Turn the camera on and look:</p>
-      <div class="path"><span>MENU</span><i>→</i><span data-i18n="ig.1.p1">the last 🔧 settings tab</span><i>→</i><span>Firmware ver.</span></div>
+      <div class="path"><span>MENU</span><i>→</i><span class="has-i"><svg class="i" aria-hidden="true"><use href="#i-wrench"/></svg><span data-i18n="ig.1.p1">the last settings tab</span></span><i>→</i><span>Firmware ver.</span></div>
       <div class="need-fw"><span data-i18n="ig.1.must">It must say</span> <b id="ig-fw">2.0.2</b></div>
       <p class="tip" data-i18n="ig.1.tip">Different? Update the camera to exactly that version first, from Canon's support site for your camera. A newer or older one won't work.</p>
     </li>
@@ -90,19 +104,19 @@
           <button class="btn ghost" type="button" id="ig-e-pick" data-i18n="ig.e.pick">Choose the card…</button>
           <button class="btn" type="button" id="ig-e-go" disabled data-i18n="ig.e.go">Install onto the card</button>
         </div>
-        <progress id="ig-e-bar" max="1" value="0" hidden></progress>
+        <div class="ig-meter" id="ig-e-bar" hidden><i></i></div>
         <p class="ig-e-msg" id="ig-e-msg" role="status" aria-live="polite"></p>
-        <p class="tip" data-i18n="ig.e.or">Or copy the files by hand:</p>
       </div>
+      <p class="ig-e-or" id="ig-e-or" hidden data-i18n="ig.e.or">Or copy the files by hand:</p>
       <p data-i18n="ig.5.d">Put the card in the computer. Unzip the file you downloaded (Windows: right-click → Extract All; Mac: double-click it). That makes a folder: open it, select everything inside, and copy it onto the card.</p>
       <div class="trees">
         <div class="tree ok">
-          <b data-i18n="ig.5.ok">✓ Right: on the card itself</b>
-          <code>📁 ML<br>📄 autoexec.bin<br>📄 ML-SETUP.FIR<br>📄 M-FILM-README.txt</code>
+          <svg class="i" aria-hidden="true"><use href="#i-check"/></svg><b data-i18n="ig.5.ok">Right: on the card itself</b>
+          <code>ML/<br>autoexec.bin<br>ML-SETUP.FIR<br>M-FILM-README.txt</code>
         </div>
         <div class="tree bad">
-          <b data-i18n="ig.5.bad">✗ Wrong: inside a folder</b>
-          <code>📁 M-Film-…-camera-…<br>&nbsp;&nbsp;&nbsp;📁 ML<br>&nbsp;&nbsp;&nbsp;📄 autoexec.bin<br>&nbsp;&nbsp;&nbsp;📄 ML-SETUP.FIR</code>
+          <svg class="i" aria-hidden="true"><use href="#i-x"/></svg><b data-i18n="ig.5.bad">Wrong: inside a folder</b>
+          <code>M-Film-…-camera-…/<br><span class="in">ML/</span><br><span class="in">autoexec.bin</span><br><span class="in">ML-SETUP.FIR</span></code>
         </div>
       </div>
       <p class="tip" data-i18n="ig.5.tip">Then eject the card (Windows: the USB icon → Eject; Mac: drag it to the bin) before you take it out.</p>
@@ -132,10 +146,6 @@
     </li>
   </ol>
 
-  <div class="ig-nav" id="ig-nav" hidden>
-    <button class="btn ghost" type="button" id="ig-back" data-i18n="ig.back">← Back</button>
-    <button class="btn" type="button" id="ig-next">Next →</button>
-  </div>
 
   <section class="ig-help faq">
     <h2 data-i18n="ig.h.t">If something goes wrong</h2>

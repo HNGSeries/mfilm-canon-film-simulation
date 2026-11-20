@@ -68,10 +68,23 @@ const listed = supported
   ? fetch('dl/index.json').then((r) => (r.ok ? r.json() : null)).catch(() => null).then((j) => { list = j; })
   : Promise.resolve();
 
+const ICON = { ok: 'check', bad: 'alert', warn: 'alert' };
 function say(key, cls, ...args) {
   said = key && [key, cls, args];
   msg.className = 'ig-e-msg' + (cls ? ' ' + cls : '');
-  msg.textContent = key ? T(key, ...args) : '';
+  msg.textContent = '';
+  if (!key) return;
+  if (ICON[cls]) msg.insertAdjacentHTML('beforeend', `<svg class="i" aria-hidden="true"><use href="#i-${ICON[cls]}"/></svg>`);
+  const t = document.createElement('span');
+  t.textContent = T(key, ...args);
+  msg.append(t);
+}
+
+// the line under the buttons: sweeping while it waits, then how much of the card is written
+function meter(n, of) {
+  bar.hidden = false;
+  bar.classList.toggle('wait', of == null);
+  bar.firstElementChild.style.width = of == null ? '' : (100 * n / of).toFixed(1) + '%';
 }
 
 function zip() { return camera && list && list.zips[camera.platform]; }
@@ -89,6 +102,7 @@ export async function easyCamera(c) {
   camera = c;
   const show = !!zip();
   box.hidden = !show;
+  $('ig-e-or').hidden = !show;
   $('ig-easy-skip').hidden = !show;
   if (!show) return;
   if (said) say(said[0], said[1], ...said[2]);
@@ -148,7 +162,7 @@ go.addEventListener('click', async () => {
   const z = zip();
   if (!z || !card || busy) return;
   busy = true; update();
-  bar.hidden = false; bar.removeAttribute('value');
+  meter();
   try {
     if ((await card.requestPermission({ mode: 'readwrite' })) !== 'granted') { say('ig.e.denied', 'bad'); return; }
     say('ig.e.get', null, version());
@@ -182,7 +196,7 @@ go.addEventListener('click', async () => {
       todo.push(p);
     }
     let done = 0;
-    bar.max = todo.length; bar.value = 0;
+    meter(0, todo.length);
     say('ig.e.write', null, 0, todo.length);
     let next = 0, failed = null;
     async function worker() {
@@ -194,7 +208,7 @@ go.addEventListener('click', async () => {
           await w.write(files[p]);
           await w.close();
         } catch (e) { failed = failed || [p, e]; return; }
-        bar.value = ++done;
+        meter(++done, todo.length);
         say('ig.e.write', null, done, todo.length);
       }
     }
