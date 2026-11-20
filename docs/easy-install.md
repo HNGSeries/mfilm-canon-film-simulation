@@ -14,8 +14,11 @@ The spike ran on 2026-11-20 on the maintainer's Mac, in Microsoft Edge 153 and G
 the v0.2.3 650D zip. No spare card was at hand, so it used two disk images mounted as cards would be:
 `EOS_DIGITAL` (FAT32, as the camera formats a card of 32 GB or less) and `EOS_EXFAT` (exFAT). Each had
 `DCIM/100CANON` and no `._` files to start with. A card in a reader is a different device from a disk
-image, so the first install onto a real card is still to do. The file system is the same, so what
-follows about `._` files, quarantine and Safe Browsing should hold.
+image, but the file system is the same, so what follows about `._` files, quarantine and Safe Browsing
+held there too.
+
+Once the page shipped (2026-11-20, with the v0.2.4 zips), the maintainer installed M-Film from mfilm.app
+onto a real SD card, and it worked in the camera.
 
 ## Choosing the card
 
@@ -99,4 +102,3 @@ alternate data streams, so nothing should land on the card. This hasn't been tri
 
 - `E:\` on Windows in Chrome or Edge: choosing it, writing, and whether any `Zone.Identifier` files
   appear.
-- A real SD card in a reader, then the camera: *Firmware ver.* → update from a card the page wrote.
