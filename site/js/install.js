@@ -33,7 +33,7 @@ addStrings({
     'ig.6.t': 'Run the installer, once', 'ig.6.d': 'Camera off, card in, camera on. Then:',
     'ig.6.d2': 'Magic Lantern\'s installer appears and says when it\'s done (a few seconds). Switch the camera off.',
     'ig.6.tip': 'This doesn\'t replace Canon\'s firmware: it only tells the camera to start Magic Lantern from the card. You only do it once.',
-    'ig.6u.d': 'This camera has no installer on the card: it is done from a computer, with the free program mlinstall, over USB: it is in the zip, in the folder mlinstall-for-your-computer (that folder doesn't go on the card). It takes two clicks: Enable Boot Disk with the camera connected, then Write card boot flags with the card in the reader.',
+    'ig.6u.d': 'This camera has no installer on the card: it is done from a computer, with the free program mlinstall, over USB: it is in the zip, in the folder mlinstall-for-your-computer (that folder doesn\'t go on the card). It takes two clicks: Enable Boot Disk with the camera connected, then Write card boot flags with the card in the reader.',
     'ig.6u.btn': 'The steps, with mlinstall →',
     'ig.7.av': 'This camera has no trash button: a short press of Av opens M-Film\'s home.',
     'ig.7.t': 'Switch on: the film shelf appears',
