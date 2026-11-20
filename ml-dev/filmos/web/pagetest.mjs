@@ -17,42 +17,12 @@
 // "lut" for Portra 160), a roll of Portra 160 is developed too, so a table
 // made from a LUT that isn't on the page is caught as well.
 
-import { createServer } from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
-import { extname, join, normalize, resolve, sep } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { readFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import { serve, browser } from './pageserve.mjs';
 
 const ROOT = resolve(process.argv[2] || 'site');
 const SET = 7, RIGHT = 2;          // js/camera.js: KEY
-const TYPES = {
-  '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css',
-  '.json': 'application/json', '.wasm': 'application/wasm', '.svg': 'image/svg+xml',
-  '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.mp4': 'video/mp4',
-};
-
-// the site as GitHub Pages serves it
-function serve() {
-  const server = createServer(async (req, res) => {
-    const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-    let file = normalize(join(ROOT, path));
-    if (file !== ROOT && !file.startsWith(ROOT + sep)) { res.writeHead(403).end(); return; }
-    try {
-      if ((await stat(file)).isDirectory()) file = join(file, 'index.html');
-      const body = await readFile(file);
-      res.writeHead(200, { 'Content-Type': TYPES[extname(file)] || 'application/octet-stream' }).end(body);
-    } catch {
-      res.writeHead(404).end();
-    }
-  });
-  return new Promise((ok) => server.listen(0, '127.0.0.1', () => ok(server)));
-}
-
-async function browser() {
-  const where = process.env.PLAYWRIGHT;
-  const pw = await import(where ? pathToFileURL(resolve(where, 'index.mjs')).href : 'playwright');
-  const channel = process.env.MFILM_BROWSER;
-  return pw.chromium.launch(channel ? { channel } : {});
-}
 
 // One roll of a film on a fresh page: load, shoot, develop. Returns what went wrong, or nothing.
 async function roll(context, url, film) {
@@ -137,7 +107,7 @@ const films = ['portra400'];
 if (/^LOOK\d+\.LUT\s+portra160\s+lut\b/m.test(tables)) films.push('portra160');
 else console.log('portra160: not tried, the page has no Film-Luts tables (built with MFILM_PLAIN=1?)');
 
-const server = await serve();
+const server = await serve(ROOT);
 const url = `http://127.0.0.1:${server.address().port}/`;
 const b = await browser();
 let problems = [];

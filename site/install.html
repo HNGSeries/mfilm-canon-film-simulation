@@ -42,6 +42,12 @@
     </ul>
   </section>
 
+  <!-- shown by js/install.js, which turns the steps into a form: one at a time, Next and Back -->
+  <div class="ig-progress" id="ig-progress" hidden>
+    <span class="ig-count" id="ig-count"></span>
+    <div class="ig-dots" id="ig-dots"></div>
+  </div>
+
   <ol class="ig-steps">
     <li id="s1">
       <h3 data-i18n="ig.1.t">Check the camera's Canon firmware</h3>
@@ -63,6 +69,7 @@
       <h3 data-i18n="ig.3.t">Download the file for your camera</h3>
       <p data-i18n="ig.3.d">One zip file, about 18 MB. Pay what you want for it, $0 included.</p>
       <a class="btn" id="ig-dl" href="./#get"><span data-i18n="ig.3.btn">Download</span> <code id="ig-zip">M-Film-&lt;version&gt;-camera-EOSM.202.zip</code></a>
+      <p class="tip" id="ig-easy-skip" hidden data-i18n="ig.3.easy">You can skip this step in this browser: step 5 downloads M-Film and puts it on the card.</p>
     </li>
 
     <li id="s4">
@@ -74,6 +81,19 @@
 
     <li id="s5">
       <h3 data-i18n="ig.5.t">Copy the files onto the card</h3>
+      <!-- Chrome, Edge and Opera on a computer: the page writes the zip onto the card (js/install.js,
+           docs/easy-install.md). Everywhere else this stays hidden and the steps below are the way. -->
+      <div class="ig-easy" id="ig-easy" hidden>
+        <b class="ig-easy-t" data-i18n="ig.e.t">Install onto the card from this page</b>
+        <p data-i18n="ig.e.d">This browser can download M-Film and copy it onto the card for you. Put the card in the computer, choose it, and press Install.</p>
+        <div class="ig-easy-row">
+          <button class="btn ghost" type="button" id="ig-e-pick" data-i18n="ig.e.pick">Choose the card…</button>
+          <button class="btn" type="button" id="ig-e-go" disabled data-i18n="ig.e.go">Install onto the card</button>
+        </div>
+        <progress id="ig-e-bar" max="1" value="0" hidden></progress>
+        <p class="ig-e-msg" id="ig-e-msg" role="status" aria-live="polite"></p>
+        <p class="tip" data-i18n="ig.e.or">Or copy the files by hand:</p>
+      </div>
       <p data-i18n="ig.5.d">Put the card in the computer. Unzip the file you downloaded (Windows: right-click → Extract All; Mac: double-click it). That makes a folder: open it, select everything inside, and copy it onto the card.</p>
       <div class="trees">
         <div class="tree ok">
@@ -111,6 +131,11 @@
       <a class="btn ghost" href="./" data-i18n="ig.7.try">Practise on the camera in your browser first →</a>
     </li>
   </ol>
+
+  <div class="ig-nav" id="ig-nav" hidden>
+    <button class="btn ghost" type="button" id="ig-back" data-i18n="ig.back">← Back</button>
+    <button class="btn" type="button" id="ig-next">Next →</button>
+  </div>
 
   <section class="ig-help faq">
     <h2 data-i18n="ig.h.t">If something goes wrong</h2>

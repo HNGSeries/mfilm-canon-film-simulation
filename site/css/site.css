@@ -566,6 +566,33 @@ footer { display: block; }
 .tree code { font-size: 14px; line-height: 1.8; color: var(--ink); }
 .tree.ok { border-color: #2f5a2c; background: #121a11; } .tree.ok b { color: #9fdc9a; }
 .tree.bad { border-color: #6b2a20; background: #1c1110; } .tree.bad b { color: #ff9c8a; }
+.ig-progress { display: flex; align-items: center; gap: 16px; margin: 32px 0 0; scroll-margin-top: 84px; }
+.ig-progress[hidden] { display: none; }
+.ig-count { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+.ig-dots { display: flex; gap: 6px; flex: 1; }
+.ig-dots button { flex: 1; height: 6px; padding: 0; border: 0; border-radius: 3px; background: var(--line); cursor: pointer; }
+.ig-dots button.on { background: var(--amber); }
+.ig-dots button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+.ig-steps.wizard { margin: 28px 0 8px; }
+.ig-steps.wizard > li { border-left-color: transparent; padding-bottom: 12px; min-height: 180px; }
+.ig-steps.wizard > li::before { content: attr(data-n); }
+.ig-nav { display: flex; gap: 10px; margin: 0 0 48px 64px; }
+.ig-nav[hidden] { display: none; }
+.ig-nav .btn { font: inherit; font-weight: 700; cursor: pointer; }
+.ig-nav .btn[hidden] { display: none; }
+.ig-nav .btn:not(.ghost) { border: 1px solid var(--amber); margin-left: auto; }
+@media (max-width: 600px) { .ig-nav { margin-left: 0; } }
+.ig-easy { margin: 4px 0 18px; padding: 16px 18px; border: 1px solid var(--amber); border-radius: 12px; background: var(--bg2); }
+.ig-easy-t { display: block; color: var(--ink); font-size: 17px; margin-bottom: 6px; }
+.ig-easy-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.ig-easy .btn { font: inherit; font-weight: 700; cursor: pointer; }
+.ig-easy .btn:not(.ghost) { border: 1px solid var(--amber); }
+.ig-easy .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+.ig-easy progress:not([hidden]) { display: block; width: 100%; height: 8px; margin: 14px 0 0; accent-color: var(--amber); }
+.ig-e-msg { margin: 12px 0 0; color: var(--ink); }
+.ig-e-msg:empty { display: none; }
+.ig-e-msg.bad { color: #ff9c8a; } .ig-e-msg.warn { color: #f3cf8c; } .ig-e-msg.ok { color: #9fdc9a; }
+.ig-easy > .tip:last-child { margin: 14px 0 0; }
 #ig-dl code { font-size: 13px; opacity: .8; margin-left: 6px; }
 .ig-help { margin-top: 12px; }
 /* long camera names never push the page wider than the phone */

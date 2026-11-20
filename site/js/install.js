@@ -3,13 +3,13 @@
 
 import { T, applyLang, toggleLang, addStrings, currentLang } from './i18n.js';
 import { latestRelease, cameraZip } from './releases.js';
+import { easyCamera } from './easyinstall.js';
 
 addStrings({
   en: {
     'ig.nav.try': 'Try it', 'ig.t': 'Put M-Film on your camera',
     'ig.d': 'Step by step, no experience needed. About 15 minutes. Nothing in the camera changes for good: take the card out and it is Canon\'s camera again.',
     'ig.which': 'Your camera',
-    'ig.st.working': 'Tried on this camera, and it works.',
     'ig.st.issues': 'Works on this camera with a known problem:',
     'ig.st.testing': 'Nobody has tried it on this camera yet: you could be the first. It is safe to try, and you can always go back.',
     'ig.need.t': 'What you need',
@@ -40,6 +40,9 @@ addStrings({
     'ig.7.d': 'Turn the camera on. After a moment you\'ll see M-Film\'s shelf of films. Pick one and press SET: the roll is loaded. Now shoot.',
     'ig.7.tip': 'The delete (trash) button opens M-Film\'s home; PLAY shows the developed prints. Canon\'s own menu is in M-Film: Home → Settings (INFO on Home goes straight there) → Canon menu.',
     'ig.7.try': 'Practise on the camera in your browser first →',
+    'ig.of': (n, of) => `Step ${n} of ${of}`,
+    'ig.back': '← Back', 'ig.next': 'Next →',
+    'ig.next.s1': 'It matches: next →', 'ig.next.s4': 'Formatted: next →',
     'ig.h.t': 'If something goes wrong',
     'ig.h.1.q': '"Memory card containing firmware is required to update"',
     'ig.h.1.a': 'The camera didn\'t find the installer it accepts. Either the camera\'s firmware isn\'t exactly the version above (step 1), or the files are inside a folder instead of on the card itself (step 5). On a Mac, also run dot_clean (step 5).',
@@ -57,7 +60,6 @@ addStrings({
     'ig.nav.try': 'ลองเล่น', 'ig.t': 'ลง M-Film ในกล้องของคุณ',
     'ig.d': 'ทำตามทีละขั้น ไม่ต้องมีความรู้มาก่อน ใช้เวลาประมาณ 15 นาที และไม่มีอะไรในกล้องเปลี่ยนถาวร ถอดการ์ดออกเมื่อไหร่ก็กลับเป็นกล้อง Canon แบบเดิม',
     'ig.which': 'กล้องของคุณ',
-    'ig.st.working': 'มีคนลองกับรุ่นนี้แล้ว ใช้ได้',
     'ig.st.issues': 'ใช้ได้กับรุ่นนี้ แต่มีปัญหาที่รู้แล้ว:',
     'ig.st.testing': 'ยังไม่มีใครลองกับรุ่นนี้ คุณอาจเป็นคนแรก ลองได้อย่างปลอดภัย และกลับไปแบบเดิมได้เสมอ',
     'ig.need.t': 'สิ่งที่ต้องมี',
@@ -88,6 +90,9 @@ addStrings({
     'ig.7.d': 'เปิดกล้อง รอสักครู่จะเห็นชั้นวางฟิล์มของ M-Film เลือกม้วนแล้วกด SET ฟิล์มก็ถูกใส่แล้ว เริ่มถ่ายได้เลย',
     'ig.7.tip': 'ปุ่มลบ (ถังขยะ) เปิดหน้า Home ของ M-Film ปุ่ม PLAY ดูรูปที่ล้างแล้ว ส่วนเมนูของ Canon อยู่ใน M-Film: Home → Settings (กด INFO ที่หน้า Home ก็ไปได้ทันที) → Canon menu',
     'ig.7.try': 'ลองเล่นกับกล้องบนเว็บก่อน →',
+    'ig.of': (n, of) => `ขั้นที่ ${n} จาก ${of}`,
+    'ig.back': '← ย้อนกลับ', 'ig.next': 'ถัดไป →',
+    'ig.next.s1': 'ตรงแล้ว ถัดไป →', 'ig.next.s4': 'ฟอร์แมตแล้ว ถัดไป →',
     'ig.h.t': 'ถ้ามีปัญหา',
     'ig.h.1.q': 'ขึ้นว่า "Memory card containing firmware is required to update"',
     'ig.h.1.a': 'กล้องหาตัวติดตั้งที่ใช้ได้ไม่เจอ อาจเป็นเพราะ firmware ไม่ตรงกับเวอร์ชันข้างบน (ขั้นที่ 1) หรือไฟล์อยู่ในโฟลเดอร์แทนที่จะอยู่บนการ์ดตรงๆ (ขั้นที่ 5) ถ้าใช้ Mac ให้รัน dot_clean ด้วย (ขั้นที่ 5)',
@@ -125,15 +130,58 @@ function show() {
   const note = (currentLang() === 'th' && c.note_th) || c.note;
   st.className = 'ig-status ' + status;
   const plain = (note || '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/`/g, '');
-  st.textContent = T('ig.st.' + status) + ((status === 'issues' || status === 'testing') && plain ? ' ' + plain : '');
+  // a camera that simply works needs no line; one with a known problem, or that nobody has tried, does
+  st.textContent = status === 'working' ? '' : T('ig.st.' + status) + (plain ? ' ' + plain : '');
   document.getElementById('ig-fir').hidden = USB_INSTALL.has(c.platform);
   document.getElementById('ig-usb').hidden = !USB_INSTALL.has(c.platform);
   document.getElementById('ig-av').hidden = !AV_HOME.has(c.platform);
+  easyCamera(c);
   try { localStorage.setItem('mfilm.camera', c.platform); } catch {}
 }
 
+// The guide as a form: one step at a time, with Next and Back. Each step is its own #s1 … #s7, so the
+// browser's Back button goes back a step too, and a link can open a step. Without JavaScript every
+// step shows, one under the other.
+const list = document.querySelector('.ig-steps');
+const steps = [...list.children];
+const dots = document.getElementById('ig-dots');
+steps.forEach((li, i) => {
+  li.dataset.n = i + 1;
+  const d = document.createElement('button');
+  d.type = 'button';
+  d.addEventListener('click', () => { location.hash = li.id; });
+  dots.append(d);
+});
+list.classList.add('wizard');
+document.getElementById('ig-progress').hidden = false;
+document.getElementById('ig-nav').hidden = false;
+const at = () => Math.max(0, steps.findIndex((li) => '#' + li.id === location.hash));
+
+function form(scroll) {
+  const i = at();
+  steps.forEach((li, k) => { li.hidden = k !== i; });
+  [...dots.children].forEach((d, k) => {
+    d.className = k <= i ? 'on' : '';
+    d.setAttribute('aria-label', T('ig.of', k + 1, steps.length) + ': ' + steps[k].querySelector('h3').textContent);
+  });
+  document.querySelector('.ig-need').hidden = i !== 0;
+  document.getElementById('ig-count').textContent = T('ig.of', i + 1, steps.length);
+  document.getElementById('ig-back').hidden = i === 0;
+  const next = document.getElementById('ig-next');
+  next.hidden = i === steps.length - 1;
+  next.textContent = T('ig.next.' + steps[i].id) === 'ig.next.' + steps[i].id ? T('ig.next') : T('ig.next.' + steps[i].id);
+  if (scroll) {
+    if (i === 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+    else document.getElementById('ig-progress').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+document.getElementById('ig-back').addEventListener('click', () => { location.hash = steps[at() - 1].id; });
+document.getElementById('ig-next').addEventListener('click', () => { location.hash = steps[at() + 1].id; });
+window.addEventListener('hashchange', () => form(true));
+
 applyLang();
-document.querySelector('.lang').addEventListener('click', () => { toggleLang(); show(); });
+form(false);
+document.querySelector('.lang').addEventListener('click', () => { toggleLang(); show(); form(false); });
 sel.addEventListener('change', show);
 
 fetch('fos/cameras.json').then((r) => r.json()).then((j) => {
