@@ -4,6 +4,21 @@
 [releases](https://github.com/HNGSeries/mfilm-canon-film-simulation/releases) ส่วน Darkrooms
 มี[หน้าของตัวเอง](https://github.com/HNGSeries/Darkrooms-app/releases) [English](CHANGELOG.md)
 
+## 0.2.4
+
+- **ฟิล์ม 9 ตัวได้สีจาก [spektrafilm](https://github.com/andreavolpato/spektrafilm)** ของ Andrea Volpato
+  ซึ่งสร้างฟิล์มแต่ละตัวจากข้อมูลของผู้ผลิตทีละชั้น แล้วล้าง อัด และสแกน: Kodak Portra 160, 400 และ 800, Ektar 100,
+  Gold 200 และ Kodachrome 64 กับ Fujifilm Pro 400H, Velvia 100 และ Provia 100F แต่ละตัวสว่างเท่าเดิม
+  แต่สีและคอนทราสต์เปลี่ยน รูปจากฟิล์ม 9 ตัวนี้จึงไม่ตรงกับที่ 0.2.3 เคยล้าง ([เทียบกันอย่างไร](docs/spektrafilm.md))
+  บนชั้นยังมี 68 film stock เท่าเดิม และยังไม่มีตัวไหนวัดเทียบฟิล์มจริงแล้ว ตารางพวกนี้เป็น CC BY-SA 4.0
+  ทุก zip มี `SPEKTRAFILM_LICENSE.txt` มาด้วย
+- **เกรนละเอียดขึ้น** สำหรับ Portra 400, Pro 400H และ Portra 400 NC, VC และ UC ([#80](../../issues/80))
+- **1300D ไม่ค้างตอนเปิดเครื่องอีก** ([#85](../../issues/85)) คนลองคนแรกเจอบั๊กและแก้เอง เมื่อแก้แล้ว
+  ชั้นฟิล์ม การถ่าย และห้องมืดในกล้องใช้ได้หมดบนกล้องของเขา
+- ชื่อ zip ทุกตัวบอกว่าเป็น M-Film เวอร์ชันไหน เช่น `M-Film-0.2.4-camera-EOSM.202.zip`
+
+**ก๊อปโฟลเดอร์ `ML` ทั้งโฟลเดอร์จาก zip ลงการ์ด** อีกครั้ง เพราะตารางสีใหม่ 9 ตัวอยู่ใน `ML/DARKROOM`
+
 ## 0.2.3
 
 0.2.3 เป็นเรื่องสี สำหรับทุกรุ่น:

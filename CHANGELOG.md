@@ -4,6 +4,21 @@ The camera side, version by version. The files for each are in the
 [releases](https://github.com/HNGSeries/mfilm-canon-film-simulation/releases); Darkrooms has
 [its own](https://github.com/HNGSeries/Darkrooms-app/releases). [ภาษาไทย](CHANGELOG.th.md)
 
+## 0.2.4
+
+- **Nine film stocks take their colour from [spektrafilm](https://github.com/andreavolpato/spektrafilm)**, by
+  Andrea Volpato, which builds each film from its maker's data, layer by layer, and develops, prints and scans it:
+  Kodak Portra 160, 400 and 800, Ektar 100, Gold 200 and Kodachrome 64, and Fujifilm Pro 400H, Velvia 100 and
+  Provia 100F. Each keeps the brightness it had; its colour and contrast change, so these nine won't match what
+  0.2.3 developed ([how they compare](docs/spektrafilm.md)). The shelf is still 68 film stocks, and none is
+  measured against the real film yet. The tables are CC BY-SA 4.0: every zip carries `SPEKTRAFILM_LICENSE.txt`.
+- **Finer grain** for Portra 400, Pro 400H and the Portra 400 NC, VC and UC ([#80](../../issues/80)).
+- **The 1300D no longer freezes at power on** ([#85](../../issues/85)): its first tester found the bug and fixed it.
+  With the fix the film shelf, shooting and the in-camera darkroom worked on their camera.
+- Every zip's name says which M-Film it is: `M-Film-0.2.4-camera-EOSM.202.zip`.
+
+**Copy the whole `ML` folder of the zip to the card** again: the nine new colour tables are in `ML/DARKROOM`.
+
 ## 0.2.3
 
 0.2.3 is about colour, on every camera:
