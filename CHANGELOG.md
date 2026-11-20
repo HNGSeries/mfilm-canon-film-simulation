@@ -14,7 +14,9 @@ The camera side, version by version. The files for each are in the
   measured against the real film yet. The tables are CC BY-SA 4.0: every zip carries `SPEKTRAFILM_LICENSE.txt`.
 - **Finer grain** for Portra 400, Pro 400H and the Portra 400 NC, VC and UC ([#80](../../issues/80)).
 - **The 1300D no longer freezes at power on** ([#85](../../issues/85)): its first tester found the bug and fixed it.
-  With the fix the film shelf, shooting and the in-camera darkroom worked on their camera.
+  With the fix the film shelf, shooting and the in-camera darkroom worked on their camera. Its zip has no
+  `ML-SETUP.FIR` (Magic Lantern makes none for it): M-FILM-README.txt in the zip now says how to set it up
+  with mlinstall instead.
 - Every zip's name says which M-Film it is: `M-Film-0.2.4-camera-EOSM.202.zip`.
 
 **Copy the whole `ML` folder of the zip to the card** again: the nine new colour tables are in `ML/DARKROOM`.
