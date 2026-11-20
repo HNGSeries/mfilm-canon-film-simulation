@@ -35,6 +35,7 @@ From the [latest release](../../releases/latest) (or the newest run under *Actio
 | Canon EOS 700D / Rebel T5i / Kiss X7i | 1.1.5 | `M-Film-<version>-camera-700D.115.zip` |
 | Canon EOS 1100D / Rebel T3 / Kiss X50 | 1.0.5 | `M-Film-<version>-camera-1100D.105.zip` |
 | Canon EOS 1300D / Rebel T6 / Kiss X80 | 1.1.0 | `M-Film-<version>-camera-1300D.110.zip` |
+| Canon EOS M2 | 1.0.3 | `M-Film-<version>-camera-EOSM2.103.zip` |
 <!-- cameras:end -->
 
 The firmware must match exactly (MENU → last settings tab → *Firmware ver.*).

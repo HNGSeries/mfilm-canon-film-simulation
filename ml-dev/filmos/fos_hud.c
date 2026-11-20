@@ -491,9 +491,9 @@ void fos_hud_clear(uint8_t *vram, int pitch, int style, const struct fos_hud_pal
 
 /* ---------------------------------------------------------------- the top plate */
 
-/* not on the EOS M: it has no viewfinder to shoot through, and its boot
+/* not on the EOS M / EOS M2: no optical viewfinder to shoot through, and boot
  * memory is short (MEMORY.md) */
-#ifndef CONFIG_EOSM
+#if !defined(CONFIG_EOSM) && !defined(CONFIG_EOSM2)
 
 /* What a DSLR shows when you shoot through the viewfinder and the screen
  * on the back is Canon's settings display: a film camera's top plate in
