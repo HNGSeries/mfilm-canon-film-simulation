@@ -104,6 +104,8 @@ jobs:
           cp THIRD_PARTY.md "$d/THIRD_PARTY.txt"
           cp ml-dev/films/spektra/SPEKTRAFILM_LICENSE.txt "$d/SPEKTRAFILM_LICENSE.txt"
           cp ml-dev/films/spektra/CHANGELOG.txt "$d/SPEKTRAFILM_CHANGELOG.txt"
+          # the 1300D has no ML-SETUP.FIR: it is set up from a computer with mlinstall, which its zip carries
+          if [ "$p" = 1300D.110 ]; then bash ml-dev/tools/mlinstall.sh "$d/mlinstall-for-your-computer"; fi
           # the zip's name says which M-Film it is (VERSION), so two downloads can't be mixed up
           v=$(tr -d ' \r\n' < VERSION)
           (cd "$d" && zip -qr "$GITHUB_WORKSPACE/M-Film-$v-camera-$p.zip" .)
@@ -208,7 +210,7 @@ jobs:
           body: |
             **On the camera** (`M-Film-<version>-camera-<camera>.zip`): the Film OS with Magic Lantern. Unzip it onto the card
             and run *Firmware ver.* → update once (see M-FILM-README.txt in the zip; the 1300D has no `ML-SETUP.FIR` and is
-            set up with mlinstall from a computer instead, as TESTING.md says). How far testers have got on
+            set up from a computer instead, with mlinstall, which its zip carries: see TESTING.md). How far testers have got on
             each camera, and what's still wrong, is in the README's camera table: see TESTING.md before you put it
             on a camera nobody has tried yet. Every zip has the in-camera darkroom. The film OS is a module on
             every camera (ML/modules/filmos.mo, loaded after boot): one zip a camera.

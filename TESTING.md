@@ -60,11 +60,12 @@ its line in the *Modules* tab says why. Tell us what it says.
 ### Canon EOS 1300D
 
 The 1300D has no `ML-SETUP.FIR`: Magic Lantern doesn't make one for it. Step 2 above is done from a
-computer instead, with [mlinstall](https://github.com/petabyt/mlinstall/releases) (free, GPL), as Magic
-Lantern's developers suggest ([magiclantern_simplified#325](https://github.com/reticulatedpines/magiclantern_simplified/issues/325)).
+computer instead, with [mlinstall](https://github.com/petabyt/mlinstall) (free, GPL), as Magic
+Lantern's developers suggest. From 0.2.4 the 1300D's zip carries it, in the folder `mlinstall-for-your-computer`
+(Windows, Mac and Linux; its `README.txt` says which file is which): that folder doesn't go on the card ([magiclantern_simplified#325](https://github.com/reticulatedpines/magiclantern_simplified/issues/325)).
 Magic Lantern's 1300D port is new (October 2026) and marked experimental by its authors.
 
-1. Format a card in the camera and copy the zip's files to it, as in step 1.
+1. Format a card in the camera and copy the zip's files to it, as in step 1, all but `mlinstall-for-your-computer`.
 2. Camera on, connected to the computer by USB. In mlinstall, wait until it finds the camera, then
    **Enable Boot Disk** (*Enable Custom Boot* in some versions). This tells the camera to start Magic
    Lantern from a card. It doesn't need administrator rights.
