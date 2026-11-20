@@ -1,111 +1,102 @@
-# Easy install: what the spike found
+# Easy install
 
-The idea: on mfilm.app the visitor picks their camera, checks the firmware, puts the card in the
-computer, lets the page into the card's folder and presses **Install**. The page downloads the camera's
-zip, unzips it and writes it onto the card. Downloading and copying by hand stays as the fallback.
+On mfilm.app's install page, a visitor in Chrome, Edge or Opera on a computer can let the page write
+M-Film onto the card: pick the camera, check the firmware, put the card in, choose it, press Install.
+The page downloads the camera's zip, checks it, unzips it and copies it onto the card. Every other
+browser gets the steps by hand, as before. The code is `site/js/easyinstall.js`; the test is
+`ml-dev/filmos/web/installtest.mjs`.
 
-This page records the spike (stage 1) that tested the risky parts before any UI work. Verdict: **it
-works as planned on Chromium desktop browsers**, as long as the zips are served from mfilm.app itself
-and the page cleans up the `._` files macOS leaves behind.
+Before any of it was built, a spike checked the parts that could have sunk the idea. It works in
+Chromium browsers on a computer, provided the zips come from mfilm.app itself and the page removes the
+`._` files macOS leaves on the card.
 
-Tested 2026-11-20 on the maintainer's Mac with Microsoft Edge 153 and Google Chrome 157, a throwaway
-page served from `127.0.0.1`, the v0.2.3 650D zip, and two card images mounted the way a card is:
+The spike ran on 2026-11-20 on the maintainer's Mac, in Microsoft Edge 153 and Google Chrome 157, with
+the v0.2.3 650D zip. No spare card was at hand, so it used two disk images mounted as cards would be:
 `EOS_DIGITAL` (FAT32, as the camera formats a card of 32 GB or less) and `EOS_EXFAT` (exFAT). Each had
-`DCIM/100CANON` and no `._` files to start with. No real card was at hand. A card in a reader is a
-different device from a disk image, so try it once on a real card in stage 2. The file system is the
-same, though, so the `._`, quarantine and Safe Browsing results carry over.
+`DCIM/100CANON` and no `._` files to start with. A card in a reader is a different device from a disk
+image, so the first install onto a real card is still to do. The file system is the same, so what
+follows about `._` files, quarantine and Safe Browsing should hold.
 
-## 1. Picking the card's root
+## Choosing the card
 
-`showDirectoryPicker({ mode: 'readwrite' })` exists only in Chromium desktop browsers (Chrome, Edge,
-Opera, Brave). Safari, Firefox, and every browser on iOS get the manual steps. Android is out of scope.
+`showDirectoryPicker({ mode: 'readwrite' })` exists only in Chromium browsers on a computer (Chrome,
+Edge, Opera, Brave). Safari, Firefox and every browser on iOS don't have it. Android is out of scope.
 
-| | Result |
-|---|---|
-| macOS, Edge 153: `/Volumes/EOS_DIGITAL`, `/Volumes/EOS_EXFAT` | Picked the volume root itself; `readwrite` granted; no "system files" dialog |
-| macOS, Chrome 157: the same | The same |
-| Windows, `E:\` | **Not tested.** Read from Chromium's source: allowed |
+On the Mac, both Edge and Chrome let the visitor choose `/Volumes/EOS_DIGITAL` and `/Volumes/EOS_EXFAT`
+themselves, gave write access, and showed no "system files" warning.
 
-On Windows, Chromium refuses a folder only when it contains a blocked path. Blocked paths include
-`C:\Windows`, `Program Files` and AppData, so `C:\` is refused. `GenerateBlockPaths` /
+Windows hasn't been tried. Chromium refuses a folder only when a blocked path is inside it: `C:\` is
+refused because `C:\Windows`, Program Files and AppData are in it. `GenerateBlockPaths` and
 `ShouldBlockAccessToPath` in `chrome/browser/file_system_access/chrome_file_system_access_permission_context.cc`
-list no volume or removable-drive root, so `E:\` should be pickable. Confirm it once on a Windows
-machine before announcing it.
+list no drive root, so `E:\` should be allowed. Someone should try it once on Windows.
 
-## 2. Getting the zip into the page
+## Where the zip comes from
 
-GitHub release downloads can't be fetched from mfilm.app. The spike tried both routes in the browser,
-and both failed with `TypeError: Failed to fetch`:
+A page on mfilm.app can't download GitHub's release files. The spike tried two ways in the browser and
+both failed with `TypeError: Failed to fetch`. `github.com/<repo>/releases/download/...` answers with a
+302 that has no `Access-Control-Allow-Origin` header. `api.github.com/repos/<repo>/releases/assets/<id>`
+with `Accept: application/octet-stream` does send `Access-Control-Allow-Origin: *`, but it redirects to
+`release-assets.githubusercontent.com`, which sends no CORS headers.
 
-- `github.com/<repo>/releases/download/...` answers with a 302 that has no `Access-Control-Allow-Origin`.
-- `api.github.com/repos/<repo>/releases/assets/<id>` with `Accept: application/octet-stream` does send
-  `Access-Control-Allow-Origin: *`. But it redirects to `release-assets.githubusercontent.com`, which
-  sends no CORS headers at all.
+So `pages.yml` copies the newest `v*` release's camera zips into `site/dl/`, and
+`ml-dev/filmos/web/dl.py` writes `dl/index.json` beside them with each zip's name, size and SHA-256.
+The page downloads from its own site, so CORS doesn't come into it, and the SHA-256 it checks is that of
+the zip anyone can download from the release.
 
-**Choice: publish the camera zips on GitHub Pages, next to the site** (for example `site/dl/`, with a
-`SHA256SUMS` beside them). The page then downloads them from its own origin, so no CORS is needed.
+v0.2.3 has 16 camera zips, about 289 MB together, and the site is about 5 MB. GitHub Pages allows 1 GB,
+and only the newest release is published. Pages' soft limit of 100 GB a month is about 5,000 installs at
+18.5 MB each. If that gets close, there is room to shrink: the zips are about 90% the same files (mostly
+`ML/SAMPLES`), and stored once each, all 16 cameras come to about 28 MB compressed, 1 to 1.6 MB of it
+each camera's own. The page would then fetch files listed in a manifest and check each one, which isn't
+worth doing yet.
 
-- **Size.** v0.2.3 has 16 zips, about 289 MB together. The site itself is about 5 MB. GitHub Pages
-  allows a 1 GB site, so this fits. Publish only the latest release's zips, not older ones.
-- **Bandwidth.** GitHub's soft limit is 100 GB a month, about 5,000 installs at 18.5 MB each. If it
-  ever gets close: the zips are about 90% identical (mostly `ML/SAMPLES`). With files stored by
-  content once, all 16 cameras together are about 28 MB compressed, and each camera adds only 1–1.6 MB
-  of its own. That is plan B. It needs a manifest and checks each file instead of each zip, so it is
-  not worth the complexity now.
-- **Same bytes as the release.** Serving the release's own zips means the SHA-256 the page checks is
-  the one anyone can check on the release.
-- **Wiring.** `pages.yml` gets a step that runs `gh release download` for the newest `v*` release
-  (`M-Film-*-camera-*.zip`) into `site/dl/` and writes `SHA256SUMS`. A release made by `camera.yml`
-  uses `GITHUB_TOKEN`, so it does **not** trigger `pages.yml` through a `release` event. The release
-  job should run `gh workflow run pages.yml` instead (`workflow_dispatch` is the exception GitHub
-  allows), which needs `actions: write`.
-- **Rejected:** another host (Cloudflare R2 or a CORS proxy). It means another account and secrets, for
-  bytes GitHub Pages already serves.
+A release made by `camera.yml` uses `GITHUB_TOKEN`, and GitHub doesn't start other workflows from events
+that token causes. The release job therefore runs `gh workflow run pages.yml` itself
+(`workflow_dispatch` is allowed), which needs `actions: write`.
 
-## 3. Writing onto the card (macOS)
+Another host, such as Cloudflare R2 or a CORS proxy, would have meant another account and its secrets,
+for files GitHub Pages can serve.
 
-The 650D zip is 195 files, 36.3 MB:
+## Writing onto the card
 
-| | FAT32 | exFAT |
-|---|---|---|
-| Edge 153 | 7.3 s, 0 failed | 5.5 s, 0 failed |
-| Chrome 157 | 27.3 s, 0 failed | (not run) |
+The 650D zip is 195 files, 36.3 MB. Edge wrote it in 7.3 s on FAT32 and 5.5 s on exFAT; Chrome took
+27.3 s on FAT32 (exFAT wasn't tried in Chrome). No file failed in either browser. Safe Browsing and
+SmartScreen let everything through, `autoexec.bin`, `ML-SETUP.FIR`, `*.mo` and `*.sym` included.
+Chrome checks each file after it is written, which is why it is about four times slower, so the page
+writes four files at a time.
 
-- **Safe Browsing / SmartScreen blocked nothing.** That includes `autoexec.bin`, `ML-SETUP.FIR`,
-  `*.mo` and `*.sym`. Chrome runs a check after each file, which is why it is about 4× slower. Stage 2
-  should write a few files at a time and show progress.
-- **Contents are exact.** `diff -r` against the unzipped zip found every file identical. The one gap
-  was the empty folder `ML/doc`, which the spike skipped. Stage 2 must create the zip's empty folders too.
-- **No `.crswap` swap files were left behind.**
-- **macOS quarantine leaves `._` files: one for every file and folder written, 205 in all.**
-  `ls -l@` shows that every file got `com.apple.quarantine` (`0081;…;Edge;…`) and
-  `com.apple.metadata:kMDItemWhereFroms`, and every folder got `com.apple.quarantine`. FAT32 and exFAT
-  can't hold extended attributes, so macOS writes them into `._autoexec.bin`, `._ML`,
-  `ML/modules/._*.mo`, and so on. The guide already warns that these can stop the camera.
-- **The page can remove them itself.** It walks the tree after writing and calls `removeEntry()` on
-  every `._*` name. That removed 205 of 205 files in Edge and in Chrome, and `xattr` afterwards showed
-  nothing. With easy install, Mac users don't need `dot_clean`.
-- **Windows is expected to be clean, not tested.** Chromium marks files with Mark-of-the-Web, which is
-  a `Zone.Identifier` alternate data stream. FAT32 and exFAT have no alternate data streams, so the
-  mark can't land on the card.
+`diff -r` against the unzipped zip found every file identical. The spike missed the empty folder
+`ML/doc`; the page creates the zip's empty folders too. No `.crswap` swap files were left behind.
 
-## 4. What stage 2 has to do (from the above)
+macOS marks everything the browser writes as downloaded. `ls -l@` showed `com.apple.quarantine`
+(`0081;…;Edge;…`) and `com.apple.metadata:kMDItemWhereFroms` on every file, and `com.apple.quarantine`
+on every folder. FAT32 and exFAT can't hold extended attributes, so macOS writes each one into a `._`
+file beside it: `._autoexec.bin`, `._ML`, `ML/modules/._*.mo` and so on, 205 of them. These are the
+files the guide's `dot_clean` step is for, since they can stop the camera's installer.
 
-- Show the button only where `showDirectoryPicker` exists. Everyone else gets the existing download
-  steps unchanged.
-- Fetch `dl/<zip>` from mfilm.app and check its SHA-256 against `dl/SHA256SUMS`. Unzip with fflate
-  (pinned, for example `fflate@0.8.2` from jsDelivr).
-- Skip `mlinstall-for-your-computer/`. Create empty folders.
-- Write a few files at a time and show progress. Then remove every `._*` in the tree.
-- Refuse or warn when the picked folder doesn't look like a card root, that is, it has no `DCIM/` and
-  isn't empty (for example the user picked `DCIM` itself, or Desktop). Warn when an old `ML/` is there:
-  the guide says to format in the camera first, and the web page can't format.
-- Keep manual: step 6 (*Firmware ver.* → update), and mlinstall for the 1300D, which writes boot
-  sectors that no web page can reach.
-- Use English and Thai strings, the way `install.js` does.
+The page can delete them itself. After writing, it walks what it wrote and calls `removeEntry()` on
+every `._` name there. In the spike that removed all 205, in Edge and in Chrome, and `xattr` showed
+nothing left. Visitors who install from the page don't need `dot_clean`. The page leaves `DCIM` and
+anything else it didn't write alone.
 
-## Still open
+On Windows, Chromium's mark is a `Zone.Identifier` alternate data stream. FAT32 and exFAT have no
+alternate data streams, so nothing should land on the card. This hasn't been tried.
 
-- `E:\` on Windows with Chrome or Edge: pick, write, and check that no `Zone.Identifier` files appear.
-- One run on a real SD card in a reader. Then the camera: run *Firmware ver.* → update from a card the
-  page wrote.
+## What the page does
+
+- It shows the box only where `showDirectoryPicker` exists. Other browsers see the guide as before.
+- It downloads `dl/<zip>`, checks its SHA-256 against `dl/index.json`, and unzips it with fflate 0.8.2
+  from jsDelivr.
+- It skips `mlinstall-for-your-computer/` and creates empty folders.
+- It writes four files at a time with a progress bar, then removes the `._` files in what it wrote.
+- It refuses a folder with files but no `DCIM/` (the visitor chose a folder on the computer) and the
+  `DCIM` folder itself. It warns when `ML/` or `autoexec.bin` is already there: the guide says to
+  format in the camera first, and a web page can't format a card.
+- Step 6 (*Firmware ver.* → update) stays by hand, and so does mlinstall on the 1300D, which writes
+  boot sectors no web page can reach.
+
+## Not tried yet
+
+- `E:\` on Windows in Chrome or Edge: choosing it, writing, and whether any `Zone.Identifier` files
+  appear.
+- A real SD card in a reader, then the camera: *Firmware ver.* → update from a card the page wrote.

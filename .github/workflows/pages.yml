@@ -39,6 +39,18 @@ jobs:
           python -m pip install -q numpy scipy pillow
       - name: Build the film OS for the browser
         run: bash ml-dev/filmos/web/build.sh site/fos
+      # The install page writes the camera's zip onto the card (docs/easy-install.md). A page can't fetch
+      # GitHub's release downloads (no CORS), so the newest release's zips are published here, in dl/.
+      # camera.yml runs this workflow again once it has made a release.
+      - name: The newest release's camera zips, for the install page
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release list -R "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases --limit 50 \
+                  --json tagName,publishedAt -q '[.[] | select(.tagName | test("^v[0-9]"))] | sort_by(.publishedAt) | last | .tagName')
+          gh release download "$tag" -R "$GITHUB_REPOSITORY" -p 'M-Film-*camera-*.zip' -D site/dl
+          python ml-dev/filmos/web/dl.py site/dl "$tag"
+          du -sh site/dl
       # The page as a visitor uses it: a roll loaded, shot and developed in a headless browser (#143).
       # A page that can't develop isn't published. Tried a second time before it fails, so that a
       # browser that was only slow doesn't hold the site back.
@@ -50,6 +62,8 @@ jobs:
           npm install --no-save --no-package-lock --silent playwright@1.64.1
           npx playwright install --with-deps chromium
           node ml-dev/filmos/web/pagetest.mjs site || { echo "once more"; node ml-dev/filmos/web/pagetest.mjs site; }
+      - name: The install page writes a camera's zip onto a card
+        run: node ml-dev/filmos/web/installtest.mjs site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

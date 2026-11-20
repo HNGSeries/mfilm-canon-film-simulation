@@ -185,6 +185,9 @@ jobs:
     needs: [darkroom, camera]
     if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.tag != '' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write             # the release
+      actions: write              # pages.yml, run again for the new zips
     steps:
       - uses: actions/checkout@v4
       - name: The tag is the VERSION file's
@@ -219,3 +222,9 @@ jobs:
             The colour tables of 53 films are adapted from film emulation tables by Pat David, and those of 9 are derived
             from spektrafilm by Andrea Volpato; both are licensed CC BY-SA 4.0, not GPL-2.0: THIRD_PARTY.txt in every zip
             says which, what was changed and what you may do.
+      # mfilm.app's install page serves the newest release's zips from the site itself (pages.yml, dl/).
+      # A release made with GITHUB_TOKEN doesn't start other workflows, but a workflow_dispatch does.
+      - name: Publish the new zips on mfilm.app
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml -R "$GITHUB_REPOSITORY" --ref main
