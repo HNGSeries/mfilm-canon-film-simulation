@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "sf mono",
+        "createdAt": "2026-11-20T05:27:47.844Z",
+        "reason": "agent: the system monospace stack sets file and folder names (autoexec.bin, ML/) in the install guide's card listings and the zip name, which is code, not a display face"
+      }
+    ]
+  }
+}

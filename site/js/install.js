@@ -18,7 +18,7 @@ addStrings({
     'ig.need.3': 'A computer with a card reader (Windows or Mac)',
     'ig.need.4': 'About 15 minutes, not in the middle of a shoot',
     'ig.1.t': 'Check the camera\'s Canon firmware', 'ig.1.d': 'M-Film is made for one exact version of Canon\'s software. Turn the camera on and look:',
-    'ig.1.p1': 'the last 🔧 settings tab', 'ig.1.must': 'It must say',
+    'ig.1.p1': 'the last settings tab', 'ig.1.must': 'It must say',
     'ig.1.tip': 'Different? Update the camera to exactly that version first, from Canon\'s support site for your camera. A newer or older one won\'t work.',
     'ig.2.t': 'Set the camera to shoot RAW', 'ig.2.d': 'The films are made from the RAW file, so set this now, in Canon\'s menu, while it is still the normal camera:',
     'ig.2.tip': 'RAW+JPEG works too. A photo shot as JPEG only can\'t be developed.',
@@ -27,7 +27,7 @@ addStrings({
     'ig.4.tip': 'Format it in the camera, not on the computer.',
     'ig.5.t': 'Copy the files onto the card',
     'ig.5.d': 'Put the card in the computer. Unzip the file you downloaded (Windows: right-click → Extract All; Mac: double-click it). That makes a folder: open it, select everything inside, and copy it onto the card.',
-    'ig.5.ok': '✓ Right: on the card itself', 'ig.5.bad': '✗ Wrong: inside a folder',
+    'ig.5.ok': 'Right: on the card itself', 'ig.5.bad': 'Wrong: inside a folder',
     'ig.5.tip': 'Then eject the card (Windows: the USB icon → Eject; Mac: drag it to the bin) before you take it out.',
     'ig.5.mac': 'On a Mac: Mac\'s hidden "._" files can stop the camera. In Terminal, run dot_clean -m /Volumes/EOS_DIGITAL (your card\'s name), then eject.',
     'ig.6.t': 'Run the installer, once', 'ig.6.d': 'Camera off, card in, camera on. Then:',
@@ -68,7 +68,7 @@ addStrings({
     'ig.need.3': 'คอมพิวเตอร์ที่มีช่องอ่านการ์ด (Windows หรือ Mac)',
     'ig.need.4': 'เวลาประมาณ 15 นาที อย่าทำระหว่างงานถ่ายจริง',
     'ig.1.t': 'เช็ก firmware ของกล้อง', 'ig.1.d': 'M-Film ทำมาสำหรับซอฟต์แวร์ของ Canon เวอร์ชันเดียวเท่านั้น เปิดกล้องแล้วดูที่:',
-    'ig.1.p1': 'แท็บตั้งค่า 🔧 อันสุดท้าย', 'ig.1.must': 'ต้องขึ้นว่า',
+    'ig.1.p1': 'แท็บตั้งค่าอันสุดท้าย', 'ig.1.must': 'ต้องขึ้นว่า',
     'ig.1.tip': 'ถ้าไม่ตรง ให้อัปเดตกล้องเป็นเวอร์ชันนั้นก่อน จากเว็บ support ของ Canon สำหรับรุ่นของคุณ เวอร์ชันใหม่กว่าหรือเก่ากว่าใช้ไม่ได้',
     'ig.2.t': 'ตั้งกล้องให้ถ่ายเป็น RAW', 'ig.2.d': 'ฟิล์มถูกสร้างจากไฟล์ RAW เลยต้องตั้งตอนนี้ ในเมนูของ Canon ตอนที่กล้องยังเป็นแบบปกติ:',
     'ig.2.tip': 'RAW+JPEG ก็ได้ แต่รูปที่ถ่ายเป็น JPEG อย่างเดียวล้างไม่ได้',
@@ -77,7 +77,7 @@ addStrings({
     'ig.4.tip': 'ฟอร์แมตในกล้อง ไม่ใช่ในคอม',
     'ig.5.t': 'ก๊อปไฟล์ลงการ์ด',
     'ig.5.d': 'เสียบการ์ดเข้าคอม แตกไฟล์ zip ที่โหลดมา (Windows: คลิกขวา → Extract All, Mac: ดับเบิลคลิก) จะได้โฟลเดอร์มาหนึ่งอัน เปิดเข้าไป เลือกทุกอย่างข้างใน แล้วก๊อปลงการ์ด',
-    'ig.5.ok': '✓ ถูก: อยู่บนการ์ดตรงๆ', 'ig.5.bad': '✗ ผิด: อยู่ในโฟลเดอร์',
+    'ig.5.ok': 'ถูก: อยู่บนการ์ดตรงๆ', 'ig.5.bad': 'ผิด: อยู่ในโฟลเดอร์',
     'ig.5.tip': 'แล้วกด Eject การ์ดก่อนดึงออก (Windows: ไอคอน USB → Eject, Mac: ลากไปถังขยะ)',
     'ig.5.mac': 'ถ้าใช้ Mac: ไฟล์ซ่อน "._" ของ Mac อาจทำให้กล้องไม่ยอมติดตั้ง เปิด Terminal แล้วพิมพ์ dot_clean -m /Volumes/EOS_DIGITAL (เปลี่ยนเป็นชื่อการ์ดของคุณ) แล้วค่อย Eject',
     'ig.6.t': 'รันตัวติดตั้ง ครั้งเดียว', 'ig.6.d': 'ปิดกล้อง ใส่การ์ด เปิดกล้อง แล้ว:',
@@ -154,29 +154,44 @@ steps.forEach((li, i) => {
 });
 list.classList.add('wizard');
 document.getElementById('ig-progress').hidden = false;
-document.getElementById('ig-nav').hidden = false;
 const at = () => Math.max(0, steps.findIndex((li) => '#' + li.id === location.hash));
+const still = matchMedia('(prefers-reduced-motion: reduce)');
+let was = -1;
+
+// a new step opens like a focal-plane shutter: the curtain runs down going forward, up going back
+function shutter(li, forward) {
+  li.classList.remove('shown'); void li.offsetWidth; li.classList.add('shown');
+  if (!li.animate) return;
+  if (still.matches) { li.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160 }); return; }
+  const closed = forward ? 'inset(0 0 100% 0)' : 'inset(100% 0 0 0)';
+  li.animate([{ clipPath: closed }, { clipPath: 'inset(0 0 0 0)' }], { duration: 420, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+}
 
 function form(scroll) {
   const i = at();
   steps.forEach((li, k) => { li.hidden = k !== i; });
+  if (scroll && i !== was) shutter(steps[i], i > was);
+  was = i;
   [...dots.children].forEach((d, k) => {
     d.className = k <= i ? 'on' : '';
     d.setAttribute('aria-label', T('ig.of', k + 1, steps.length) + ': ' + steps[k].querySelector('h3').textContent);
   });
   document.querySelector('.ig-need').hidden = i !== 0;
   document.getElementById('ig-count').textContent = T('ig.of', i + 1, steps.length);
-  document.getElementById('ig-back').hidden = i === 0;
-  const next = document.getElementById('ig-next');
-  next.hidden = i === steps.length - 1;
-  next.textContent = T('ig.next.' + steps[i].id) === 'ig.next.' + steps[i].id ? T('ig.next') : T('ig.next.' + steps[i].id);
+  const label = T('ig.next.' + steps[i].id) === 'ig.next.' + steps[i].id ? T('ig.next') : T('ig.next.' + steps[i].id);
+  for (const b of document.querySelectorAll('[data-go="back"]')) b.hidden = i === 0;
+  for (const b of document.querySelectorAll('[data-go="next"]')) { b.hidden = i === steps.length - 1; b.textContent = label; }
+  // the new step's top just under the bar of Back and Next, which stays put as the page scrolls
   if (scroll) {
-    if (i === 0) window.scrollTo({ top: 0, behavior: 'smooth' });
-    else document.getElementById('ig-progress').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const bar = document.getElementById('ig-progress');
+    const under = document.querySelector('.top').offsetHeight + bar.offsetHeight;
+    const y = list.getBoundingClientRect().top + scrollY - under;
+    if (scrollY > y || i === 0) window.scrollTo({ top: i === 0 ? 0 : y, behavior: still.matches ? 'auto' : 'smooth' });
   }
 }
-document.getElementById('ig-back').addEventListener('click', () => { location.hash = steps[at() - 1].id; });
-document.getElementById('ig-next').addEventListener('click', () => { location.hash = steps[at() + 1].id; });
+for (const b of document.querySelectorAll('[data-go]')) {
+  b.addEventListener('click', () => { location.hash = steps[at() + (b.dataset.go === 'next' ? 1 : -1)].id; });
+}
 window.addEventListener('hashchange', () => form(true));
 
 applyLang();

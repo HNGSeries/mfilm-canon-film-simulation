@@ -1,0 +1,453 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-20T05:27:46.746690+00:00",
+  "title": "Design System: M-Film (mfilm.app)",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Darkroom Black",
+        "canonical": "#0b0b0a",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#141413",
+          "#1c1b19",
+          "#2b2a27",
+          "#3a3835",
+          "#8a847b",
+          "#b0a99f",
+          "#ece8e1"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Lifted Black",
+        "canonical": "#141413",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#141413",
+          "#1c1b19",
+          "#2b2a27",
+          "#3a3835",
+          "#8a847b",
+          "#b0a99f",
+          "#ece8e1"
+        ]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Black",
+        "canonical": "#1c1b19",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#141413",
+          "#1c1b19",
+          "#2b2a27",
+          "#3a3835",
+          "#8a847b",
+          "#b0a99f",
+          "#ece8e1"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#2b2a27",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#141413",
+          "#1c1b19",
+          "#2b2a27",
+          "#3a3835",
+          "#8a847b",
+          "#b0a99f",
+          "#ece8e1"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "#3a3835",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#141413",
+          "#1c1b19",
+          "#2b2a27",
+          "#3a3835",
+          "#8a847b",
+          "#b0a99f",
+          "#ece8e1"
+        ]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "#8a847b",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#141413",
+          "#1c1b19",
+          "#2b2a27",
+          "#3a3835",
+          "#8a847b",
+          "#b0a99f",
+          "#ece8e1"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#b0a99f",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#141413",
+          "#1c1b19",
+          "#2b2a27",
+          "#3a3835",
+          "#8a847b",
+          "#b0a99f",
+          "#ece8e1"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Paper Ink",
+        "canonical": "#ece8e1",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#141413",
+          "#1c1b19",
+          "#2b2a27",
+          "#3a3835",
+          "#8a847b",
+          "#b0a99f",
+          "#ece8e1"
+        ]
+      },
+      "amber": {
+        "role": "primary",
+        "displayName": "Darkroom Amber",
+        "canonical": "#eca834",
+        "tonalRamp": [
+          "#2a1d08",
+          "#4a330e",
+          "#7a5516",
+          "#b07d22",
+          "#eca834",
+          "#f4bd5c",
+          "#f8d494",
+          "#fcebc9"
+        ]
+      },
+      "amber-hi": {
+        "role": "primary",
+        "displayName": "Amber, Lit",
+        "canonical": "#f4bd5c",
+        "tonalRamp": [
+          "#2a1d08",
+          "#4a330e",
+          "#7a5516",
+          "#b07d22",
+          "#eca834",
+          "#f4bd5c",
+          "#f8d494",
+          "#fcebc9"
+        ]
+      },
+      "amber-ink": {
+        "role": "primary",
+        "displayName": "Amber Ink",
+        "canonical": "#17110a",
+        "tonalRamp": [
+          "#2a1d08",
+          "#4a330e",
+          "#7a5516",
+          "#b07d22",
+          "#eca834",
+          "#f4bd5c",
+          "#f8d494",
+          "#fcebc9"
+        ]
+      },
+      "signal-red": {
+        "role": "error",
+        "displayName": "Signal Red",
+        "canonical": "#e0442f",
+        "tonalRamp": [
+          "#1f1210",
+          "#3d1a14",
+          "#6b2a20",
+          "#a8361f",
+          "#e0442f",
+          "#ff9c8a",
+          "#ffc2b6",
+          "#ffe3dc"
+        ]
+      },
+      "error-ink": {
+        "role": "error",
+        "displayName": "Error Ink",
+        "canonical": "#ff9c8a",
+        "tonalRamp": [
+          "#1f1210",
+          "#3d1a14",
+          "#6b2a20",
+          "#a8361f",
+          "#e0442f",
+          "#ff9c8a",
+          "#ffc2b6",
+          "#ffe3dc"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page headline: home (one line on desktop), install, 404."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Band headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Step titles, viewer caption name, column heads."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "Paragraph under a page headline."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraphs in Muted Ink, max 64ch."
+      },
+      "body-small": {
+        "displayName": "Body small",
+        "purpose": "Notes, captions, step descriptions, footer."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase field labels, picker label, table column heads; no tracking or uppercase in Thai."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Prices and other compared numbers, tabular."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The M·FILM wordmark in the header and footer only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "dialog-lift",
+        "value": "0 30px 60px rgba(0, 0, 0, .5)",
+        "purpose": "The download dialog only; the page is flat."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Shutter curtain, frame counter, dialog rise, FAQ plus turning."
+      },
+      {
+        "name": "feedback",
+        "value": "150ms to 300ms",
+        "purpose": "Colour, border and opacity changes on hover, active and done states."
+      },
+      {
+        "name": "develop-full",
+        "value": "1.1s linear, stepped brightness 2.1 / contrast .35 / saturate 0 to 1",
+        "purpose": "Film viewer, the first time the frame is seen."
+      },
+      {
+        "name": "develop-light",
+        "value": "0.42s linear, from brightness 1.25 / contrast .8 / saturate .5",
+        "purpose": "Film viewer, each later film pick."
+      },
+      {
+        "name": "shutter-curtain",
+        "value": "clip-path inset 100% to 0, 420ms ease-out; downward forward, upward back",
+        "purpose": "Between install steps."
+      },
+      {
+        "name": "frame-counter",
+        "value": "translateY(-40%) and opacity 0 to rest, 500ms ease-out",
+        "purpose": "The install step number badge."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "160ms opacity fade",
+        "purpose": "Replaces the curtain; develop and frame counter drop."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "header-collapse",
+        "value": "760px"
+      },
+      {
+        "name": "try-steps-two-up",
+        "value": "820px"
+      },
+      {
+        "name": "band-head-stack",
+        "value": "860px"
+      },
+      {
+        "name": "viewer-stack",
+        "value": "900px"
+      },
+      {
+        "name": "hero-headline-one-line",
+        "value": "1000px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one amber action in a group: Download, Next, the detected OS.",
+      "html": "<button class=\"ds-btn\">Download for your Canon</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border:1px solid var(--amber,#eca834);border-radius:6px;background:var(--amber,#eca834);color:var(--amber-ink,#17110a);font:600 16px/1 Barlow,\"Noto Sans Thai\",system-ui,sans-serif;letter-spacing:.01em;cursor:pointer;transition:background .15s,border-color .15s}.ds-btn:hover{background:var(--amber-hi,#f4bd5c);border-color:var(--amber-hi,#f4bd5c)}.ds-btn:focus-visible{outline:2px solid var(--amber,#eca834);outline-offset:3px}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "The second action beside a primary.",
+      "html": "<button class=\"ds-btn-ghost\">How to install</button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border:1px solid var(--line2,#3a3835);border-radius:6px;background:transparent;color:var(--ink,#ece8e1);font:600 16px/1 Barlow,\"Noto Sans Thai\",system-ui,sans-serif;cursor:pointer;transition:border-color .15s}.ds-btn-ghost:hover{border-color:var(--ink,#ece8e1)}.ds-btn-ghost:focus-visible{outline:2px solid var(--amber,#eca834);outline-offset:3px}"
+    },
+    {
+      "name": "Select",
+      "kind": "input",
+      "refersTo": "select",
+      "description": "Camera picker and other choices; Lifted Black field with a drawn chevron.",
+      "html": "<span class=\"ds-select\"><select><option>EOS M</option><option>650D</option></select></span>",
+      "css": ".ds-select{position:relative;display:inline-block}.ds-select::after{content:\"\";position:absolute;right:14px;top:50%;width:7px;height:7px;margin-top:-5px;border:solid #b0a99f;border-width:0 1.5px 1.5px 0;rotate:45deg;pointer-events:none}.ds-select select{appearance:none;-webkit-appearance:none;height:40px;padding:0 40px 0 14px;border:1px solid #3a3835;border-radius:6px;background:#141413;color:#ece8e1;font:600 15px Barlow,\"Noto Sans Thai\",system-ui,sans-serif;cursor:pointer}.ds-select select:hover{border-color:#b0a99f}.ds-select select:focus-visible{outline:2px solid #eca834;outline-offset:3px}"
+    },
+    {
+      "name": "Header",
+      "kind": "nav",
+      "refersTo": "lang-toggle",
+      "description": "64px sticky header: wordmark, muted links, TH toggle, small Download.",
+      "html": "<header class=\"ds-top\"><a class=\"ds-brand\" href=\"#\">M·FILM</a><nav><a href=\"#\">Films</a><a href=\"#\">Cameras</a><button class=\"ds-lang\">TH</button><a class=\"ds-dl\" href=\"#\">Download</a></nav></header>",
+      "css": ".ds-top{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px;padding:0 24px;background:#0b0b0a;border-bottom:1px solid #2b2a27;color:#ece8e1;font:500 15px Barlow,system-ui,sans-serif}.ds-brand{font:700 20px \"Barlow Condensed\",Barlow,sans-serif;letter-spacing:.1em;text-decoration:none;color:#ece8e1}.ds-top nav{display:flex;align-items:center;gap:28px}.ds-top nav a:not(.ds-dl){color:#b0a99f;text-decoration:none;transition:color .15s}.ds-top nav a:not(.ds-dl):hover{color:#ece8e1}.ds-lang{height:32px;min-width:38px;padding:0 8px;border:1px solid #3a3835;border-radius:6px;background:none;color:#b0a99f;font:600 13px Barlow,sans-serif;letter-spacing:.06em;cursor:pointer}.ds-lang:hover{color:#ece8e1;border-color:#ece8e1}.ds-dl{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:6px;background:#eca834;color:#17110a;font-weight:600;text-decoration:none}.ds-dl:hover{background:#f4bd5c}"
+    },
+    {
+      "name": "Shelf Tabs",
+      "kind": "nav",
+      "refersTo": "shelf-tab",
+      "description": "Text tabs on a hairline with tabular counts; active gets a 2px amber underline.",
+      "html": "<div class=\"ds-tabs\"><button class=\"on\">Colour negative<span>24</span></button><button>Slide<span>14</span></button><button>Black and white<span>18</span></button></div>",
+      "css": ".ds-tabs{display:flex;flex-wrap:wrap;gap:4px 20px;border-bottom:1px solid #2b2a27}.ds-tabs button{display:inline-flex;align-items:baseline;gap:6px;padding:0 0 12px;margin-bottom:-1px;border:0;border-bottom:2px solid transparent;background:none;color:#b0a99f;font:600 15px Barlow,sans-serif;cursor:pointer;transition:color .15s,border-color .15s}.ds-tabs button span{font-size:13px;color:#8a847b;font-variant-numeric:tabular-nums}.ds-tabs button:hover{color:#ece8e1}.ds-tabs button.on{color:#ece8e1;border-bottom-color:#eca834}.ds-tabs button:focus-visible{outline:2px solid #eca834;outline-offset:3px}"
+    },
+    {
+      "name": "Camera Status",
+      "kind": "chip",
+      "refersTo": null,
+      "description": "Status by dot form plus word, in ink: filled, half, open ring.",
+      "html": "<span class=\"ds-st ds-working\"><i></i>Working</span> <span class=\"ds-st ds-issues\"><i></i>Issues</span> <span class=\"ds-st ds-testing\"><i></i>Testing</span>",
+      "css": ".ds-st{display:inline-flex;align-items:center;gap:8px;margin-right:20px;font:600 15px Barlow,sans-serif;color:#ece8e1}.ds-st i{width:9px;height:9px;border-radius:50%;border:1.5px solid #ece8e1}.ds-working i{background:#ece8e1}.ds-issues i{background:linear-gradient(90deg,#ece8e1 50%,transparent 50%)}.ds-testing,.ds-testing i{color:#b0a99f;border-color:#b0a99f}"
+    },
+    {
+      "name": "Install Progress",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Step count, segmented 2px progress line, Back and Next.",
+      "html": "<div class=\"ds-prog\"><span class=\"ds-count\">2 of 6</span><div class=\"ds-dots\"><b class=\"on\"></b><b class=\"on\"></b><b></b><b></b><b></b><b></b></div><button class=\"ds-next\">Next</button></div>",
+      "css": ".ds-prog{display:flex;align-items:center;gap:18px;padding:14px 0;border-bottom:1px solid #3a3835;font:500 14px Barlow,sans-serif;color:#b0a99f}.ds-count{font-variant-numeric:tabular-nums;white-space:nowrap}.ds-dots{display:flex;gap:4px;flex:1}.ds-dots b{flex:1;height:2px;background:#3a3835;transition:background .3s}.ds-dots b.on{background:#eca834}.ds-next{min-height:36px;padding:0 14px;border:1px solid #eca834;border-radius:6px;background:#eca834;color:#17110a;font:600 15px Barlow,sans-serif;cursor:pointer}.ds-next:hover{background:#f4bd5c}.ds-next:focus-visible{outline:2px solid #eca834;outline-offset:3px}"
+    },
+    {
+      "name": "Frame-Counter Step",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "An install step: its number in a 40px amber ring, title, body.",
+      "html": "<div class=\"ds-step\"><span class=\"ds-n\">3</span><h3>Check the firmware</h3><p>MENU, the last settings tab, Firmware ver.</p></div>",
+      "css": ".ds-step{position:relative;padding:0 0 8px 64px;color:#ece8e1;font:500 17px/1.6 Barlow,sans-serif}.ds-n{position:absolute;left:0;top:-2px;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid #eca834;color:#eca834;font:600 18px Barlow,sans-serif;font-variant-numeric:tabular-nums}.ds-step h3{margin:4px 0 12px;font:600 26px/1.25 Barlow,sans-serif;letter-spacing:-.01em}.ds-step p{margin:0;color:#b0a99f}"
+    },
+    {
+      "name": "Film Row",
+      "kind": "card",
+      "refersTo": null,
+      "description": "A shelf row: square-cornered 3:2 thumbnail, name, ISO and process; chosen name turns amber.",
+      "html": "<button class=\"ds-film on\"><i></i><b>Portra 400</b><span>ISO 400 · C-41</span></button>",
+      "css": ".ds-film{display:grid;grid-template-columns:64px minmax(0,1fr);gap:2px 14px;align-items:center;width:320px;padding:8px 0;border:0;border-bottom:1px solid #2b2a27;background:none;color:#ece8e1;font:500 16px Barlow,sans-serif;text-align:left;cursor:pointer}.ds-film i{grid-row:span 2;width:64px;aspect-ratio:3/2;background:#8a847b;opacity:.75;transition:opacity .15s}.ds-film b{font-weight:600;line-height:1.3}.ds-film span{font-size:13px;color:#8a847b;font-variant-numeric:tabular-nums}.ds-film:hover i,.ds-film.on i{opacity:1}.ds-film.on b{color:#eca834}.ds-film:focus-visible{outline:2px solid #eca834;outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Camera Maker's Product Page",
+    "overview": "mfilm.app is built the way Leica and Fujifilm present a camera: a near-black ground, one working camera as the product shot, and real developed frames as the photography. Everything around them stays quiet so the camera and the photographs carry the page. Type is large and calm, rules are hairlines, and colour appears only where the visitor can act.\n\nThe page is a single dark column with wide bands. The playable camera sits centred at the top, then each band opens with a two-column head (headline left, a short paragraph right) over hairline-ruled content: three numbered columns, a film viewer with its shelf, a spec table, a three-column price row, the download steps and the questions. Nothing is boxed in cards; grouping comes from rules and spacing.\n\nEnglish and Thai are equals. Barlow carries Latin and Noto Sans Thai (Thai subset, self-hosted) carries Thai in the same stack, and every tracked or uppercase treatment drops for Thai.",
+    "keyCharacteristics": [
+      "Near-black warm ground with every grey drawn from one ramp.",
+      "Amber is the only colour, kept for actions, the active state and progress.",
+      "Barlow at 500 and 600, large and quiet; tabular figures wherever numbers are compared.",
+      "Hairline rules instead of cards; square photographs; 6px corners on controls only.",
+      "Three motion gestures (develop, shutter curtain, frame counter) and 150 to 300 ms colour and opacity changes for everything else."
+    ],
+    "rules": [
+      {
+        "name": "The One Colour Rule",
+        "body": "Amber is the only hue on the page. It marks what can be pressed, what is active and how far along something is, never a decoration, a status or a heading.",
+        "section": "colors"
+      },
+      {
+        "name": "The Form-Not-Hue Rule",
+        "body": "Camera status in the table is told by the dot's form, filled (Working), half (Issues) or open ring (Testing), plus the word, in ink on the neutral ramp. Status never gets a colour of its own.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Red Rule",
+        "body": "Red means an error, or the camera's live signal. It is never an accent.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Every number that sits beside another (ISO, firmware versions, prices, step counts, shelf counts) uses tabular figures.",
+        "section": "typography"
+      },
+      {
+        "name": "The Thai Equals Rule",
+        "body": "Under `:lang(th)`, headings drop to letter-spacing 0 and line-height 1.25, and labels drop uppercase and tracking and step up to 14px. Thai has no capitals; nothing is tracked for it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Rule-Not-Box Rule",
+        "body": "Groups open with a Strong Hairline across the top and separate rows with a Hairline. Containers do not get backgrounds or borders on all four sides.",
+        "section": "layout"
+      },
+      {
+        "name": "The One Lift Rule",
+        "body": "Only a modal floats. Everything on the page lies flat on the ground.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Square Print Rule",
+        "body": "A photograph is never rounded, framed or shadowed.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do keep amber (#eca834) to actions, the active state and progress; let everything else come from the warm neutral ramp.",
+      "Do tell camera status by dot form plus the word, in ink.",
+      "Do open groups with a Strong Hairline and separate rows with a Hairline instead of drawing boxes.",
+      "Do set every compared number in tabular figures.",
+      "Do keep feedback transitions at 150 to 300ms (colour, border, opacity) and save larger motion for the develop, the shutter curtain and the frame counter.",
+      "Do honour reduced motion: the develop and the curtain drop, and a step change becomes a 160ms fade.",
+      "Do write every string in English and Thai, and drop tracking and uppercase for Thai."
+    ],
+    "donts": [
+      "Don't introduce a second accent hue, or give camera status its own colour.",
+      "Don't use red for anything but errors and the camera's live signal.",
+      "Don't round, frame or shadow a photograph.",
+      "Don't put content in shadowed or fully bordered cards; only the modal dialog lifts.",
+      "Don't use gradient glows, badge rows, emoji icons or pill tabs on the page. The drawn camera's own shading is the camera's, not the page's.",
+      "Don't set page type in weights other than 500 and 600; Barlow Condensed is the wordmark only.",
+      "Don't change the film OS screens to suit the page."
+    ]
+  }
+}

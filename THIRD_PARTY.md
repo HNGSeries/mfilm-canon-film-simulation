@@ -17,6 +17,8 @@
   (with the libraries it is built from). Magic Lantern makes no `ML-SETUP.FIR` for the 1300D, so the camera is set
   up from a computer with it. `ml-dev/tools/mlinstall.sh` puts it there, each program checked against its SHA-256.
 - **Barlow** font family (SIL Open Font License 1.1): `ml-dev/filmos/fonts/OFL.txt`.
+- **Noto Sans Thai** by the Noto Project Authors (SIL Open Font License 1.1), its Thai subset only, for mfilm.app's Thai text:
+  `site/fonts/noto-sans-thai-thai.woff2`, from Google Fonts; its licence: `site/fonts/OFL-NotoSansThai.txt`.
 - Film names and box art are descriptive and made for this project; they are not affiliated with or endorsed
   by Kodak, Fujifilm, CineStill, Ilford, Agfa or others. "Canon" and "EOS M" are trademarks of Canon Inc.;
   this project is not affiliated with Canon. Canon firmware is not included.

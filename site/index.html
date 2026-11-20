@@ -18,6 +18,14 @@
 <script type="module" src="js/sections.js"></script>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-ccw" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></symbol>
+  <symbol id="i-cw" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-keys" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M7.5 14h9"/></symbol>
+</svg>
 
 <header class="top">
   <a class="brand" href="#"><img src="img/mfilm.png" alt="" width="28" height="28"> M·FILM</a>
@@ -35,18 +43,15 @@
 <main>
 <section class="hero">
   <div class="hero-text">
-    <h1 data-i18n="hero.title">Your Canon,<br>shot like film.</h1>
+    <h1 data-i18n="hero.title">Your Canon, <br>shot like film.</h1>
     <p class="lede" data-i18n="hero.lede">This is M-Film running on an EOS M, in your browser: the same menus, drawn by the same code as on the camera. Load a roll, shoot it, then develop it.</p>
+    <div class="hero-actions">
+      <a class="btn" href="#download" data-download data-i18n="cta.free">Download for your Canon</a>
+      <a class="btn ghost" href="install.html" data-i18n="hero.guide">How to install</a>
+    </div>
   </div>
 
   <div class="stage">
-    <label class="picker">
-      <span class="picker-label" data-i18n="picker.label">Camera</span>
-      <span class="select">
-        <select id="model" aria-label="Camera"></select>
-      </span>
-    </label>
-
     <!-- The camera from the back: its body drawn (img/eosm-back.svg, or js/bodies.js),
          each control a button placed over it in % of the body. -->
     <div class="cam" id="cam" data-model="eosm">
@@ -64,12 +69,32 @@
     <div class="cam-under">
       <div class="status" aria-live="polite"><span class="dot"></span><span class="status-text" data-i18n="st.boot">Starting…</span></div>
       <div class="wheel-hint">
-        <button class="mini" data-key="WHEEL_L" aria-label="Turn the dial left">⟲</button>
+        <button class="mini" data-key="WHEEL_L" aria-label="Turn the dial left"><svg class="i"><use href="#i-ccw"/></svg></button>
         <button class="mini lvbtn" data-ctl="lv" hidden>LV</button>
         <span data-i18n="cam.dial">dial</span>
-        <button class="mini" data-key="WHEEL_R" aria-label="Turn the dial right">⟳</button>
+        <button class="mini" data-key="WHEEL_R" aria-label="Turn the dial right"><svg class="i"><use href="#i-cw"/></svg></button>
       </div>
     </div>
+    <div class="stage-bar">
+      <label class="picker">
+        <span class="picker-label" data-i18n="picker.label">Camera</span>
+        <span class="select">
+          <select id="model" aria-label="Camera"></select>
+        </span>
+      </label>
+      <details class="keys">
+        <summary><svg class="i"><use href="#i-keys"/></svg><span data-i18n="g.keys">Keyboard</span></summary>
+        <dl>
+          <div><dt>Space</dt><dd data-i18n="k.shutter">shutter (hold: half-press)</dd></div>
+          <div><dt>← → ↑ ↓</dt><dd data-i18n="k.dial">dial presses</dd></div>
+          <div><dt>[ ]</dt><dd data-i18n="k.wheel">turn the dial</dd></div>
+          <div><dt>Enter</dt><dd>SET</dd></div>
+          <div><dt>M · I · P</dt><dd>MENU · INFO · PLAY</dd></div>
+          <div><dt>⌫</dt><dd data-i18n="k.home">delete: M-Film home</dd></div>
+        </dl>
+      </details>
+    </div>
+
   </div>
 
   <aside class="guide">
@@ -79,42 +104,44 @@
       <li data-step="develop"><b data-i18n="g.develop.t">Develop it</b><span data-i18n="g.develop.d">When the roll is finished the camera asks. Develop it, and watch the darkroom work.</span></li>
       <li data-step="prints"><b data-i18n="g.prints.t">See the prints</b><span data-i18n="g.prints.d">PLAY shows the contact sheet and every print.</span></li>
     </ol>
-    <details class="keys">
-      <summary data-i18n="g.keys">Keyboard</summary>
-      <dl>
-        <dt>Space</dt><dd data-i18n="k.shutter">shutter (hold: half-press)</dd>
-        <dt>← → ↑ ↓</dt><dd data-i18n="k.dial">dial presses</dd>
-        <dt>[ ]</dt><dd data-i18n="k.wheel">turn the dial</dd>
-        <dt>Enter</dt><dd>SET</dd>
-        <dt>M · I · P</dt><dd>MENU · INFO · PLAY</dd>
-        <dt>⌫</dt><dd data-i18n="k.home">delete: M-Film home</dd>
-      </dl>
-    </details>
-    <a class="btn" href="#download" data-download data-i18n="cta.free">Download for your Canon</a>
   </aside>
 </section>
 
 <section class="band how">
-  <h2 data-i18n="how.t">A film camera, inside your camera</h2>
+  <div class="band-head"><h2 data-i18n="how.t">A film camera, inside your camera</h2></div>
   <div class="how-grid">
-    <div><span class="num">1</span><b data-i18n="how.1.t">Load a roll</b><p data-i18n="how.1.d">A shelf of 68 canisters. Pick a film and 36, 24 or 12 frames; the camera sets itself up for it.</p></div>
-    <div><span class="num">2</span><b data-i18n="how.2.t">Shoot blind</b><p data-i18n="how.2.d">No picture after each shot and no going back through them: an SLR's viewfinder, a meter needle and a frame counter.</p></div>
-    <div><span class="num">3</span><b data-i18n="how.3.t">Develop the roll</b><p data-i18n="how.3.d">In the camera's own darkroom, or on your computer with Darkrooms. Then see what you got.</p></div>
+    <div><b data-i18n="how.1.t">Load a roll</b><p data-i18n="how.1.d">A shelf of 68 canisters. Pick a film and 36, 24 or 12 frames; the camera sets itself up for it.</p></div>
+    <div><b data-i18n="how.2.t">Shoot blind</b><p data-i18n="how.2.d">No picture after each shot and no going back through them: an SLR's viewfinder, a meter needle and a frame counter.</p></div>
+    <div><b data-i18n="how.3.t">Develop the roll</b><p data-i18n="how.3.d">In the camera's own darkroom, or on your computer with Darkrooms. Then see what you got.</p></div>
   </div>
 </section>
 
 <section id="films" class="band">
-  <h2 data-i18n="films.t">68 films, on four shelves</h2>
-  <p data-i18n="films.d">The same RAW from an EOS M, developed with every film. Each has its own colour, grain, halation and softness.</p>
-  <p class="muted" id="films-state"></p>
-  <div class="tabs" role="tablist" id="shelves"></div>
-  <div class="films" id="films-grid"><p class="muted" data-i18n="films.loading">Loading the films…</p></div>
-  <p class="muted" data-i18n="films.credit">The colour of 59 of these films is a table by <a href="https://patdavid.net">Pat David</a>, shared under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>: a look made by eye, not a measurement of the film.</p>
+  <div class="band-head">
+    <h2 data-i18n="films.t">68 films, on four shelves</h2>
+    <p data-i18n="films.d">The same RAW from an EOS M, developed with every film. Each has its own colour, grain, halation and softness.</p>
+  </div>
+  <div class="viewer">
+    <figure class="view" id="film-view">
+      <button class="view-frame" type="button" aria-label="See it larger"><img src="fos/films/portra400.jpg" alt="Kodak Portra 400"></button>
+      <figcaption><b></b><span class="spec"></span><p></p></figcaption>
+    </figure>
+    <div class="shelf">
+      <div class="tabs" role="tablist" id="shelves"></div>
+      <ul class="films" id="films-grid"><li class="muted" data-i18n="films.loading">Loading the films…</li></ul>
+    </div>
+  </div>
+  <div class="films-notes">
+    <p class="muted" id="films-state"></p>
+    <p class="muted" data-i18n="films.credit">The colour of 59 of these films is a table by <a href="https://patdavid.net">Pat David</a>, shared under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>: a look made by eye, not a measurement of the film.</p>
+  </div>
 </section>
 
 <section id="cameras" class="band">
+  <div class="band-head">
   <h2 data-i18n="cams.t">For Canon cameras that run Magic Lantern</h2>
   <p data-i18n="cams.d">Every camera on which Magic Lantern itself is mature (DIGIC 4 and 5). Testers have tried most of them: here is how far each one got.</p>
+  </div>
   <div class="cam-table-wrap">
     <table class="cam-table">
       <thead><tr><th data-i18n="ct.camera">Camera</th><th data-i18n="ct.fw">Canon firmware</th><th data-i18n="ct.status">Status</th><th data-i18n="ct.notes">Notes</th></tr></thead>
@@ -153,15 +180,20 @@
 </section>
 
 <section id="download" class="band get">
-  <h2 data-i18n="get.t">Put it on your camera</h2>
-  <ol class="install">
-    <li data-i18n="in.1">Check the camera's Canon firmware (MENU → last settings tab → Firmware ver.): it must be the one in the table.</li>
-    <li data-i18n="in.2">Unzip the files for your camera onto an SD card, put it in, and run Firmware ver. → update once. From then on M-Film starts with the camera.</li>
-    <li data-i18n="in.3">In Canon's menu set Image quality to RAW and Image review to Off: the darkroom develops RAWs.</li>
-  </ol>
-  <div class="get-btns">
-    <a class="btn" href="#download" data-download data-i18n="get.btn">Download: pay what you want</a>
-    <a class="btn ghost" href="install.html" data-i18n="get.guide">Step-by-step guide, with pictures →</a>
+  <div class="get-grid">
+    <div>
+      <h2 data-i18n="get.t">Put it on your camera</h2>
+      <p data-i18n="get.d">One zip for your camera: unzip it onto the card, and the camera starts with M-Film. Pay what you want for it, from nothing at all.</p>
+      <div class="get-btns">
+        <a class="btn" href="#download" data-download data-i18n="get.btn">Download: pay what you want</a>
+        <a class="btn ghost" href="install.html" data-i18n="get.guide">Step-by-step guide, with pictures →</a>
+      </div>
+    </div>
+    <ol class="install">
+      <li data-i18n="in.1">Check the camera's Canon firmware (MENU → last settings tab → Firmware ver.): it must be the one in the table.</li>
+      <li data-i18n="in.2">Unzip the files for your camera onto an SD card, put it in, and run Firmware ver. → update once. From then on M-Film starts with the camera.</li>
+      <li data-i18n="in.3">In Canon's menu set Image quality to RAW and Image review to Off: the darkroom develops RAWs.</li>
+    </ol>
   </div>
 </section>
 
@@ -178,7 +210,7 @@
 
 <dialog class="dl" id="dl" aria-labelledby="dl-title">
   <form method="dialog" class="dl-in">
-    <button class="dl-x" value="close" aria-label="Close">×</button>
+    <button class="dl-x" value="close" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button>
 
     <div class="dl-ask">
       <h2 id="dl-title" data-i18n="dl.t">Download M-Film</h2>
@@ -222,10 +254,10 @@
 </dialog>
 
 <div class="lightbox" id="lightbox" hidden>
-  <button class="lb-x" aria-label="Close">×</button>
-  <button class="lb-nav prev" aria-label="Previous film">‹</button>
+  <button class="lb-x" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button>
+  <button class="lb-nav prev" aria-label="Previous film"><svg class="i"><use href="#i-left"/></svg></button>
   <figure><img alt=""><figcaption></figcaption></figure>
-  <button class="lb-nav next" aria-label="Next film">›</button>
+  <button class="lb-nav next" aria-label="Next film"><svg class="i"><use href="#i-right"/></svg></button>
 </div>
 
 <footer>

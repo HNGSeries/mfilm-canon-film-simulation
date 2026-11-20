@@ -3,7 +3,7 @@
 const STR = {
   en: {
     'nav.films': 'Films', 'nav.cameras': 'Cameras', 'nav.download': 'Download',
-    'hero.title': 'Your Canon,<br>shot like film.',
+    'hero.title': 'Your Canon, <br>shot like film.',
     'hero.lede': 'This is M-Film running on an EOS M, in your browser: the same menus, drawn by the same code as on the camera. Load a roll, shoot it, then develop it.',
     'picker.more': 'more soon',
     'picker.label': 'Camera', 'picker.soon': 'Coming to the browser',
@@ -53,7 +53,7 @@ const STR = {
   },
   th: {
     'nav.films': 'ฟิล์ม', 'nav.cameras': 'กล้อง', 'nav.download': 'ดาวน์โหลด',
-    'hero.title': 'เปลี่ยน Canon ของคุณ<br>ให้ถ่ายเหมือนกล้องฟิล์ม',
+    'hero.title': 'เปลี่ยน Canon ของคุณ <br>ให้ถ่ายเหมือนกล้องฟิล์ม',
     'hero.lede': 'นี่คือ M-Film ที่รันบน EOS M ในเบราว์เซอร์ของคุณ เมนูเดียวกัน วาดด้วยโค้ดชุดเดียวกับในกล้องจริง ลองใส่ฟิล์ม ถ่ายให้หมดม้วน แล้วล้างฟิล์มดู',
     'picker.more': 'รุ่นอื่นเร็วๆ นี้',
     'picker.label': 'กล้อง', 'picker.soon': 'เร็วๆ นี้บนเว็บ',
@@ -105,6 +105,7 @@ const STR = {
 
 // the sections under the camera (index.html, js/sections.js)
 Object.assign(STR.en, {
+  'hero.guide': 'How to install', 'films.open': 'See it larger',
   'nav.faq': 'FAQ', 'nav.install': 'Install', 'get.guide': 'Step-by-step guide, with pictures →',
   'how.t': 'A film camera, inside your camera',
   'how.1.t': 'Load a roll', 'how.1.d': 'A shelf of 68 canisters. Pick a film and 36, 24 or 12 frames; the camera sets itself up for it.',
@@ -157,6 +158,7 @@ Object.assign(STR.en, {
   'foot.manual': 'Manual (Thai)', 'foot.privacy': 'Darkrooms privacy', 'foot.coffee': 'Buy the developer a coffee', 'foot.follow': 'Follow',
 });
 Object.assign(STR.th, {
+  'hero.guide': 'วิธีติดตั้ง', 'films.open': 'ดูภาพใหญ่',
   'nav.faq': 'คำถาม', 'nav.install': 'วิธีติดตั้ง', 'get.guide': 'วิธีติดตั้งทีละขั้น พร้อมภาพ →',
   'how.t': 'กล้องฟิล์ม อยู่ในกล้องของคุณ',
   'how.1.t': 'ใส่ฟิล์ม', 'how.1.d': 'ชั้นวางกลักฟิล์ม 68 แบบ เลือกฟิล์มและจำนวนรูป 36, 24 หรือ 12 กล้องจะตั้งค่าตามฟิล์มให้เอง',
