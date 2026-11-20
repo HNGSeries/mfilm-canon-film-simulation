@@ -12,6 +12,10 @@
   `af957b631a304e6be94778b96cb3395de3438e9f` (`COMMIT` in `ml-dev/films/filmluts.py`; each table it takes is
   checked against its SHA-256 in `ml-dev/films/filmluts.sha256`). Its `.cube` files are *not* in this
   repository: the camera build (`ml-dev/films/getluts.py`) and Darkrooms download them.
+- **mlinstall** by petabyt (GPL-2.0), https://github.com/petabyt/mlinstall, release 1.1.2: only in the 1300D's
+  zip, in the folder `mlinstall-for-your-computer`, unchanged, with its licence and its source at that release
+  (with the libraries it is built from). Magic Lantern makes no `ML-SETUP.FIR` for the 1300D, so the camera is set
+  up from a computer with it. `ml-dev/tools/mlinstall.sh` puts it there, each program checked against its SHA-256.
 - **Barlow** font family (SIL Open Font License 1.1): `ml-dev/filmos/fonts/OFL.txt`.
 - Film names and box art are descriptive and made for this project; they are not affiliated with or endorsed
   by Kodak, Fujifilm, CineStill, Ilford, Agfa or others. "Canon" and "EOS M" are trademarks of Canon Inc.;
