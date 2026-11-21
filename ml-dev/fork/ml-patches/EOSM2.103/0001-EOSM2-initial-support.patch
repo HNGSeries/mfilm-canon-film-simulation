@@ -1,0 +1,1517 @@
+From baf277d8e5c8b71da4fef0aff0ffcd9d4bb8e562 Mon Sep 17 00:00:00 2001
+From: Molinzzj <79618529+Molinzzj@users.noreply.github.com>
+Date: Sat, 21 Nov 2026 08:48:23 +0000
+Subject: [PATCH] EOSM2.103: add Canon EOS M2 (1.0.3) port & 8.3 short-filename
+ .sym fix
+
+---
+ platform/EOSM2.103/Makefile                   |  26 ++
+ platform/EOSM2.103/cfn.c                      |  37 +++
+ platform/EOSM2.103/consts.h                   | 257 ++++++++++++++++++
+ platform/EOSM2.103/features.h                 |  40 +++
+ platform/EOSM2.103/fps-engio_per_cam.c        |  17 ++
+ platform/EOSM2.103/fps-engio_per_cam.h        |  12 +
+ platform/EOSM2.103/gui.h                      |  65 +++++
+ platform/EOSM2.103/include/platform/mvr.h     | 138 ++++++++++
+ .../EOSM2.103/include/platform/state-object.h |  13 +
+ platform/EOSM2.103/internals.h                | 163 +++++++++++
+ platform/EOSM2.103/modules.hidden             |   0
+ platform/EOSM2.103/modules.included           |  12 +
+ platform/EOSM2.103/mvr.h                      | 140 ++++++++++
+ platform/EOSM2.103/stubs.S                    | 253 +++++++++++++++++
+ platform/Makefile                             |   1 +
+ src/bmp.c                                     |   2 +-
+ src/boot-d45-am.c                             |   4 +-
+ src/edmac-memcpy.c                            |   3 +
+ src/fps-engio.c                               |   5 +
+ src/fw-signature.h                            |   1 +
+ src/lens.c                                    |   4 +-
+ src/lens.h                                    |   3 +-
+ src/menu.c                                    |   4 +-
+ src/menuindex.c                               |   2 +-
+ src/property.h                                |   2 +-
+ src/raw.c                                     |  12 +-
+ 26 files changed, 1202 insertions(+), 14 deletions(-)
+ create mode 100644 platform/EOSM2.103/Makefile
+ create mode 100644 platform/EOSM2.103/cfn.c
+ create mode 100644 platform/EOSM2.103/consts.h
+ create mode 100644 platform/EOSM2.103/features.h
+ create mode 100644 platform/EOSM2.103/fps-engio_per_cam.c
+ create mode 100644 platform/EOSM2.103/fps-engio_per_cam.h
+ create mode 100644 platform/EOSM2.103/gui.h
+ create mode 100644 platform/EOSM2.103/include/platform/mvr.h
+ create mode 100644 platform/EOSM2.103/include/platform/state-object.h
+ create mode 100644 platform/EOSM2.103/internals.h
+ create mode 100644 platform/EOSM2.103/modules.hidden
+ create mode 100644 platform/EOSM2.103/modules.included
+ create mode 100644 platform/EOSM2.103/mvr.h
+ create mode 100644 platform/EOSM2.103/stubs.S
+
+diff --git a/platform/EOSM2.103/Makefile b/platform/EOSM2.103/Makefile
+new file mode 100644
+index 000000000..07d69777c
+--- /dev/null
++++ b/platform/EOSM2.103/Makefile
+@@ -0,0 +1,26 @@
++MODEL = EOSM2
++FW_VERSION = 103
++
++TOP_DIR = ../..
++
++AUTOEXEC_BASE = 0x800000
++FIR_BASE = 0x800120
++
++#CANON_FIR = EOSM2103.FIR
++MAIN_FIRMWARE_ADDR = 0xFF0C0000
++ROMBASEADDR = 0xFF0C0000
++PLATFORM_ARCH = armv5te
++
++# Load ML at the beginning of the AllocateMemory pool
++# default 0x44C000 - 0xC2A000, patched to 0x4E0000 - 0xC2A000 (592K for us).
++RESTARTSTART = 0x44C100
++ML_BOOT_OBJ = boot-d45-am.o
++ML_SRC_EXTRA_OBJS = $(BUILD_DIR)/reloc.o
++
++ML_AF_PATTERNS_OBJ = n
++
++# Strict FAT32 8.3 short filename (DryOS FIO rejects 9-char "EOSM2_103")
++ML_MODULES_SYM_NAME = EOSM2103.SYM
++
++include ../Makefile
++.DEFAULT_GOAL := $(BUILD_DIR)/cam_complete
+diff --git a/platform/EOSM2.103/cfn.c b/platform/EOSM2.103/cfn.c
+new file mode 100644
+index 000000000..1b84e6413
+--- /dev/null
++++ b/platform/EOSM2.103/cfn.c
+@@ -0,0 +1,37 @@
++#include <dryos.h>
++#include <property.h>
++#include <cfn-generic.h>
++
++// look on camera menu or review sites to get custom function numbers
++
++int get_htp() // Highlight Tone Priority
++{ 
++    return GetCFnData(0, 3);
++}
++
++void set_htp(int value)
++{
++    SetCFnData(0, 3, value); 
++}
++
++int get_mlu() // EOSM2 doesn't have mirror lock up
++{
++    return 0; 
++}
++
++void set_mlu(int value) 
++{ 
++    return;
++}
++
++int cfn_get_af_button_assignment() 
++{
++    return GetCFnData(0, 5);
++}
++
++void cfn_set_af_button(int value) 
++{
++    SetCFnData(0, 5, value);
++}
++
++GENERIC_GET_ALO
+diff --git a/platform/EOSM2.103/consts.h b/platform/EOSM2.103/consts.h
+new file mode 100644
+index 000000000..e77145b0d
+--- /dev/null
++++ b/platform/EOSM2.103/consts.h
+@@ -0,0 +1,257 @@
++/*
++ *  EOS M2 1.0.3 consts
++ */
++
++#define CANON_SHUTTER_RATING 100000
++
++#define CARD_LED_ADDRESS 0xC022C188 // http://magiclantern.wikia.com/wiki/Led_addresses
++#define LEDON 0x138800
++#define LEDOFF 0x838C00
++
++    // RESTARTSTART
++#define HIJACK_INSTR_BL_CSTART  0xFF0C0DBC
++#define HIJACK_INSTR_BSS_END 0xFF0C1C90  //BSS_END is 0x17EC74
++#define HIJACK_FIXBR_BZERO32 0xFF0C1BE4
++#define HIJACK_FIXBR_CREATE_ITASK 0xFF0C1C80
++#define HIJACK_INSTR_MY_ITASK 0xFF0C1C98
++#define HIJACK_TASK_ADDR 0x8FBCC
++
++// Used for copying and modifying ROM code before transferring control.
++// Look in HIJACK macros for the highest address, subtract MAIN_FIRMWARE_ADDR, align up.
++#define FIRMWARE_ENTRY_LEN 0x3000
++
++// Used in boot-hack.c with CONFIG_ALLOCATE_MEMORY_POOL
++#define ROM_ITASK_START             0xFF0C57A0      /* init_task start */
++#define ROM_ITASK_END               0xFF0C5978      /* init_task end (need to include /_term and a few others) */
++#define ROM_CREATETASK_MAIN_START   0xFF0C3064      /* CreateTaskMain start */
++#define ROM_CREATETASK_MAIN_END     0xFF0C3234      /* only relocate until AllocateMemory initialization; need to include ff0c2c74 "K355" and ff0c3204 00c2a000 */
++#define ROM_ALLOCMEM_END            0xFF0C30A4      /* where the end limit of AllocateMemory pool is set */
++#define ROM_ALLOCMEM_INIT           (ROM_ALLOCMEM_END + 8) /* where it calls AllocateMemory_init_pool */
++#define ROM_B_CREATETASK_MAIN       0xFF0C5814      /* jump from init_task to CreateTaskMain */
++
++#define ARMLIB_OVERFLOWING_BUFFER 0xB89E4 // in AJ_armlib_setup_related3
++
++#define DRYOS_ASSERT_HANDLER 0x8FBAC // dec TH_assert or assert_0
++
++#define YUV422_LV_BUFFER_1 0x4FBF7800
++#define YUV422_LV_BUFFER_2 0x4F3D7800
++#define YUV422_LV_BUFFER_3 0x4F7E7800
++
++// http://magiclantern.wikia.com/wiki/VRAM_ADDR_from_code
++// stateobj_disp[1]
++#define YUV422_LV_BUFFER_DISPLAY_ADDR (*(uint32_t*)(0x90494+0x12C))
++
++#define DEFAULT_RAW_BUFFER MEM(0x91CF0 + 0x78)
++#define DEFAULT_RAW_BUFFER_SIZE (0x48CC0000 - 0x48798100)
++
++#define REG_EDMAC_WRITE_LV_ADDR 0xC0F04208 // SDRAM address of LV buffer (aka VRAM)
++#define REG_EDMAC_WRITE_HD_ADDR 0xC0F04108 // SDRAM address of HD buffer (aka YUV)
++
++#define YUV422_HD_BUFFER_DMA_ADDR (shamem_read(REG_EDMAC_WRITE_HD_ADDR)) // first line from DMA is dummy
++
++// http://magiclantern.wikia.com/wiki/ASM_Zedbra
++#define YUV422_HD_BUFFER_1 0x483cc100
++#define YUV422_HD_BUFFER_2 0x48000100
++
++// see "focusinfo" and Wiki:Struct_Guessing
++#define FOCUS_CONFIRMATION (*(int*)(0x93990+0x4))
++
++// Look for string judge_permit_lv same as "[MC] permit LV instant" on other cameras.
++#define HALFSHUTTER_PRESSED (*(int*)(0x910A8+0x20))
++
++// for gui_main_task
++#define GMT_NFUNCS 7
++#define GMT_FUNCTABLE 0xFFA11EA4 // dec gui_main_task
++
++#define CURRENT_GUI_MODE (*(int*)0x928BC) // in SetGUIRequestMode (0x92860+0x5C) EOSM = +0x58
++
++// dec ptpNotifyOlcInfoChanged and look for: if arg1 == 1: MEM(0x79B8) = *(arg2)
++// #define ISO_ADJUSTMENT_ACTIVE ((*(int*)0x96388) == 0xF) // (0x96338+0x50)
++
++// from a Canon screenshot: call("dispcheck")
++// assume same as 5D3 and EOSM/650D/6D/100D. (700D is 80)
++#define COLOR_FG_NONLV 1
++
++// look in MVR_Initialize for AllocateMemory call; decompile it and see where ret_AllocateMemory is stored.
++// (0x8FF7C+0x4)
++#define MVR_516_STRUCT (*(void**)0x8FF80)
++
++// #define MEM(x) (*(volatile int*)(x))
++#define div_maybe(a,b) ((a)/(b))
++
++// see mvrGetBufferUsage, which is not really safe to call => err70
++// macros copied from arm-console
++#define MVR_BUFFER_USAGE_FRAME MAX(MEM(MVR_516_STRUCT + 0x59C), MEM(MVR_516_STRUCT + 0x598))
++#define MVR_BUFFER_USAGE_SOUND 0 // not sure
++#define MVR_BUFFER_USAGE MAX(MVR_BUFFER_USAGE_FRAME, MVR_BUFFER_USAGE_SOUND)
++
++#define MVR_FRAME_NUMBER  (*(int*)(0x204 + MVR_516_STRUCT)) // in mvrExpStarted
++#define MVR_BYTES_WRITTEN MEM((0xb0 + MVR_516_STRUCT))
++
++#define MOV_RES_AND_FPS_COMBINATIONS 9 // 3FHD, 2HD, 2VGA
++#define MOV_OPT_NUM_PARAMS 2
++#define MOV_GOP_OPT_NUM_PARAMS 5
++#define MOV_OPT_STEP 5
++#define MOV_GOP_OPT_STEP 5
++
++#define AE_STATE (*(int8_t*)(0x99C54 + 0x1C)) 
++#define AE_VALUE (*(int8_t*)(0x99C54 + 0x1D))
++
++#define GUIMODE_PLAY 1
++#define GUIMODE_MENU 2
++// #define GUIMODE_INFO 0x15 // EOSM
++#define GUIMODE_FOCUS_MODE 0x123456 // This a fake address, right?
++
++/* these don't exist in the M - see if it works on the M2*/
++// #define GUIMODE_MOVIE_ENSURE_A_LENS_IS_ATTACHED (CURRENT_GUI_MODE == 0x24)
++// #define GUIMODE_MOVIE_PRESS_LV_TO_RESUME (CURRENT_GUI_MODE == 0x25)
++/* this is used on the M */
++#define GUIMODE_MOVIE_ENSURE_A_LENS_IS_ATTACHED 0
++#define GUIMODE_MOVIE_PRESS_LV_TO_RESUME 0
++
++#define PLAY_MODE (gui_state == GUISTATE_PLAYMENU && CURRENT_GUI_MODE == GUIMODE_PLAY)
++#define MENU_MODE (gui_state == GUISTATE_PLAYMENU && CURRENT_GUI_MODE == GUIMODE_MENU)
++
++#define AUDIO_MONITORING_HEADPHONES_CONNECTED (!((*(int*)(0xC0220000+0x138)) & 1)) //EnableVideoOut
++#define HOTPLUG_VIDEO_OUT_PROP_DELIVER_ADDR (0x8FC20+0x18)
++#define HOTPLUG_VIDEO_OUT_STATUS_ADDR (0x8FC20+0x10)
++
++// In bindGUIEventFromGUICBR, look for "LV Set" => arg0 = 8
++// Next, in SetGUIRequestMode, look at what code calls NotifyGUIEvent(8, something) => valid values from 90 to 102
++#define GUIMODE_ML_MENU ( RECORDING_H264 ?  99 : 93 ) // assume same as EOSM
++
++// for displaying TRAP FOCUS msg outside LV
++// assume same as EOSM - though EOSM doesn't do TRAP_FOCUS
++#define DISPLAY_TRAP_FOCUS_POS_X 50
++#define DISPLAY_TRAP_FOCUS_POS_Y 360
++#define DISPLAY_TRAP_FOCUS_MSG       "TRAP FOCUS"
++#define DISPLAY_TRAP_FOCUS_MSG_BLANK "          "
++
++#define NUM_PICSTYLES 10
++
++#define FLASH_MAX_EV 3
++#define FLASH_MIN_EV -10 // not sure if it actually works
++#define FASTEST_SHUTTER_SPEED_RAW 152
++#define MAX_AE_EV 5 // assume same as 100D
++
++#define DIALOG_MnCardFormatBegin (0xAB910+0x4) // ret_CreateDialogBox(...DlgMnCardFormatBegin_handler...) is stored there
++#define DIALOG_MnCardFormatExecute (0xB19F4+0x4) // "DlgMnCardFormatExcute.c Status(0x%x) 100"
++#define FORMAT_BTN_NAME "[Trash to change]"
++#define FORMAT_BTN BGMT_PRESS_DOWN
++#define FORMAT_STR_LOC 4 // assume same as EOSM
++
++#define BULB_MIN_EXPOSURE 1000 // assume same as EOSM
++
++// http://magiclantern.wikia.com/wiki/Fonts
++// http://www.magiclantern.fm/forum/index.php?topic=15895.msg186764#msg186764
++#define BFNT_CHAR_CODES    0xF012485C
++#define BFNT_BITMAP_OFFSET 0xF0127A10
++#define BFNT_BITMAP_DATA   0xF012ABC4
++
++// from CFn
++#define AF_BTN_HALFSHUTTER 0
++#define AF_BTN_STAR 1 // assume same as EOSM
++
++#define IMGPLAY_ZOOM_LEVEL_ADDR (0x99EBC+0x48) // dec GuiImageZoomDown and look for a negative counter
++#define IMGPLAY_ZOOM_LEVEL_MAX 14
++#define IMGPLAY_ZOOM_POS_X MEM(0xE2664) // CentrePos
++#define IMGPLAY_ZOOM_POS_Y MEM(0xE2664+0x4)
++//~ #define IMGPLAY_ZOOM_POS_X_CENTER 360
++//~ #define IMGPLAY_ZOOM_POS_Y_CENTER 240
++
++#define BULB_EXPOSURE_CORRECTION 150 // min value for which bulb exif is OK [not tested]
++
++// see http://magiclantern.wikia.com/wiki/VRAM/BMP
++#define WINSYS_BMP_DIRTY_BIT_NEG MEM(0xA05D4+0x2c)
++
++// manual exposure overrides
++#define LVAE_STRUCT 0xEC4BC
++#define CONTROL_BV      (*(uint16_t*)(LVAE_STRUCT+0x20)) // EP_SetControlBv
++#define CONTROL_BV_TV   (*(uint16_t*)(LVAE_STRUCT+0x22)) // EP_SetControlParam
++#define CONTROL_BV_AV   (*(uint16_t*)(LVAE_STRUCT+0x24))
++#define CONTROL_BV_ISO  (*(uint16_t*)(LVAE_STRUCT+0x26))
++#define CONTROL_BV_ZERO (*(uint16_t*)(LVAE_STRUCT+0x28))
++#define LVAE_ISO_SPEED  (*(uint8_t* )(LVAE_STRUCT))      // offset 0x0; at 3 it changes iso very slowly
++//~ #define LVAE_ISO_MIN    (*(uint8_t* )(LVAE_STRUCT+0x28)) // string: ISOMin:%d
++//~ #define LVAE_ISO_HIS    (*(uint8_t* )(LVAE_STRUCT+0x2a)) // no idea what this is
++#define LVAE_DISP_GAIN  (*(uint16_t*)(LVAE_STRUCT+0x3c)) // lvae_setdispgain
++#define LVAE_MOV_M_CTRL (*(uint8_t* )(LVAE_STRUCT+0x1c)) // lvae_setmoviemanualcontrol
++
++#define MIN_MSLEEP 10
++
++// assume same as EOSM
++#define INFO_BTN_NAME "INFO"
++#define Q_BTN_NAME "[1-Finger Tap]"
++// #define ARROW_MODE_TOGGLE_KEY "IDK"
++
++#define DISPLAY_STATEOBJ (*(struct state_object **)0x905B0) // (0x90494+0x11C)
++#define DISPLAY_IS_ON (DISPLAY_STATEOBJ->current_state != 0)
++
++#define VIDEO_PARAMETERS_SRC_3 MEM(0x91CD4) // (0x91CC8+0xC)
++#define FRAME_ISO (*(uint8_t*)(VIDEO_PARAMETERS_SRC_3+0))
++#define FRAME_APERTURE (*(uint8_t*)(VIDEO_PARAMETERS_SRC_3+1))
++#define FRAME_SHUTTER (*(uint8_t*)(VIDEO_PARAMETERS_SRC_3+2))
++#define FRAME_SHUTTER_TIMER (*(uint16_t*)(VIDEO_PARAMETERS_SRC_3+6))
++#define FRAME_BV ((int)FRAME_SHUTTER + (int)FRAME_APERTURE - (int)FRAME_ISO)
++
++#define FRAME_SHUTTER_BLANKING_ZOOM   (*(uint16_t*)0x416D7B7C) // ADTG register 805f
++#define FRAME_SHUTTER_BLANKING_NOZOOM (*(uint16_t*)0x416D7B80) // ADTG register 8061
++/* when reading, use the other mode, as it contains the original value (not overriden) */
++#define FRAME_SHUTTER_BLANKING_READ   (lv_dispsize > 1 ? FRAME_SHUTTER_BLANKING_NOZOOM : FRAME_SHUTTER_BLANKING_ZOOM)
++#define FRAME_SHUTTER_BLANKING_WRITE  (lv_dispsize > 1 ? &FRAME_SHUTTER_BLANKING_ZOOM : &FRAME_SHUTTER_BLANKING_NOZOOM) // commented out on EOSM
++#define LV_OVERLAYS_MODE MEM(0xDF1BC + 0x7C)
++
++// see "Malloc Information"
++#define MALLOC_STRUCT_ADDR 0xB9698
++//#define MALLOC_FREE_MEMORY (MEM(MALLOC_STRUCT + 8) - MEM(MALLOC_STRUCT + 0x1C)) // "Total Size" - "Allocated Size"
++#define SRM_BUFFER_SIZE 0x1F24000   /* print it from srm_malloc_cbr */
++#define SRM_MAX_BUF_COUNT_VIDEO_MODE 16 // probably not the true max, D45 cams all guess 16 and non-fatally fail if using too much
++
++#define UNAVI_BASE (0xA7048)
++#define UNAVI (MEM(UNAVI_BASE + 0x24))
++#define UNAVI_AV (MEM(UNAVI_BASE + 0x58))
++#define LV_BOTTOM_BAR_DISPLAYED ((UNAVI == 2) || (UNAVI_AV != 0))
++#undef UNAVI_FEEDBACK_TIMER_ACTIVE // no CancelUnaviFeedBackTimer in the firmware
++
++/******************************************************************************************************************
++ * touch_num_fingers_ptr:
++ * --> value=0x11100 when screen isn't being touched, value=0x11101 when 1 finger is held touching the screen
++ * --> value=0x11102 with 2 fingers touching the screen
++ * --> value=0x11103 with 3 fingers
++ * --> value=0x1104 with 4 fingers! Note: only the LSB seems to be used here, other bits seem to change sometimes.
++ *  but the rightmost bit always changes to match how many fingers are touching the screen. We can recognize up to
++ *  2 touch points active. Looks like canon doesn't utilize more than 2 finger gestures, it does't report the
++ *  coordinates of the 3rd-6th fingers.
++ *
++ * touch_coord_ptr:
++ *  --> top left corner = 0x0000000
++ *  --> top right corner = 0x00002CF
++ *  --> bottom right corner = 0x1DF02CF
++ *  --> bottom left corner = 0x1DF0000
++ *
++ *  [**] lower 3 bits represent the X coordinates, from 0 to 719 (720px wide)
++ *  [**] middle bit is always 0
++ *  [**] upper 3 bits represent the Y coordinates, from 0 to 479 (480px tall)
++ *
++ *  And that's how Canon's touch screen works :)
++ *******************************************************************************************************************/
++// not used [was for early implemenation]
++//#define TOUCH_XY_RAW1 0x4D868
++//#define TOUCH_XY_RAW2 (TOUCH_XY_RAW1+4)
++//#define TOUCH_MULTI 0x4D810   //~ found these with memspy. look for addresses changing with screen touches.
++//--------------
++//#define HIJACK_TOUCH_CBR_PTR 0x4D3F8
++
++// EOSM and 700D has this but 650D and 100D does not - need to keep searching for it
++//#define HIJACK_TOUCH_CBR_PTR 0x4D3F8
++
++
++// max volume supported for beeps
++#define ASIF_MAX_VOL 10 // assume same as EOSM
++
++// look for "JudgeBottomInfoDispTimerState(%d)"
++#define JUDGE_BOTTOM_INFO_DISP_TIMER_STATE 0xA70A0 // (0xA7048+0x58)
++
++// temperature convertion from raw-temperature to celsius
++// http://www.magiclantern.fm/forum/index.php?topic=9673.msg171969#msg171969
++#define EFIC_CELSIUS (MOD(efic_temp - 95, 256) * 40 / 100 - 22) // assume same as EOSM until it can be tested in camera
+diff --git a/platform/EOSM2.103/features.h b/platform/EOSM2.103/features.h
+new file mode 100644
+index 000000000..1e597b523
+--- /dev/null
++++ b/platform/EOSM2.103/features.h
+@@ -0,0 +1,40 @@
++#include "all_features.h"
++/* Can't Be Implemented */
++#undef FEATURE_FORCE_LIVEVIEW // Already Live View
++#undef FEATURE_MLU // No Mirror
++#undef FEATURE_MLU_HANDHELD
++#undef FEATURE_STICKY_DOF // No DOF button
++#undef FEATURE_IMAGE_EFFECTS // DigicV new effects check "Art Filter"
++#undef FEATURE_INTERMEDIATE_ISO_PHOTO_DISPLAY // Well.. it will work in 1 mode
++#undef FEATURE_AF_PATTERNS // No regular AF
++#undef FEATURE_VOICE_TAGS // Just to be sure
++//#undef FEATURE_SHUTTER_FINE_TUNING //It works! Timer values are not applied until you press record (this is normal for EOSM)
++
++
++/* Working (trimmed heavy video/crop features for DIGIC 5 boot memory headroom) */
++#undef FEATURE_CROP_MODE_HACK
++#undef FEATURE_MOVIE_RECORDING_50D
++#undef FEATURE_FPS_RAMPING
++#define FEATURE_AUDIO_REMOTE_SHOT
++
++/* Some Hope Yet */
++#undef FEATURE_TRAP_FOCUS
++#undef FEATURE_FOLLOW_FOCUS
++// #undef FEATURE_RACK_FOCUS
++// #undef FEATURE_FOCUS_STACKING
++#undef FEATURE_GHOST_IMAGE // No way to pick image but works.
++// #undef FEATURE_SET_MAINDIAL // Set taken over by Q
++// #undef FEATURE_PLAY_EXPOSURE_FUSION // https://www.magiclantern.fm/forum/index.php?topic=9741.msg211033#msg211033
++#undef FEATURE_PLAY_COMPARE_IMAGES
++#undef FEATURE_PLAY_TIMELAPSE
++#undef FEATURE_PLAY_EXPOSURE_ADJUST
++#undef FEATURE_QUICK_ZOOM
++#undef FEATURE_QUICK_ERASE
++#undef FEATURE_LV_FOCUS_BOX_FAST
++#undef FEATURE_LV_FOCUS_BOX_SNAP
++#undef FEATURE_ARROW_SHORTCUTS
++#undef FEATURE_MAGIC_ZOOM_FULL_SCREEN // https://bitbucket.org/hudson/magic-lantern/issue/2272/full-screen-magic-zoom-is-garbled-on-700d
++                                      // https://bitbucket.org/hudson/magic-lantern/issues/2842
++
++//#define FEATURE_EYEFI_TRICKS
++//#define FEATURE_JUNKIE_MENU
+diff --git a/platform/EOSM2.103/fps-engio_per_cam.c b/platform/EOSM2.103/fps-engio_per_cam.c
+new file mode 100644
+index 000000000..43250548f
+--- /dev/null
++++ b/platform/EOSM2.103/fps-engio_per_cam.c
+@@ -0,0 +1,17 @@
++#include "dryos.h"
++#include "fps-engio_per_cam.h"
++
++int get_fps_register_a(void)
++{
++    return shamem_read(FPS_REGISTER_A);
++}
++
++int get_fps_register_a_default(void)
++{
++    return shamem_read(FPS_REGISTER_A + 4);
++}
++
++int get_fps_register_b(void)
++{
++    return shamem_read(FPS_REGISTER_B);
++}
+diff --git a/platform/EOSM2.103/fps-engio_per_cam.h b/platform/EOSM2.103/fps-engio_per_cam.h
+new file mode 100644
+index 000000000..9ec7f82a3
+--- /dev/null
++++ b/platform/EOSM2.103/fps-engio_per_cam.h
+@@ -0,0 +1,12 @@
++#ifndef _fps_engio_per_cam_h_
++#define _fps_engio_per_cam_h_
++
++#define FPS_REGISTER_A 0xC0F06008
++#define FPS_REGISTER_B 0xC0F06014
++#define FPS_REGISTER_CONFIRM_CHANGES 0xC0F06000
++
++int get_fps_register_a(void);
++int get_fps_register_a_default(void);
++int get_fps_register_b(void);
++
++#endif
+diff --git a/platform/EOSM2.103/gui.h b/platform/EOSM2.103/gui.h
+new file mode 100644
+index 000000000..d01984c4b
+--- /dev/null
++++ b/platform/EOSM2.103/gui.h
+@@ -0,0 +1,65 @@
++#ifndef _cameraspecific_gui_h_
++#define _cameraspecific_gui_h_
++
++
++// button codes as received by gui_main_task
++#define BGMT_WHEEL_LEFT 2
++#define BGMT_WHEEL_RIGHT 3
++
++// no top wheel => use fake negative values => they will fail read-only tests and will not be passed to Canon firmware
++#define BGMT_WHEEL_UP -12345
++#define BGMT_WHEEL_DOWN -123456
++
++#define BGMT_PRESS_SET 0x4
++#define BGMT_UNPRESS_SET 0x5
++
++#define BGMT_MENU 0x6
++#define BGMT_INFO 0x7
++#define BGMT_PLAY 0xb
++#define BGMT_TRASH 0xD // not present on the camera, but appears to be interpreted correctly by Canon code, http://www.magiclantern.fm/forum/index.php?topic=15895.msg196560#msg196560
++#define BGMT_REC 0x1E
++
++/* no zoom buttons => fake codes */
++#define BGMT_PRESS_ZOOM_IN -0x112
++#define BGMT_UNPRESS_ZOOM_IN -0x113
++
++#define BGMT_LV 0x1E
++#define BGMT_Q_SET 0x1D
++// #define BGMT_Q -0xFFFE // dummy value so button can be faked with fake_simple_button(); negative means internal ML event, not passed to Canon code
++
++#define BGMT_PRESS_UP 0x2a
++#define BGMT_UNPRESS_UP 0x2b
++#define BGMT_PRESS_RIGHT 0x26
++#define BGMT_UNPRESS_RIGHT 0x27
++#define BGMT_PRESS_LEFT 0x28
++#define BGMT_UNPRESS_LEFT 0x29
++#define BGMT_PRESS_DOWN 0x2c
++#define BGMT_UNPRESS_DOWN 0x2d
++
++#define BGMT_PRESS_HALFSHUTTER 0x50
++
++// touch events
++#define BGMT_TOUCH_1_FINGER 0x6f
++#define BGMT_UNTOUCH_1_FINGER 0x70
++#define BGMT_TOUCH_2_FINGER 0x76
++#define BGMT_UNTOUCH_2_FINGER 0x77
++#define BGMT_TOUCH_MOVE 0x71 // when one or two finger are moving
++#define BGMT_TOUCH_PINCH_START 0x78 // when two fingers are touched and start moving
++#define BGMT_TOUCH_PINCH_STOP 0x79 // when two fingers are touched and stop moving
++
++#define GMT_GUICMD_PRESS_BUTTON_SOMETHING 0x54 // unhandled buttons?
++
++#define GMT_OLC_INFO_CHANGED 0x69 // backtrace copyOlcDataToStorage call in gui_massive_event_loop
++
++// needed for correct shutdown from powersave modes
++#define GMT_GUICMD_START_AS_CHECK 97
++#define GMT_GUICMD_OPEN_SLOT_COVER 93
++#define GMT_GUICMD_LOCK_OFF 91
++
++// not implemented yet
++#define GMT_LOCAL_DIALOG_REFRESH_LV 0x36 // event type = 2, gui code = 0x100000C6 in EOS-M
++
++#define BTN_ZEBRAS_FOR_PLAYBACK BGMT_MENU // what button to use for zebras in Play mode
++#define BTN_ZEBRAS_FOR_PLAYBACK_NAME "Menu"
++
++#endif
+diff --git a/platform/EOSM2.103/include/platform/mvr.h b/platform/EOSM2.103/include/platform/mvr.h
+new file mode 100644
+index 000000000..cb9f023a7
+--- /dev/null
++++ b/platform/EOSM2.103/include/platform/mvr.h
+@@ -0,0 +1,138 @@
++#ifndef __PLATFORM_MVR_H__
++#define __PLATFORM_MVR_H__
++
++// Movie recording.
++// tab size: 4
++
++struct mvr_config
++{
++	int16_t         qscale_related_1;		// 0x00, 67bc
++	uint16_t        debug_flag;             // 0x02, 67be   1 = write debugmsg's
++	uint16_t        qscale_mode;            // 0x04, 67c0   1 = QScale, 0 = CBR
++	uint16_t		db_filter_a;			// 0x06, 67c2
++	uint16_t		db_filter_b;            // 0x08, 67c4
++	int16_t 		def_q_scale;            // 0x0a, 67c6
++	int16_t 		qscale_related_2;		// 0x0c, 67c8
++	int16_t 		qscale_related_3;		// 0x0e, 67ca
++	uint16_t 		x67cc;                  // 0x10, 67cc
++	int16_t 		qscale_limit_L;			// 0x12, 67ce
++	int16_t         qscale_limit_H;         // 0x14, 67d0
++	uint16_t		time_const;				// 0x16, 67d2
++	uint32_t		fullhd_30fps_opt_size_I;// 0x18, 67d4
++	uint32_t		fullhd_30fps_opt_size_P;// 0x1c, 67d8
++	uint32_t		D1_30fps;				// 0x20, 67dc
++	uint32_t		D2_30fps;				// 0x24, 67e0
++	uint32_t		x67e4;					// 0x28, 67e4
++	uint32_t		fullhd_25fps_opt_size_I;// 0x2c, 67e8
++	uint32_t		fullhd_25fps_opt_size_P;// 0x30, 67ec
++	uint32_t		fullhd_25fps_D1;		// 0x34, 67f0
++	uint32_t		fullhd_25fps_D2;		// 0x38, 67f4
++	uint32_t		x67f8;					// 0x3c, 67f8
++	uint32_t		fullhd_24fps_opt_size_I;// 0x40, 67fc
++	uint32_t		fullhd_24fps_opt_size_P;// 0x44, 6800
++	uint32_t		fullhd_24fps_D1;		// 0x48, 6804
++	uint32_t		fullhd_24fps_D2;		// 0x4c, 6808
++	uint32_t		x680c;					// 0x50, 680c
++	uint32_t		hd_60fps_opt_size_I;	// 0x54, 6810
++	uint32_t		hd_60fps_opt_size_P;	// 0x58, 6814
++	uint32_t		hd_60fps_D1;			// 0x5c, 6818
++	uint32_t		hd_60fps_D2;			// 0x60, 681c
++	uint32_t		x6820;					// 0x64, 6820
++	uint32_t		hd_50fps_opt_size_I;	// 0x68, 6824
++	uint32_t		hd_50fps_opt_size_P;	// 0x6c, 6828
++	uint32_t		hd_50fps_D1;			// 0x70, 682c
++	uint32_t		hd_50fps_D2;			// 0x74, 6830
++	uint32_t		x6834_kinda_counter;	// 0x78, 6834
++	uint32_t		x6838;                  // 0x7c, 6838
++	uint32_t		x683c;                  // 0x80, 683c
++	uint32_t        x6840;                  // 0x84, 6840
++	uint32_t		x6844;                  // 0x88, 6844
++	uint32_t		x6848;					// 0x8c, 6848
++    int32_t         another_def_q_scale;	// 0x90, 684c
++	int32_t         IniQScale;              // 0x94, 6850
++	uint32_t		x6854;                  // 0x98, 6854
++	uint32_t		x6858;                  // 0x9c, 6858
++	uint32_t		x685c;					// 0xa0, 685c
++	uint32_t        vga_30fps_opt_size_I;	// 0xa4, 6860
++	uint32_t 	    vga_30fps_opt_size_P;	// 0xa8, 6864
++	uint32_t 		vga_30fps_D1;           // 0xac, 6868
++	uint32_t		vga_30fps_D2;			// 0xb0, 686c
++	uint32_t		x6870;                  // 0xb4, 6870
++	uint32_t	    vga_25fps_opt_size_I;	// 0xb8, 6874
++	uint32_t        vga_25fps_opt_size_P;	// 0xbc, 6878
++	uint32_t		vga_25fps_D1;			// 0xc0, 687c
++	uint32_t		vga_25fps_D2;           // 0xc4, 6880
++	uint32_t		x6884;                  // 0xc8, 6884
++	uint32_t		x6888;                  // 0xcc, 6888
++	uint32_t		x688c;                  // 0xd0, 688c
++	uint32_t		x6890;                  // 0xd4, 6890
++	uint32_t		x6894;                  // 0xd8, 6894
++	uint32_t		x6898;                  // 0xdc, 6898
++	uint32_t		x689c;                  // 0xe0, 689c
++	uint32_t		x68a0;                  // 0xe4, 68a0
++	uint32_t		x68a4;                  // 0xe8, 68a4
++	uint32_t		x68a8;                  // 0xec, 68a8
++	uint32_t		x68ac;                  // 0xf0, 68ac
++	uint32_t		actual_qscale_maybe3;   // 0xf4, 68b0
++	uint32_t		actual_qscale_maybe2;   // 0xf8, 68b4
++	int32_t		actual_qscale_maybe;    // 0xfc, 68b8
++	uint32_t		IOptSize;               // 0x100, 68bc
++	uint32_t		POptSize;               // 0x104, 68c0
++	uint32_t		IOptSize2;              // 0x108, 68c4
++	uint32_t		POptSize2;              // 0x10c, 68c8
++	uint32_t		GopSize;                // 0x110, 68cc
++	uint32_t		x68d0;                  // 0x114, 68d0
++	uint32_t		x68d4;                  // 0x118, 68d4
++	uint32_t		_D1;                    // 0x11c, 68d8
++	uint32_t		_D2;                    // 0x120, 68dc
++	uint32_t		x68e0;                  // 0x124, 68e0
++	uint32_t		fullhd_30fps_gop_opt_0;	// 0x128, 68e4
++	uint32_t		fullhd_30fps_gop_opt_1;	// 0x12c, 68e8
++	uint32_t		fullhd_30fps_gop_opt_2;	// 0x130, 68ec
++	uint32_t		fullhd_30fps_gop_opt_3;	// 0x134, 68f0
++	uint32_t		fullhd_30fps_gop_opt_4;	// 0x138, 68f4
++	uint32_t		fullhd_25fps_gop_opt_0;	// 0x13c, 68f8
++	uint32_t		fullhd_25fps_gop_opt_1;	// 0x140, 68fc
++	uint32_t		fullhd_25fps_gop_opt_2;	// 0x144, 6900
++	uint32_t		fullhd_25fps_gop_opt_3;	// 0x148, 6904
++	uint32_t		fullhd_25fps_gop_opt_4;	// 0x14c, 6908
++	uint32_t		fullhd_24fps_gop_opt_0;	// 0x150, 690c
++	uint32_t		fullhd_24fps_gop_opt_1;	// 0x154, 6910
++	uint32_t		fullhd_24fps_gop_opt_2;	// 0x158, 6914
++	uint32_t		fullhd_24fps_gop_opt_3;	// 0x15c, 6918
++	uint32_t		fullhd_24fps_gop_opt_4;	// 0x160, 691c
++    uint32_t		hd_60fps_gop_opt_0;     // 0x164, 6920
++    uint32_t		hd_60fps_gop_opt_1;     // 0x168, 6924
++    uint32_t		hd_60fps_gop_opt_2;     // 0x16c, 6928
++    uint32_t		hd_60fps_gop_opt_3;     // 0x170, 692c
++    uint32_t		hd_60fps_gop_opt_4;     // 0x174, 6930
++    uint32_t		hd_50fps_gop_opt_0;     // 0x178, 6934
++    uint32_t		hd_50fps_gop_opt_1;     // 0x17c, 6938
++    uint32_t		hd_50fps_gop_opt_2;     // 0x180, 693c
++    uint32_t		hd_50fps_gop_opt_3;     // 0x184, 6940
++    uint32_t		hd_50fps_gop_opt_4;     // 0x188, 6944
++    uint32_t		x6948;                  // 0x18c, 6948
++    uint32_t		x694c;                  // 0x190, 694c
++    uint32_t		x6950;                  // 0x194, 6950
++    uint32_t		x6954;                  // 0x198, 6954
++    uint32_t		x6958;                  // 0x19c, 6958
++    uint32_t		x695c;                  // 0x1a0, 695c
++    uint32_t		x6960;                  // 0x1a4, 6960
++    uint32_t		x6964;                  // 0x1a8, 6964
++    uint32_t		x6968;                  // 0x1ac, 6968
++    uint32_t		x696c;                  // 0x1b0, 696c
++    uint32_t		vga_30fps_gop_opt_0;    // 0x1b4, 6970
++    uint32_t		vga_30fps_gop_opt_1;    // 0x1b8, 6974
++    uint32_t		vga_30fps_gop_opt_2;    // 0x1bc, 6978
++    uint32_t		vga_30fps_gop_opt_3;    // 0x1c0, 697c
++    uint32_t		vga_30fps_gop_opt_4;    // 0x1c4, 6980
++    uint32_t		vga_25fps_gop_opt_0;    // 0x1c8, 6984
++    uint32_t		vga_25fps_gop_opt_1;    // 0x1cc, 6988
++    uint32_t		vga_25fps_gop_opt_2;    // 0x1d0, 698c
++    uint32_t		vga_25fps_gop_opt_3;    // 0x1d4, 6990
++    uint32_t		vga_25fps_gop_opt_4;    // 0x1d8, 6994
++} __attribute__((aligned,packed));
++
++//~ SIZE_CHECK_STRUCT( mvr_config, 0x30 );
++
++#endif /* __PLATFORM_MVR_H__ */
+diff --git a/platform/EOSM2.103/include/platform/state-object.h b/platform/EOSM2.103/include/platform/state-object.h
+new file mode 100644
+index 000000000..21840dd39
+--- /dev/null
++++ b/platform/EOSM2.103/include/platform/state-object.h
+@@ -0,0 +1,13 @@
++#ifndef __platform_state_object_h
++#define __platform_state_object_h
++
++#define DISPLAY_STATE DISPLAY_STATEOBJ
++#define INPUT_ENABLE_IMAGE_PHYSICAL_SCREEN_PARAMETER 28
++#define EVF_STATE    (*(struct state_object **)0x91CF0)
++#define MOVREC_STATE (*(struct state_object **)0x93AF8)
++#define SSS_STATE    (*(struct state_object **)0x9169C)
++
++/** Unused **/
++// #define INPUT_SET_IMAGE_VRAM_PARAMETER_MUTE_FLIP_CBR ??
++// #define INPUT_SET_IMAGE_VRAM_PARAMETER_MUTE_FLIP_CBR 26
++#endif // __platform_state_object_h
+diff --git a/platform/EOSM2.103/internals.h b/platform/EOSM2.103/internals.h
+new file mode 100644
+index 000000000..ad54bc3a4
+--- /dev/null
++++ b/platform/EOSM2.103/internals.h
+@@ -0,0 +1,163 @@
++/**
++ * Camera internals for EOS-M2 1.0.3
++ */
++
++/** Properties are persistent (saved in NVRAM) => a mistake can cause permanent damage. Undefine this for new ports. */
++/* WARNING--THIS IS JUST FOR TESTING IF WE CAN COMPILE */
++#define CONFIG_PROP_REQUEST_CHANGE
++
++/** 
++ * State object hooks are pieces of code that run in Canon tasks (state objects). See state-object.c . 
++ * They might slow down Canon code, so here you can disable all of them (useful for debugging or early ports) 
++ */
++#define CONFIG_STATE_OBJECT_HOOKS
++
++/** This camera runs DryOS **/
++//~ #define CONFIG_VXWORKS
++
++/** This camera has a DIGIC V chip */
++#define CONFIG_DIGIC_V
++
++/** This camera has an APS-C sensor */
++//~ #define CONFIG_FULLFRAME
++
++/** This camera has LiveView and can record video **/
++#define CONFIG_LIVEVIEW
++#define CONFIG_MOVIE
++
++/** This camera has a 3:2 screen, 720x480 **/
++#define CONFIG_3_2_SCREEN
++
++/** We only have a single LED **/
++//~ #define CONFIG_BLUE_LED
++
++/** There is no LCD sensor that turns the display off **/
++//~ #define CONFIG_LCD_SENSOR
++
++/** This camera has no miror **/
++//~ #define CONFIG_MLU
++
++/** This camera reports focus info in LiveView **/
++//~ #define CONFIG_LV_FOCUS_INFO
++
++/** Sensor gives some data Needs Help **/
++//~ #define CONFIG_ELECTRONIC_LEVEL
++
++/** Define this if the camera has an ambient light sensor used for auto brightness **/
++//~ #define CONFIG_AUTO_BRIGHTNESS
++
++/** idk **/
++//~ #define CONFIG_Q_MENU_PLAYBACK
++
++/** No flip-out display **/
++//~ #define CONFIG_VARIANGLE_DISPLAY
++
++/** Battery does not report exact percentage **/
++//~ #define CONFIG_BATTERY_INFO
++
++/** We can do bulb exposures (well, I hope) **/
++#define CONFIG_BULB
++
++/** There is no Bulb Mode **/
++//~ #define CONFIG_SEPARATE_BULB_MODE
++
++/** We can't control audio settings from ML **/
++//~ #define CONFIG_AUDIO_CONTROLS
++
++/** No zoom button **/
++#define CONFIG_ZOOM_BTN_NOT_WORKING_WHILE_RECORDING
++
++/** We can redirect the display buffer to some arbitrary address, just by changing YUV422_LV_BUFFER_DISPLAY_ADDR **/
++/** Well, I hope so **/
++#define CONFIG_CAN_REDIRECT_DISPLAY_BUFFER_EASILY
++#define CONFIG_CAN_REDIRECT_DISPLAY_BUFFER
++
++/** Therefore, we can implement display filters (features that alter the LiveView image in real-time) **/
++#define CONFIG_DISPLAY_FILTERS
++
++/** We can override ISO on a per-frame basis, by changing FRAME_ISO (e.g. for HDR video or gradual exposure) **/
++#define CONFIG_FRAME_ISO_OVERRIDE
++
++/** But we can't override the digital ISO component via FRAME_ISO **/
++#define CONFIG_FRAME_ISO_OVERRIDE_ANALOG_ONLY
++
++/** We can also override shutter on a per-frame basis */
++#define CONFIG_FRAME_SHUTTER_OVERRIDE
++
++/** We can't change ExpSim from ML (at least not yet) **/
++#define CONFIG_EXPSIM
++
++/** Asif hangs camera.. will look for a fix **/
++//~ #define CONFIG_BEEP
++
++/** This camera has no trouble saving Kelvin and/or WBShift in movie mode **/
++#define CONFIG_WB_WORKAROUND
++
++/** We can restore ML files after formatting the card in the camera **/
++#define CONFIG_RESTORE_AFTER_FORMAT
++
++/** We don't know how to use DMA_MEMCPY (yet) **/
++//~ #define CONFIG_DMA_MEMCPY
++
++/** We know how to use edmac_memcpy. This one is really fast (600MB/s!) */
++#define CONFIG_EDMAC_MEMCPY
++
++/** We shouldn't warn the user if movie exposure is Auto **/
++#define CONFIG_MOVIE_AE_WARNING
++
++/** No photo mode outside LiveView **/
++//~ #define CONFIG_PHOTO_MODE_INFO_DISPLAY
++
++/** No additional_version stub on this DryOS version **/
++#define CONFIG_NO_ADDITIONAL_VERSION
++
++/** Touchscreen support **/
++#define CONFIG_TOUCHSCREEN
++
++/** Intermediate "x1" zoom, before going into x5/x10 (what's the point?!) */
++#define CONFIG_ZOOM_X1
++
++/** Perfect sync using EVF_STATE **/
++#define CONFIG_EVF_STATE_SYNC
++
++/** FPS override: Canon changes FPS registers often; we need to undo their changes asap */
++#define CONFIG_FPS_AGGRESSIVE_UPDATE
++
++/** FIO_RenameFile works **/
++#define CONFIG_FIO_RENAMEFILE_WORKS
++
++/** FPS override: change timers from EVF state */
++#define CONFIG_FPS_UPDATE_FROM_EVF_STATE
++
++/** There is a Movie Mode, needs research */
++#define CONFIG_NO_DEDICATED_MOVIE_MODE
++
++/** We have access to Raw data */
++#define CONFIG_RAW_LIVEVIEW
++#define CONFIG_RAW_PHOTO
++
++/** We can control audio settings from ML **/
++//~ #define CONFIG_AUDIO_CONTROLS
++
++/** Hide Canon bottom bar from DebugMsg hook */
++#define CONFIG_LVAPP_HACK_DEBUGMSG
++
++/** Workaround for menu timeout in LiveView */
++#define CONFIG_MENU_TIMEOUT_FIX
++
++/** this method bypasses Canon's lv_save_raw and slurps the raw data directly from connection #0 */
++// #define CONFIG_EDMAC_RAW_SLURP
++
++/** Long-pressing SET/Q opens submenus */
++#define CONFIG_LONG_PRESS_SET_MENU
++
++/** This camera loads ML into the AllocateMemory pool **/
++#define CONFIG_ALLOCATE_MEMORY_POOL
++
++/** This camera uses new-style DryOS task hooks */
++#define CONFIG_NEW_DRYOS_TASK_HOOKS
++
++#define CONFIG_MALLOC_STRUCT_V2
++
++#define CONFIG_TASK_STRUCT_V2
++#define CONFIG_TASK_ATTR_STRUCT_V2
+diff --git a/platform/EOSM2.103/modules.hidden b/platform/EOSM2.103/modules.hidden
+new file mode 100644
+index 000000000..e69de29bb
+diff --git a/platform/EOSM2.103/modules.included b/platform/EOSM2.103/modules.included
+new file mode 100644
+index 000000000..176c881ec
+--- /dev/null
++++ b/platform/EOSM2.103/modules.included
+@@ -0,0 +1,12 @@
++# Module names in this file will be included in the cam magiclantern.zip
++# Minimal module set for initial EOS M2 (1.0.3) port (592 KB DIGIC 5 AllocateMemory budget).
++autoexpo
++bench
++deflick
++dual_iso
++ettr
++file_man
++img_name
++pic_view
++selftest
++silent
+diff --git a/platform/EOSM2.103/mvr.h b/platform/EOSM2.103/mvr.h
+new file mode 100644
+index 000000000..a56a3fde8
+--- /dev/null
++++ b/platform/EOSM2.103/mvr.h
+@@ -0,0 +1,140 @@
++
++// Movie recording.
++
++extern struct mvr_struct * mvr_struct;
++extern struct state_object * mvr_state;
++
++// tab size: 4
++
++struct mvr_config
++{
++	int16_t         qscale_related_1;		// 0x00, 67bc
++	uint16_t        debug_flag;             // 0x02, 67be   1 = write debugmsg's
++	uint16_t        qscale_mode;            // 0x04, 67c0   1 = QScale, 0 = CBR
++	uint16_t		db_filter_a;			// 0x06, 67c2
++	uint16_t		db_filter_b;            // 0x08, 67c4
++	int16_t 		def_q_scale;            // 0x0a, 67c6
++	int16_t 		qscale_related_2;		// 0x0c, 67c8
++	int16_t 		qscale_related_3;		// 0x0e, 67ca
++	uint16_t 		x67cc;                  // 0x10, 67cc
++	int16_t 		qscale_limit_L;			// 0x12, 67ce
++	int16_t         qscale_limit_H;         // 0x14, 67d0
++	uint16_t		time_const;				// 0x16, 67d2
++	uint32_t		fullhd_30fps_opt_size_I;// 0x18, 67d4
++	uint32_t		fullhd_30fps_opt_size_P;// 0x1c, 67d8
++	uint32_t		D1_30fps;				// 0x20, 67dc
++	uint32_t		D2_30fps;				// 0x24, 67e0
++	uint32_t		x67e4;					// 0x28, 67e4
++	uint32_t		fullhd_25fps_opt_size_I;// 0x2c, 67e8
++	uint32_t		fullhd_25fps_opt_size_P;// 0x30, 67ec
++	uint32_t		fullhd_25fps_D1;		// 0x34, 67f0
++	uint32_t		fullhd_25fps_D2;		// 0x38, 67f4
++	uint32_t		x67f8;					// 0x3c, 67f8
++	uint32_t		fullhd_24fps_opt_size_I;// 0x40, 67fc
++	uint32_t		fullhd_24fps_opt_size_P;// 0x44, 6800
++	uint32_t		fullhd_24fps_D1;		// 0x48, 6804
++	uint32_t		fullhd_24fps_D2;		// 0x4c, 6808
++	uint32_t		x680c;					// 0x50, 680c
++	uint32_t		hd_60fps_opt_size_I;	// 0x54, 6810
++	uint32_t		hd_60fps_opt_size_P;	// 0x58, 6814
++	uint32_t		hd_60fps_D1;			// 0x5c, 6818
++	uint32_t		hd_60fps_D2;			// 0x60, 681c
++	uint32_t		x6820;					// 0x64, 6820
++	uint32_t		hd_50fps_opt_size_I;	// 0x68, 6824
++	uint32_t		hd_50fps_opt_size_P;	// 0x6c, 6828
++	uint32_t		hd_50fps_D1;			// 0x70, 682c
++	uint32_t		hd_50fps_D2;			// 0x74, 6830
++	uint32_t		x6834_kinda_counter;	// 0x78, 6834
++	uint32_t		x6838;                  // 0x7c, 6838
++	uint32_t		x683c;                  // 0x80, 683c
++	uint32_t        x6840;                  // 0x84, 6840
++	uint32_t		x6844;                  // 0x88, 6844
++	uint32_t		x6848;					// 0x8c, 6848
++    int32_t         another_def_q_scale;	// 0x90, 684c
++	int32_t         IniQScale;              // 0x94, 6850
++	uint32_t		x6854;                  // 0x98, 6854
++	uint32_t		x6858;                  // 0x9c, 6858
++	uint32_t		x685c;					// 0xa0, 685c
++	uint32_t        vga_30fps_opt_size_I;	// 0xa4, 6860
++	uint32_t 	    vga_30fps_opt_size_P;	// 0xa8, 6864
++	uint32_t 		vga_30fps_D1;           // 0xac, 6868
++	uint32_t		vga_30fps_D2;			// 0xb0, 686c
++	uint32_t		x6870;                  // 0xb4, 6870
++	uint32_t	    vga_25fps_opt_size_I;	// 0xb8, 6874
++	uint32_t        vga_25fps_opt_size_P;	// 0xbc, 6878
++	uint32_t		vga_25fps_D1;			// 0xc0, 687c
++	uint32_t		vga_25fps_D2;           // 0xc4, 6880
++	uint32_t		x6884;                  // 0xc8, 6884
++	uint32_t		x6888;                  // 0xcc, 6888
++	uint32_t		x688c;                  // 0xd0, 688c
++	uint32_t		x6890;                  // 0xd4, 6890
++	uint32_t		x6894;                  // 0xd8, 6894
++	uint32_t		x6898;                  // 0xdc, 6898
++	uint32_t		x689c;                  // 0xe0, 689c
++	uint32_t		x68a0;                  // 0xe4, 68a0
++	uint32_t		x68a4;                  // 0xe8, 68a4
++	uint32_t		x68a8;                  // 0xec, 68a8
++	uint32_t		x68ac;                  // 0xf0, 68ac
++	uint32_t		actual_qscale_maybe3;   // 0xf4, 68b0
++	uint32_t		actual_qscale_maybe2;   // 0xf8, 68b4
++	uint32_t		actual_qscale_maybe;    // 0xfc, 68b8
++	uint32_t		IOptSize;               // 0x100, 68bc
++	uint32_t		POptSize;               // 0x104, 68c0
++	uint32_t		IOptSize2;              // 0x108, 68c4
++	uint32_t		POptSize2;              // 0x10c, 68c8
++	uint32_t		GopSize;                // 0x110, 68cc
++	uint32_t		x68d0;                  // 0x114, 68d0
++	uint32_t		x68d4;                  // 0x118, 68d4
++	uint32_t		_D1;                    // 0x11c, 68d8
++	uint32_t		_D2;                    // 0x120, 68dc
++	uint32_t		x68e0;                  // 0x124, 68e0
++	uint32_t		fullhd_30fps_gop_opt_0;	// 0x128, 68e4
++	uint32_t		fullhd_30fps_gop_opt_1;	// 0x12c, 68e8
++	uint32_t		fullhd_30fps_gop_opt_2;	// 0x130, 68ec
++	uint32_t		fullhd_30fps_gop_opt_3;	// 0x134, 68f0
++	uint32_t		fullhd_30fps_gop_opt_4;	// 0x138, 68f4
++	uint32_t		fullhd_25fps_gop_opt_0;	// 0x13c, 68f8
++	uint32_t		fullhd_25fps_gop_opt_1;	// 0x140, 68fc
++	uint32_t		fullhd_25fps_gop_opt_2;	// 0x144, 6900
++	uint32_t		fullhd_25fps_gop_opt_3;	// 0x148, 6904
++	uint32_t		fullhd_25fps_gop_opt_4;	// 0x14c, 6908
++	uint32_t		fullhd_24fps_gop_opt_0;	// 0x150, 690c
++	uint32_t		fullhd_24fps_gop_opt_1;	// 0x154, 6910
++	uint32_t		fullhd_24fps_gop_opt_2;	// 0x158, 6914
++	uint32_t		fullhd_24fps_gop_opt_3;	// 0x15c, 6918
++	uint32_t		fullhd_24fps_gop_opt_4;	// 0x160, 691c
++    uint32_t		hd_60fps_gop_opt_0;     // 0x164, 6920
++    uint32_t		hd_60fps_gop_opt_1;     // 0x168, 6924
++    uint32_t		hd_60fps_gop_opt_2;     // 0x16c, 6928
++    uint32_t		hd_60fps_gop_opt_3;     // 0x170, 692c
++    uint32_t		hd_60fps_gop_opt_4;     // 0x174, 6930
++    uint32_t		hd_50fps_gop_opt_0;     // 0x178, 6934
++    uint32_t		hd_50fps_gop_opt_1;     // 0x17c, 6938
++    uint32_t		hd_50fps_gop_opt_2;     // 0x180, 693c
++    uint32_t		hd_50fps_gop_opt_3;     // 0x184, 6940
++    uint32_t		hd_50fps_gop_opt_4;     // 0x188, 6944
++    uint32_t		x6948;                  // 0x18c, 6948
++    uint32_t		x694c;                  // 0x190, 694c
++    uint32_t		x6950;                  // 0x194, 6950
++    uint32_t		x6954;                  // 0x198, 6954
++    uint32_t		x6958;                  // 0x19c, 6958
++    uint32_t		x695c;                  // 0x1a0, 695c
++    uint32_t		x6960;                  // 0x1a4, 6960
++    uint32_t		x6964;                  // 0x1a8, 6964
++    uint32_t		x6968;                  // 0x1ac, 6968
++    uint32_t		x696c;                  // 0x1b0, 696c
++    uint32_t		vga_30fps_gop_opt_0;    // 0x1b4, 6970
++    uint32_t		vga_30fps_gop_opt_1;    // 0x1b8, 6974
++    uint32_t		vga_30fps_gop_opt_2;    // 0x1bc, 6978
++    uint32_t		vga_30fps_gop_opt_3;    // 0x1c0, 697c
++    uint32_t		vga_30fps_gop_opt_4;    // 0x1c4, 6980
++    uint32_t		vga_25fps_gop_opt_0;    // 0x1c8, 6984
++    uint32_t		vga_25fps_gop_opt_1;    // 0x1cc, 6988
++    uint32_t		vga_25fps_gop_opt_2;    // 0x1d0, 698c
++    uint32_t		vga_25fps_gop_opt_3;    // 0x1d4, 6990
++    uint32_t		vga_25fps_gop_opt_4;    // 0x1d8, 6994
++} __attribute__((aligned,packed));
++
++//~ SIZE_CHECK_STRUCT( mvr_config, 0x30 );
++
++extern struct mvr_config mvr_config;
+diff --git a/platform/EOSM2.103/stubs.S b/platform/EOSM2.103/stubs.S
+new file mode 100644
+index 000000000..a39ce20c2
+--- /dev/null
++++ b/platform/EOSM2.103/stubs.S
+@@ -0,0 +1,253 @@
++/** \file
++ * Entry points into the firmware image.
++ *
++ * These are the functions that we can call from our tasks
++ * in the Canon 1.0.3 firmware for the EOS M2.
++ *
++ */
++/*
++ * Copyright (C) 2017 Magic Lantern Team
++ * 
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ * 
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ * 
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the
++ * Free Software Foundation, Inc.,
++ * 51 Franklin Street, Fifth Floor,
++ * Boston, MA  02110-1301, USA.
++ */
++
++#include <stub.h>
++
++.text
++
++/** Some functions are copied to RAM at around ff0c009c; they have to be called from RAM... **/
++#define RAM_OFFSET (0xFFD1F0E4-0x1900)  // (0xFFD1D7E4)
++
++
++/** Startup **/
++NSTUB(MAIN_FIRMWARE_ADDR, firmware_entry)
++NSTUB(0xFF0C1BD4,  cstart)
++NSTUB(0xFFDA3E98 - RAM_OFFSET,  bzero32)
++NSTUB(0xFFD2094C - RAM_OFFSET,  create_init_task)
++NSTUB(0xFF0C57A0,  init_task)
++NSTUB(   0x930A8,  additional_version)
++
++/** File I/O **/
++NSTUB(0xFF357704,  FIO_CloseFile)
++NSTUB(0xFF3586FC,  FIO_FindClose)
++NSTUB(0xFF35861C,  FIO_FindNextEx)
++NSTUB(0xFF3574B4, _FIO_ReadFile)
++NSTUB(0xFF357564,  FIO_SeekSkipFile)
++NSTUB(0xFF357654, _FIO_WriteFile)
++NSTUB(0xFF357F60, _FIO_CreateDirectory)
++NSTUB(0xFF357360, _FIO_CreateFile)
++NSTUB(0xFF358528, _FIO_FindFirstEx)
++NSTUB(0xFF357880, _FIO_GetFileSize)
++NSTUB(0xFF3572A4, _FIO_OpenFile)
++NSTUB(0xFF35740C, _FIO_RemoveFile)
++NSTUB(0xFF357D98, _FIO_RenameFile)
++
++/** GUI **/
++NSTUB(   0x8FED4,  gui_main_struct)
++NSTUB(   0xA043C,  gui_task_list)
++NSTUB(0xFF0D8B78,  GUI_Control)
++NSTUB(0xFF1A54B8,  SetGUIRequestMode)
++NSTUB(0xFF0D921C,  gui_init_end)
++NSTUB(0xFF0D87A8,  gui_main_task)
++// NSTUB(0xFF0D8D34,  GUI_ChangeMode)
++// NSTUB(0xFF1BF590,  gui_massive_event_loop)
++
++/** ASIF **/
++NSTUB(0xFF143B70,  PowerAudioOutput)
++NSTUB(0xFF14375C,  PowerMicAmp)
++NSTUB(0xFF1196C8,  SetAudioVolumeIn)
++NSTUB(0xFF141ABC,  SetAudioVolumeOut)
++NSTUB(0xFF117368,  SetNextASIFADCBuffer)
++NSTUB(0xFF117550,  SetNextASIFDACBuffer)
++NSTUB(0xFF142F80,  SetSamplingRate)
++NSTUB(0xFF119328,  SoundDevActiveIn)
++NSTUB(0xFF11684C,  StartASIFDMAADC)
++NSTUB(0xFF116C20,  StartASIFDMADAC)
++NSTUB(0xFF116AF8,  StopASIFDMAADC)                          // Regular -- Stop ASIF ADC - needed for future changes to mlv_snd.c
++NSTUB(0xFF116EA0,  StopASIFDMADAC)
++// NSTUB(0xFF119580,  SoundDevShutDownIn)                   /* breaks the audio meters */
++
++/** Audio **/
++NSTUB(   0x90298,  sounddev)
++NSTUB(0xFF34A470, _audio_ic_read)
++NSTUB(0xFF349E24, _audio_ic_write)
++NSTUB(0xFFA1474C,  audio_thresholds)
++NSTUB(0xFF118F18,  sounddev_task)
++
++/** Bitmap **/
++NSTUB(   0xBE92C,  LCD_Palette)                             // in InitializeBitmapDisplayDevice, right after 0xc0f14400
++NSTUB(   0xC012C,  bmp_vram_info)                           // look in SetBitmapVramAddress
++
++/** CFN **/
++NSTUB(0xFF6E31EC,  GetCFnData)
++NSTUB(0xFF6E3404,  SetCFnData)
++
++/** Camera interface? **/
++NSTUB(0xC0220000,  camera_engine)
++
++/** DMA **/
++NSTUB(0xFFD28AAC - RAM_OFFSET,  dma_memcpy)
++
++/** Debug messages **/
++NSTUB(   0x90980,  dm_names)
++NSTUB(0xFFD21B7C - RAM_OFFSET,  DryosDebugMsg)
++NSTUB(0xFFD21EE8 - RAM_OFFSET,  dm_set_store_level)
++
++/** Dialog API **/
++NSTUB(0xFF4eADC0,  dialog_redraw)
++NSTUB(0xFF5671DC,  dialog_set_property_str)
++
++/** Dialog handlers **/
++NSTUB(0xFF705064,  ErrCardForLVApp_handler)
++NSTUB(0xFF557F40,  ErrForCamera_handler)                    // ERR70, ERR80 etc. (DlgErrForCamera.c)
++NSTUB(0xFF56FBF8,  HideUnaviFeedBack_maybe)
++NSTUB(0xFF5760B0,  LiveViewApp_handler)
++NSTUB(0xFF57709C,  LiveViewApp_handler_BL_JudgeBottomInfoDispTimerState)
++NSTUB(0xFF56F8B4,  LiveViewApp_handler_end)
++NSTUB(0xFF7563A8,  LiveViewShutterApp_handler)
++NSTUB(0xFF757550,  LiveViewWifiApp_handler)
++NSTUB(0xFF787304,  PlayMain_handler)                        // StartPlayTouchPassFilterApp
++NSTUB(0xFF597880,  PlayMovieGuideApp_handler)               // StartPlayMovieGuideApp
++NSTUB(0xFF584918,  ShootOlcApp_handler)
++
++/** EDMAC **/
++NSTUB(0xFFD4E768 - RAM_OFFSET,  AbortEDmac)
++NSTUB(0xFFD4E2BC - RAM_OFFSET,  ConnectReadEDmac)
++NSTUB(0xFFD4E1F8 - RAM_OFFSET,  ConnectWriteEDmac)
++NSTUB(0xFFD4E89C - RAM_OFFSET,  RegisterEDmacAbortCBR)
++NSTUB(0xFFD4E808 - RAM_OFFSET,  RegisterEDmacCompleteCBR)
++NSTUB(0xFFD4E930 - RAM_OFFSET,  RegisterEDmacPopCBR)
++NSTUB(0xFFD4E098 - RAM_OFFSET,  SetEDmac)
++NSTUB(0xFFD4E444 - RAM_OFFSET,  StartEDmac)
++NSTUB(0xFFD4E8D8 - RAM_OFFSET,  UnregisterEDmacAbortCBR)
++NSTUB(0xFFD4E844 - RAM_OFFSET,  UnregisterEDmacCompleteCBR)
++NSTUB(0xFFD4E96C - RAM_OFFSET,  UnregisterEDmacPopCBR)
++
++/** Electronic Level **/
++// NSTUB(0xFF286E9C,  GUI_SetRollingPitchingLevelStatus)    // not available on this camera
++
++/** Engio **/
++NSTUB(0xFF2C6C2C, _EngDrvOut)
++NSTUB(0xFF2C6F44, _engio_write)
++NSTUB(0xFF2C6CC8,  shamem_read)
++
++/** Eventprocs (call by name) **/
++NSTUB(0xFF146EB4,  call)
++
++/** Events **/
++NSTUB(0xFFD54000 - RAM_OFFSET,  TryPostEvent)
++// NSTUB(0xFFD54084 - RAM_OFFSET,  TryPostEvent_end)
++// NSTUB(0xFFD53920 - RAM_OFFSET,  TryPostStageEvent)
++// NSTUB(0xFFD539A4 - RAM_OFFSET,  TryPostStageEvent_end)
++
++/** ExMem **/
++NSTUB(0xFFD26EE8 - RAM_OFFSET,  AddMemoryChunk)
++NSTUB(0xFF14AAA0,  AllocateContinuousMemoryResource)        // m_pfContAllocMemoryCBR
++NSTUB(0xFF14AA54,  AllocateMemoryResource)                  // m_pfAllocMemoryCBR
++NSTUB(0xFFD266D4 - RAM_OFFSET,  CreateMemoryChunk)          // called from CreateMemorySuite
++NSTUB(0xFFD27698 - RAM_OFFSET,  CreateMemorySuite)
++NSTUB(0xFFD272E8 - RAM_OFFSET,  DeleteMemorySuite)          // *"DeleteMemorySuite 0x%x"
++NSTUB(0xFF14ABB8,  FreeMemoryResource)                      // m_pfFreeMemoryCBR
++NSTUB(0xFFD27004 - RAM_OFFSET,  GetFirstChunkFromSuite)
++NSTUB(0xFFD26C80 - RAM_OFFSET,  GetMemoryAddressOfMemoryChunk)
++NSTUB(0xFFD27D08 - RAM_OFFSET,  GetNextMemoryChunk)
++NSTUB(0xFF0E9660,  SRM_AllocateMemoryResourceFor1stJob)
++NSTUB(0xFF0EDA50,  SRM_FreeMemoryResourceFor1stJob)
++
++/** GUI timers **/
++NSTUB(0xFF5647D0,  CancelDateTimer)
++NSTUB(0xFFD29D24 - RAM_OFFSET,  CancelTimer)
++NSTUB(0xFFD2320C - RAM_OFFSET,  SetHPTimerAfterNow)
++NSTUB(0xFFD2330C - RAM_OFFSET,  SetHPTimerNextTick)
++NSTUB(0xFFD29B24 - RAM_OFFSET,  SetTimerAfter)
++
++/** H264 Encoder **/
++NSTUB(   0x96758,  mvr_config)
++NSTUB(0xFF2C5EDC,  mvrFixQScale)
++NSTUB(0xFF2C59D4,  mvrSetDefQScale)
++
++/** Interrupts **/
++NSTUB(   0x8FABC,  post_isr_hook)
++NSTUB(   0x8FAB8,  pre_isr_hook)
++
++/** Making the card bootable **/
++NSTUB(   0xAB4CC,  sd_device)
++NSTUB(0xFF51FFDC,  fsuDecodePartitionTable)
++
++/** Memory allocation **/
++NSTUB(0xFFD25774 - RAM_OFFSET,  GetMemoryInformation)
++NSTUB(0xFFD25720 - RAM_OFFSET,  GetSizeOfMaxRegion)
++NSTUB(0xFFD259D4 - RAM_OFFSET, _AllocateMemory)
++NSTUB(0xFFD25D70 - RAM_OFFSET, _FreeMemory)
++NSTUB(0xFFD54248 - RAM_OFFSET, _alloc_dma_memory)
++NSTUB(0xFF0C9110, _free)                                    // see "can't malloc"
++NSTUB(0xFFD5427C - RAM_OFFSET, _free_dma_memory)
++NSTUB(0xFF0C90B8, _malloc)
++
++/** Message queues **/
++NSTUB(0xFFD50AEC - RAM_OFFSET,  msg_queue_count)
++NSTUB(0xFFD28560 - RAM_OFFSET,  msg_queue_create)
++NSTUB(0xFFD50AAC - RAM_OFFSET,  msg_queue_post)
++NSTUB(0xFFD508C0 - RAM_OFFSET,  msg_queue_receive)
++
++/** MPU communication **/
++NSTUB(0xFFD4F984 - RAM_OFFSET, _mpu_send)                   /* dwSize < TXBD_DATA_SIZE */
++NSTUB(0xFFD21148 - RAM_OFFSET, _mpu_recv)                   /* registered in InitializeIntercom as CBR */
++
++/** PTP **/
++NSTUB(0xFF28666C,  ptpPropSetUILock)
++NSTUB(0xFF2AB60C,  ptp_register_handler)
++
++/** Properties **/
++NSTUB(0xFF12D430, _prop_cleanup)
++NSTUB(0xFF12CDE8, _prop_request_change)
++NSTUB(0xFF12D364,  prop_deliver)
++NSTUB(0xFF12CBF8,  prop_register_slave)
++
++/** Recursive locks **/
++NSTUB(0xFFD50BF8 - RAM_OFFSET,  AcquireRecursiveLock)       // KernelDry/KerRLock.c
++NSTUB(0xFFD28748 - RAM_OFFSET,  CreateRecursiveLock)
++NSTUB(0xFFD50D0C - RAM_OFFSET,  ReleaseRecursiveLock)       // KernelDry/KerRLock.c_p2
++
++/** ResLock **/
++NSTUB(0xFF2CAD1C,  CreateResLockEntry)
++NSTUB(0xFF2CB1DC,  LockEngineResources)
++NSTUB(0xFF2CB380,  UnLockEngineResources)
++
++/** Semaphores **/
++NSTUB(0xFFD24454 - RAM_OFFSET,  create_named_semaphore)
++NSTUB(0xFFD246A0 - RAM_OFFSET,  give_semaphore)
++NSTUB(0xFFD245B4 - RAM_OFFSET,  take_semaphore)
++
++/** Task info **/
++NSTUB(   0x90FF0,  task_max)
++NSTUB(0xFFD749F8 - RAM_OFFSET,  get_task_info_by_id)
++NSTUB(   0x8FBCC,  current_task)
++NSTUB(     0x64C,  current_interrupt)                       // in interrupt handler (0x18), where MEM(C0201004) is stored
++
++/** Task sleep **/
++NSTUB(0xFFD24A90 - RAM_OFFSET,  msleep)
++
++/** Tasks **/
++NSTUB(   0x8FBE0,  task_dispatch_hook)                      // task_trampoline -> last call -> last non-empty BL -> one indirect call here
++NSTUB(0xFFD24B44 - RAM_OFFSET,  task_create)
++NSTUB(0xFFD2A1D8 - RAM_OFFSET,  task_trampoline)
++
++/** Misc **/
++NSTUB(0xFF140080,  LoadCalendarFromRTC)
++NSTUB(0xFFD5228C - RAM_OFFSET,  vsnprintf)
++NSTUB(0xFFD24D14,  GetTaskName)
+diff --git a/platform/Makefile b/platform/Makefile
+index b1f3d9ff1..4d42a0398 100644
+--- a/platform/Makefile
++++ b/platform/Makefile
+@@ -92,6 +92,7 @@ ML_CAMS = \
+     80D.103 \
+     850D.100 \
+     EOSM.202 \
++    EOSM2.103 \
+     M50.110 \
+     R.180 \
+     R5.152 \
+diff --git a/src/bmp.c b/src/bmp.c
+index de9222e70..4358dc454 100755
+--- a/src/bmp.c
++++ b/src/bmp.c
+@@ -94,7 +94,7 @@
+     /** Returns a pointer to idle BMP vram */
+     uint8_t* bmp_vram_idle()
+     {
+-    #if defined(CONFIG_1100D) || defined(CONFIG_100D) // This fixes "dirty" LCD output for 100D
++    #if defined(CONFIG_1100D) || defined(CONFIG_100D) || defined(CONFIG_EOSM2) // This fixes "dirty" LCD output for 100D/EOSM2
+         return (uint8_t *)((((uintptr_t)bmp_vram_real() + 0x80000) ^ 0x80000) - 0x80000);
+     #else
+         return (uint8_t *)((uintptr_t)bmp_vram_real() ^ 0x80000);
+diff --git a/src/boot-d45-am.c b/src/boot-d45-am.c
+index 2201e76c7..a06d9a418 100755
+--- a/src/boot-d45-am.c
++++ b/src/boot-d45-am.c
+@@ -124,9 +124,9 @@ init_task_func init_task_patched(void)
+         while(1);                                       /* refuse to boot */
+     }
+ 
+-    #if defined(CONFIG_6D) || defined(CONFIG_100D) || defined(CONFIG_70D)
++    #if defined(CONFIG_6D) || defined(CONFIG_100D) || defined(CONFIG_70D) || defined(CONFIG_EOSM2)
+     /* R0: 0x44C000 (start address, easier to patch, change to 0x4E0000 => reserve 592K for ML) */
+-    /* R1: 0xD3C000 [6D, 70D] / 0xC3C000 [100D] (end address, unchanged) */
++    /* R1: 0xD3C000 [6D, 70D] / 0xC3C000 [100D] / 0xC2A000 [EOSM2] (end address, unchanged) */
+     addr_AllocMem_end[1] = MOV_R0_0x4E0000_INSTR;
+     ml_reserved_mem = 0x4E0000 - RESTARTSTART;
+     #elif defined(CONFIG_550D) || defined(CONFIG_600D)
+diff --git a/src/edmac-memcpy.c b/src/edmac-memcpy.c
+index 8029ceebf..f82bd0761 100644
+--- a/src/edmac-memcpy.c
++++ b/src/edmac-memcpy.c
+@@ -24,6 +24,9 @@ uint32_t edmac_read_chan = 0x19;
+ uint32_t edmac_write_chan = 0x13;
+ //~ r 2 3 5 7 8 9 10 11-13
+ //~ w 3 4 6 10 11-15
++#elif defined(CONFIG_EOSM2)
++uint32_t edmac_read_chan = 0x19;  /* Read:  0x0A 0x0B 0x0D 0x19 0x1A 0x1B 0x1C 0x1D */
++uint32_t edmac_write_chan = 0x13; /* Write: 0x03 0x04 0x06 0x13 0x14 0x15 0x16 */
+ #elif defined(CONFIG_60D)
+ uint32_t edmac_read_chan = 0x19;  /* free indices: 2, 3, 4, 5, 6, 7, 8, 9 */
+ uint32_t edmac_write_chan = 0x06; /* 1, 4, 6, 10 */
+diff --git a/src/fps-engio.c b/src/fps-engio.c
+index 8b6903f33..68c8320ea 100755
+--- a/src/fps-engio.c
++++ b/src/fps-engio.c
+@@ -268,6 +268,11 @@ static void fps_read_current_timer_values();
+     #define FPS_TIMER_B_MIN ( \
+     RECORDING_H264 ? (MV1080CROP ? 1750 : MV720 ? 990 : 1970) \
+                    : (ZOOM || MV1080CROP ? 1336 : 1970))
++#elif defined(CONFIG_EOSM2) // using 100D values as in original EOSM2 port
++    #define TG_FREQ_BASE 32000000
++    #define FPS_TIMER_A_MIN (ZOOM ? 676 : MV1080CROP ? 540 : 520)
++    #undef FPS_TIMER_B_MIN
++    #define FPS_TIMER_B_MIN (ZOOM || MV1080 || MV1080CROP ? 1288 : MV720 || (lv && lv_dispsize==1 && !is_movie_mode()) ? 990 : 1970)
+ #elif defined(CONFIG_6D)
+     #define TG_FREQ_BASE 25600000
+     #define FPS_TIMER_A_MIN (fps_timer_a_orig - (ZOOM ? 22 : MV720 ? 10 : 34) ) //, ZOOM ? 708 : 512)
+diff --git a/src/fw-signature.h b/src/fw-signature.h
+index 8416da4de..f1f6b3c24 100755
+--- a/src/fw-signature.h
++++ b/src/fw-signature.h
+@@ -40,6 +40,7 @@
+ #define SIG_80D_103  0x98ec1433 // from FE0A0000
+ #define SIG_850D_100 0xad55d877 // from e0040000
+ #define SIG_EOSM_202 0x2D7c6dcf // from FF0C0000
++#define SIG_EOSM2_103 0x1f321405 // from FF0C0000
+ //#define SIG_M50_102  0x3b70901c // from E0040000
+ #define SIG_M50_110  0x05EDBC80 // from E0040000
+ #define SIG_R_180    0x1474d0f5 // from E0040000
+diff --git a/src/lens.c b/src/lens.c
+index 60599ef65..af5bf86c2 100644
+--- a/src/lens.c
++++ b/src/lens.c
+@@ -1061,8 +1061,8 @@ lens_take_picture(
+     // in some cases, the MLU setting is ignored; if ML can't detect this properly, this call will actually take a picture
+     // if it happens (e.g. with LV active, but camera in QR mode), that's it, we won't try taking another one
+     // side effects should be minimal
+-#if defined(CONFIG_EOSM)
+-    call("Release"); //EOSM is mirrorless no need to check for MLU
++#if defined(CONFIG_EOSM) || defined(CONFIG_EOSM2)
++    call("Release"); //EOSM/EOSM2 is mirrorless no need to check for MLU
+     goto end;
+ #else
+     int took_pic = mlu_lock_mirror_if_needed();
+diff --git a/src/lens.h b/src/lens.h
+index cfd5be64a..d5b8a30c2 100644
+--- a/src/lens.h
++++ b/src/lens.h
+@@ -96,7 +96,8 @@ extern struct lens_info lens_info;
+ #define DOF_DIFFRACTION_LIMIT_REACHED 1
+ 
+ #if defined(CONFIG_6D) || defined(CONFIG_5D3_123) || defined(CONFIG_100D) || defined(CONFIG_750D) \
+-    || defined(CONFIG_80D) || defined(CONFIG_7D2) || defined(CONFIG_70D) || defined(CONFIG_5D4)
++    || defined(CONFIG_80D) || defined(CONFIG_7D2) || defined(CONFIG_70D) || defined(CONFIG_5D4) \
++    || defined(CONFIG_EOSM2)
+ struct prop_lv_lens
+ {
+         uint32_t                lens_rotation; // Identical Doesn't Change
+diff --git a/src/menu.c b/src/menu.c
+index a83f43e1b..0785cd44e 100755
+--- a/src/menu.c
++++ b/src/menu.c
+@@ -6245,7 +6245,7 @@ static struct longpress q_longpress = {
+ };
+ #endif
+ 
+-#if defined(CONFIG_EOSM)
++#if defined(CONFIG_EOSM) || defined(CONFIG_EOSM2)
+ static struct longpress erase_longpress = {
+     .long_btn_press     = BGMT_TRASH,           /* long press (500ms) opens ML menu */
+     .short_btn_press    = BGMT_PRESS_DOWN,      /* short press => do a regular "down/erase" */
+@@ -6469,7 +6469,7 @@ int handle_longpress_events(struct event * event)
+     }
+ #endif
+ 
+-#if defined(CONFIG_EOSM)
++#if defined(CONFIG_EOSM) || defined(CONFIG_EOSM2)
+     /* also trigger menu by a long press on ERASE (DOWN) */
+     if (event->param == BGMT_PRESS_DOWN)
+     {
+diff --git a/src/menuindex.c b/src/menuindex.c
+index 4d3d3fca2..c1f02afc0 100644
+--- a/src/menuindex.c
++++ b/src/menuindex.c
+@@ -52,7 +52,7 @@ static struct menu_entry help_menus[] = {
+         #elif defined(CONFIG_5DC) || defined(CONFIG_40D)
+         .name = "Press JUMP / PLAY",
+         .choices = CHOICES("Open submenu (Q)"),
+-        #elif defined(CONFIG_EOSM)
++        #elif defined(CONFIG_EOSM) || defined(CONFIG_EOSM2)
+         .name = "Tap or press PLAY",
+         .choices = CHOICES("Open submenu (Q)"),
+         #elif defined(CONFIG_100D)
+diff --git a/src/property.h b/src/property.h
+index 074c62f94..10d624883 100644
+--- a/src/property.h
++++ b/src/property.h
+@@ -109,7 +109,7 @@
+ #define PROP_HALF_SHUTTER       0x8005000a // two bytes, 1==held; only updated in LV mode
+ #define PROP_ORIENTATION        0x8005000d // 0 == 0 deg, 1 == +90 deg, 2 == -90 deg
+ #define PROP_LV_LENS_DRIVE_REMOTE 0x80050013 // what values?!
+-#ifdef CONFIG_EOSM
++#if defined(CONFIG_EOSM) || defined(CONFIG_EOSM2)
+ #define PROP_LV_FOCAL_DISTANCE 0x80050045
+ #endif
+ 
+diff --git a/src/raw.c b/src/raw.c
+index c724c8a96..737a64db6 100755
+--- a/src/raw.c
++++ b/src/raw.c
+@@ -162,7 +162,7 @@ static volatile struct edmac_mmio *raw_lv_edmac = (struct edmac_mmio *)RAW_LV_ED
+ #define RAW_PHOTO_EDMAC 0xc0f04208
+ #endif
+ 
+-#if defined(CONFIG_5D3) || defined(CONFIG_700D) || defined(CONFIG_6D) || defined(CONFIG_EOSM) || defined(CONFIG_650D) || defined(CONFIG_70D) || defined(CONFIG_100D)
++#if defined(CONFIG_5D3) || defined(CONFIG_700D) || defined(CONFIG_6D) || defined(CONFIG_EOSM) || defined(CONFIG_EOSM2) || defined(CONFIG_650D) || defined(CONFIG_70D) || defined(CONFIG_100D)
+ #define RAW_PHOTO_EDMAC 0xc0f04008
+ #endif
+ 
+@@ -328,7 +328,7 @@ static int get_default_white_level()
+     -1774, 10000,     3178, 10000,    7005, 10000
+ #endif
+ 
+-#if defined(CONFIG_650D) || defined(CONFIG_EOSM) || defined(CONFIG_700D) || defined(CONFIG_100D) // Same sensor
++#if defined(CONFIG_650D) || defined(CONFIG_EOSM) || defined(CONFIG_EOSM2) || defined(CONFIG_700D) || defined(CONFIG_100D) // Same sensor
+     //~ { "Canon EOS 650D", 0, 0x354d,
+     //~ { "Canon EOS M", 0, 0,
+     //~ { 6602,-841,-939,-4472,12458,2247,-975,2039,6148 } },
+@@ -639,6 +639,10 @@ static int dynamic_ranges[] = {1100, 1094, 1060, 1005, 919, 826, 726, 633};
+ static int dynamic_ranges[] = {1060, 1063, 1037, 982, 901, 831, 718, 622, 536};
+ #endif
+ 
++#ifdef CONFIG_EOSM2
++static int dynamic_ranges[] = {1068, 1076, 1041, 986, 899, 819, 713, 627, 518};
++#endif
++
+ #ifdef CONFIG_7D
+ static int dynamic_ranges[] = {1112, 1108, 1076, 1010, 902, 826, 709, 622};
+ #endif
+@@ -1138,7 +1142,7 @@ int raw_update_params_work()
+         skip_top = 54;
+         #endif
+ 
+-        #if defined(CONFIG_650D) || defined(CONFIG_EOSM) || defined(CONFIG_700D) || defined(CONFIG_100D)
++        #if defined(CONFIG_650D) || defined(CONFIG_EOSM) || defined(CONFIG_EOSM2) || defined(CONFIG_700D) || defined(CONFIG_100D)
+         skip_left = 72;
+         skip_top = 52;
+         #endif
+@@ -1194,7 +1198,7 @@ int raw_update_params_work()
+         raw_capture_info.binning_x  = 3; raw_capture_info.skipping_x = 0;
+ #ifdef CONFIG_5D3
+         raw_capture_info.skipping_y = 0; raw_capture_info.binning_y  = mv720 ? 5 : 3;
+-#elif defined(CONFIG_EOSM)
++#elif defined(CONFIG_EOSM) || defined(CONFIG_EOSM2)
+         raw_capture_info.binning_y  = 1; raw_capture_info.skipping_y = (mv720 || !RECORDING_H264) ? 4 : 2;
+ #else
+         raw_capture_info.binning_y  = 1; raw_capture_info.skipping_y = mv720 ? 4 : 2;
+-- 
+2.39.5
+

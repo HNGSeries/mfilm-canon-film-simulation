@@ -149,15 +149,15 @@ if [ -n "$MODULE" ]; then
         --keep-global-symbol=filmos_overlays "$MOD/build/filmos.mo"
     # libgcc's and libm's unwind tables: Magic Lantern's TCC crashes loading them, and the camera
     # hangs in its module loader with no film OS and no Modules tab (#46, #48). Nothing unwinds here.
-    arm-none-eabi-objcopy --remove-section=.ARM.exidx --remove-section=.rel.ARM.exidx \
-        --remove-section=.ARM.extab "$MOD/build/filmos.mo"
+    arm-none-eabi-objcopy --remove-section='.ARM.exidx*' --remove-section='.rel.ARM.exidx*' \
+        --remove-section='.ARM.extab*' --remove-section='.rel.ARM.extab*' "$MOD/build/filmos.mo"
     if arm-none-eabi-readelf -SW "$MOD/build/filmos.mo" | grep -q "\.ARM\.ex"; then
         echo "the film OS module still has unwind tables, which the camera's loader can't load"; exit 1
     fi
     arm-none-eabi-readelf -sW "$MOD/build/filmos.mo" | awk '$5 == "GLOBAL" && $7 == "UND" {print $8}' | sort -u > "$MOD/build/filmos.dep"
     # every symbol the module needs must be in this camera's autoexec.bin, or the loader refuses it
-    # the symbol file the camera's module loader reads (5D2_212.sym, t3_105.sym on the 1100D ...)
-    SYM="$OUT/ML/modules/$(cd "$SRC/platform/$PLAT/build" && ls *.sym | grep -v '^magiclantern.sym$' | head -1)"
+    # the symbol file the camera's module loader reads (5D2_212.sym, t3_105.sym on the 1100D, EOSM2103.SYM on the EOS M2 ...)
+    SYM="$OUT/ML/modules/$(cd "$SRC/platform/$PLAT/build" && find . -maxdepth 1 -iname '*.sym' -printf '%f\n' | grep -v '^magiclantern.sym$' | head -1)"
     [ -f "$SYM" ] || { echo "no symbol file for $PLAT in the card files"; exit 1; }
     MISSING=$(comm -23 <(sort -u "$MOD/build/filmos.dep") <(awk '{print $2}' "$SYM" | sort -u))
     if [ -n "$MISSING" ]; then

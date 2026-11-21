@@ -157,7 +157,7 @@ static void dbg(const char *fmt, ...)
  * On the EOS M that is LiveView; a DSLR (100D, 650D, 700D ...) is mostly
  * shot through its optical viewfinder, so there it is also Canon's shooting
  * screen with LiveView off. */
-#ifdef CONFIG_EOSM
+#if defined(CONFIG_EOSM) || defined(CONFIG_EOSM2)
 #define FOS_LV_ONLY 1
 #else
 #define FOS_LV_ONLY 0
